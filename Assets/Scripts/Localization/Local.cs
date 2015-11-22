@@ -6,14 +6,6 @@ using System;
 using System.Text; 
 using System.Collections.Generic; 
 
-using UnityEngine; 
-using System.Collections; 
-using System.Xml; 
-using System.IO; 
-using System; 
-using System.Text; 
-using System.Collections.Generic; 
-
 public class Local { 
 	
 	private static Local instance; 
@@ -96,7 +88,7 @@ public class Local {
 		string result = ""; 
 		try{ 
 			result = d_text [key.ToLower ()]; 
-		} catch(Exception e){ 
+		} catch(Exception /*e*/){ //TODO
 			throw new NullReferenceException("not found this key - " + key); 
 		} 
 		return result; 
