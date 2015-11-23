@@ -14,7 +14,7 @@ public class Item
     public ItemType itemType;                           
     public float itemWeight;                               
     public int maxStack = 1;
-    public int indexItemInList = 999;    
+    public int indexItemInList = 999; //TODO Плохо
     public int rarity;
 
     [SerializeField]

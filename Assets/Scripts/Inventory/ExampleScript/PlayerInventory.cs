@@ -108,37 +108,29 @@ public class PlayerInventory : MonoBehaviour
         {
             mainInventory.width = 3;
             mainInventory.height = 1;
-            mainInventory.updateSlotAmount();
-            mainInventory.adjustInventorySize();
         }
-        if (size == 6)
+        else if (size == 6)
         {
             mainInventory.width = 3;
             mainInventory.height = 2;
-            mainInventory.updateSlotAmount();
-            mainInventory.adjustInventorySize();
         }
         else if (size == 12)
         {
             mainInventory.width = 4;
             mainInventory.height = 3;
-            mainInventory.updateSlotAmount();
-            mainInventory.adjustInventorySize();
         }
         else if (size == 16)
         {
             mainInventory.width = 4;
             mainInventory.height = 4;
-            mainInventory.updateSlotAmount();
-            mainInventory.adjustInventorySize();
         }
         else if (size == 24)
         {
             mainInventory.width = 6;
             mainInventory.height = 4;
-            mainInventory.updateSlotAmount();
-            mainInventory.adjustInventorySize();
         }
+		mainInventory.updateSlotAmount(); //Возможно так лучше?
+		mainInventory.adjustInventorySize();
     }
 
     void dropTheRestItems(int size)
@@ -281,9 +273,6 @@ public class PlayerInventory : MonoBehaviour
         //}
     }
 
-
-
-    // Update is called once per frame
     void Update()
     {
         if (Input.GetKeyDown(inputManagerDatabase.CharacterSystemKeyCode))

@@ -30,37 +30,27 @@ public class EquipmentSystem : MonoBehaviour
     [MenuItem("Inventory System/Create/Equipment")]  
     public static void menuItemCreateInventory() 
     {
-        GameObject Canvas = null;
-        if (GameObject.FindGameObjectWithTag("Canvas") == null)
+		GameObject Canvas = GameObject.FindGameObjectWithTag("Canvas");
+		if (Canvas == null)
         {
             GameObject inventory = new GameObject();
             inventory.name = "Inventories";
-            Canvas = (GameObject)Instantiate(Resources.Load("Prefabs/Canvas - Inventory") as GameObject);
+			Canvas = Instantiate(Resources.Load("Prefabs/Canvas - Inventory")) as GameObject;
             Canvas.transform.SetParent(inventory.transform, true);
-            GameObject panel = (GameObject)Instantiate(Resources.Load("Prefabs/Panel - EquipmentSystem") as GameObject);
-            panel.GetComponent<RectTransform>().localPosition = new Vector3(0, 0, 0);
-            panel.transform.SetParent(Canvas.transform, true);
-            GameObject draggingItem = (GameObject)Instantiate(Resources.Load("Prefabs/DraggingItem") as GameObject);
-            draggingItem.transform.SetParent(Canvas.transform, true);
-            Instantiate(Resources.Load("Prefabs/EventSystem") as GameObject);
-            Inventory inv = panel.AddComponent<Inventory>();
-            panel.AddComponent<InventoryDesign>();
-            panel.AddComponent<EquipmentSystem>();
-            inv.getPrefabs();
+            Instantiate(Resources.Load("Prefabs/EventSystem") as GameObject);  
         }
         else
-        {
-            GameObject panel = (GameObject)Instantiate(Resources.Load("Prefabs/Panel - EquipmentSystem") as GameObject);
-            panel.transform.SetParent(GameObject.FindGameObjectWithTag("Canvas").transform, true);
-            panel.GetComponent<RectTransform>().localPosition = new Vector3(0, 0, 0);
-            Inventory inv = panel.AddComponent<Inventory>();
-            panel.AddComponent<EquipmentSystem>();
             DestroyImmediate(GameObject.FindGameObjectWithTag("DraggingItem"));
-            GameObject draggingItem = (GameObject)Instantiate(Resources.Load("Prefabs/DraggingItem") as GameObject);
-            panel.AddComponent<InventoryDesign>();
-            draggingItem.transform.SetParent(GameObject.FindGameObjectWithTag("Canvas").transform, true);
-            inv.getPrefabs();
-        }
+
+		GameObject draggingItem = Instantiate(Resources.Load("Prefabs/DraggingItem")) as GameObject;
+		draggingItem.transform.SetParent(Canvas.transform, true);
+		GameObject panel = Instantiate(Resources.Load("Prefabs/Panel - EquipmentSystem")) as GameObject;
+		panel.transform.SetParent(Canvas.transform, true);
+		panel.GetComponent<RectTransform>().localPosition = new Vector3(0, 0, 0);
+		panel.AddComponent<InventoryDesign>();
+		panel.AddComponent<EquipmentSystem>();
+		Inventory inv = panel.AddComponent<Inventory>();
+		inv.getPrefabs();
     }
 #endif
 

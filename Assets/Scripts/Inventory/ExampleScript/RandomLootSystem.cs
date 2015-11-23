@@ -9,7 +9,6 @@ public class RandomLootSystem : MonoBehaviour
 
     int counter = 0;
 
-    // Use this for initialization
     void Start()
     {
 

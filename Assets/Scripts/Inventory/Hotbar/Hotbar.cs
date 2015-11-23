@@ -18,37 +18,27 @@ public class Hotbar : MonoBehaviour
     [MenuItem("Inventory System/Create/Hotbar")] 
     public static void menuItemCreateInventory()  
     {
-        GameObject Canvas = null;
-        if (GameObject.FindGameObjectWithTag("Canvas") == null)
+		GameObject Canvas = GameObject.FindGameObjectWithTag("Canvas");
+		if (Canvas == null)
         {
             GameObject inventory = new GameObject();
             inventory.name = "Inventories";
-            Canvas = (GameObject)Instantiate(Resources.Load("Prefabs/Canvas - Inventory") as GameObject);
+			Canvas = Instantiate(Resources.Load("Prefabs/Canvas - Inventory")) as GameObject;
             Canvas.transform.SetParent(inventory.transform, true);
-            GameObject panel = (GameObject)Instantiate(Resources.Load("Prefabs/Panel - Hotbar") as GameObject);
-            panel.GetComponent<RectTransform>().localPosition = new Vector3(0, 0, 0);
-            panel.transform.SetParent(Canvas.transform, true);
-            GameObject draggingItem = (GameObject)Instantiate(Resources.Load("Prefabs/DraggingItem") as GameObject);
-            Instantiate(Resources.Load("Prefabs/EventSystem") as GameObject);
-            draggingItem.transform.SetParent(Canvas.transform, true);
-            Inventory inv = panel.AddComponent<Inventory>();
-            panel.AddComponent<InventoryDesign>();
-            panel.AddComponent<Hotbar>();
-            inv.getPrefabs();
+            Instantiate(Resources.Load("Prefabs/EventSystem"));
         }
         else
-        {
-            GameObject panel = (GameObject)Instantiate(Resources.Load("Prefabs/Panel - Hotbar") as GameObject);
-            panel.transform.SetParent(GameObject.FindGameObjectWithTag("Canvas").transform, true);
-            panel.GetComponent<RectTransform>().localPosition = new Vector3(0, 0, 0);
-            Inventory inv = panel.AddComponent<Inventory>();
-            panel.AddComponent<Hotbar>();
             DestroyImmediate(GameObject.FindGameObjectWithTag("DraggingItem"));
-            GameObject draggingItem = (GameObject)Instantiate(Resources.Load("Prefabs/DraggingItem") as GameObject);
-            draggingItem.transform.SetParent(GameObject.FindGameObjectWithTag("Canvas").transform, true);
-            panel.AddComponent<InventoryDesign>();
-            inv.getPrefabs();
-        }
+
+		GameObject panel = Instantiate(Resources.Load("Prefabs/Panel - Hotbar")) as GameObject;
+		panel.transform.SetParent(Canvas.transform, true);
+		panel.GetComponent<RectTransform>().localPosition = new Vector3(0, 0, 0);
+		panel.AddComponent<Hotbar>();
+		panel.AddComponent<InventoryDesign>();
+		GameObject draggingItem = Instantiate(Resources.Load("Prefabs/DraggingItem")) as GameObject;
+		draggingItem.transform.SetParent(Canvas.transform, true);
+		Inventory inv = panel.AddComponent<Inventory>();
+		inv.getPrefabs();
     }
 #endif
 

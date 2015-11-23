@@ -9,7 +9,6 @@ public class SlotCover : MonoBehaviour
     Inventory inv;
     RectTransform rT;
 
-    // Use this for initialization
     void Start()
     {
         inv = transform.parent.parent.parent.parent.GetComponent<Inventory>();
@@ -17,10 +16,8 @@ public class SlotCover : MonoBehaviour
 
     }
 
-    // Update is called once per frame
     void Update()
     {
-
         rT.sizeDelta = new Vector3(inv.slotSize, inv.slotSize, 0);
     }
 }

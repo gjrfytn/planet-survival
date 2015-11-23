@@ -15,10 +15,10 @@ public class ShowTooltip : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
 
     void Start()
     {
-        if (GameObject.FindGameObjectWithTag("Tooltip") != null)
+		tooltipGameObject=GameObject.FindGameObjectWithTag("Tooltip");
+		if (tooltipGameObject != null)
         {
-            tooltip = GameObject.FindGameObjectWithTag("Tooltip").GetComponent<Tooltip>();
-            tooltipGameObject = GameObject.FindGameObjectWithTag("Tooltip");
+			tooltip = tooltipGameObject.GetComponent<Tooltip>();
             tooltipRectTransform = tooltipGameObject.GetComponent<RectTransform>() as RectTransform;
         }
         canvasRectTransform = GameObject.FindGameObjectWithTag("Canvas").GetComponent<RectTransform>() as RectTransform;

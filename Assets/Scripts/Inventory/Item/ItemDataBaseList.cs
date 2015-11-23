@@ -10,21 +10,15 @@ public class ItemDataBaseList : ScriptableObject
 
     public Item getItemByID(int id)
     {
-        for (int i = 0; i < itemList.Count; i++)
-        {
-            if (itemList[i].itemID == id)
-                return itemList[i].getCopy();
-        }
-        return null;
+		Item tmpItem=itemList.Find(item=>item.itemID==id);
+
+		return tmpItem==null ? null : tmpItem.getCopy();
     }
 
     public Item getItemByName(string name)
     {
-        for (int i = 0; i < itemList.Count; i++)
-        {
-            if (itemList[i].itemName.ToLower().Equals(name.ToLower()))
-                return itemList[i].getCopy();
-        }
-        return null;
+		Item tmpItem=itemList.Find(item=>item.itemName.ToLower()==name.ToLower());
+
+		return tmpItem==null ? null : tmpItem.getCopy();
     }
 }

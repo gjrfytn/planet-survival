@@ -30,11 +30,11 @@ public class CraftSystem : MonoBehaviour
     public Image arrowImage;
 
     //List<CraftSlot> slots = new List<CraftSlot>();
-    public List<Item> itemInCraftSystem = new List<Item>();
+    public List<Item> itemInCraftSystem = new List<Item>(); //TODO Возможно стоит объединить эти два списка в один?
     public List<GameObject> itemInCraftSystemGameObject = new List<GameObject>();
     BlueprintDatabase blueprintDatabase;
     public List<Item> possibleItems = new List<Item>();
-    public List<bool> possibletoCreate = new List<bool>();
+    public List<bool> possibleToCreate = new List<bool>();
 
 
     //PlayerScript PlayerstatsScript;
@@ -50,44 +50,37 @@ public class CraftSystem : MonoBehaviour
     [MenuItem("Inventory System/Create/Craft System")]
     public static void menuItemCreateInventory()
     {
-        GameObject Canvas = null;
-        if (GameObject.FindGameObjectWithTag("Canvas") == null)
-        {
-            GameObject inventory = new GameObject();
-            inventory.name = "Inventories";
-            Canvas = (GameObject)Instantiate(Resources.Load("Prefabs/Canvas - Inventory") as GameObject);
-            Canvas.transform.SetParent(inventory.transform, true);
-            GameObject panel = (GameObject)Instantiate(Resources.Load("Prefabs/Panel - CraftSytem") as GameObject);
-            panel.GetComponent<RectTransform>().localPosition = new Vector3(0, 0, 0);
-            panel.transform.SetParent(Canvas.transform, true);
-            GameObject draggingItem = (GameObject)Instantiate(Resources.Load("Prefabs/DraggingItem") as GameObject);
-            Instantiate(Resources.Load("Prefabs/EventSystem") as GameObject);
-            draggingItem.transform.SetParent(Canvas.transform, true);
-            panel.AddComponent<CraftSystem>();
-        }
-        else
-        {
-            GameObject panel = (GameObject)Instantiate(Resources.Load("Prefabs/Panel - CraftSystem") as GameObject);
-            panel.transform.SetParent(GameObject.FindGameObjectWithTag("Canvas").transform, true);
-            panel.GetComponent<RectTransform>().localPosition = new Vector3(0, 0, 0);
-            panel.AddComponent<CraftSystem>();
-            DestroyImmediate(GameObject.FindGameObjectWithTag("DraggingItem"));
-            GameObject draggingItem = (GameObject)Instantiate(Resources.Load("Prefabs/DraggingItem") as GameObject);
-            draggingItem.transform.SetParent(GameObject.FindGameObjectWithTag("Canvas").transform, true);
-        }
-    }
-#endif
+		GameObject Canvas = GameObject.FindGameObjectWithTag("Canvas");
+		if (Canvas == null)
+		{
+			GameObject inventory = new GameObject();
+			inventory.name = "Inventories";
+			Canvas = Instantiate(Resources.Load("Prefabs/Canvas - Inventory"))as GameObject;
+			Canvas.transform.SetParent(inventory.transform, true);
+			Instantiate(Resources.Load("Prefabs/EventSystem"));
+		}
+		else
+			DestroyImmediate(GameObject.FindGameObjectWithTag("DraggingItem"));
 
-    void Update()
-    {
-        ListWithItem();
-    }
-
-
-    public void setImages()
-    {
-        finalSlotImage = transform.GetChild(3).GetComponent<Image>();
-        arrowImage = transform.GetChild(4).GetComponent<Image>();
+		GameObject panel = Instantiate(Resources.Load("Prefabs/Panel - CraftSytem")) as GameObject;
+		panel.transform.SetParent(Canvas.transform, true);
+		panel.GetComponent<RectTransform>().localPosition = new Vector3(0, 0, 0);
+		panel.AddComponent<CraftSystem>();
+		GameObject draggingItem = Instantiate(Resources.Load("Prefabs/DraggingItem")) as GameObject;
+		draggingItem.transform.SetParent(Canvas.transform, true);
+	}
+	#endif
+	
+	void Update()
+	{
+		ListWithItem();
+	}
+	
+	
+	public void setImages()
+	{
+		finalSlotImage = transform.GetChild(3).GetComponent<Image>();
+		arrowImage = transform.GetChild(4).GetComponent<Image>();
 
         Image image = transform.GetChild(5).GetComponent<Image>();
         image.sprite = arrowImage.sprite;
@@ -128,9 +121,9 @@ public class CraftSystem : MonoBehaviour
 
     public void backToInventory()
     {
-        int length = itemInCraftSystem.Count;
-        for (int i = 0; i < length; i++)
+		for (int i = 0; i < itemInCraftSystem.Count; i++)
         {
+			//TODO Очень плохо в цикле вызвать эту функцию, нужно что-то другое придумать.
             GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerInventory>().inventory.GetComponent<Inventory>().addItemToInventory(itemInCraftSystem[i].itemID, itemInCraftSystem[i].itemValue);
             Destroy(itemInCraftSystemGameObject[i]);
         }
@@ -145,7 +138,7 @@ public class CraftSystem : MonoBehaviour
     {
         itemInCraftSystem.Clear();
         possibleItems.Clear();
-        possibletoCreate.Clear();
+        possibleToCreate.Clear();
         itemInCraftSystemGameObject.Clear();
 
         for (int i = 0; i < transform.GetChild(1).childCount; i++)
@@ -175,7 +168,7 @@ public class CraftSystem : MonoBehaviour
                 {
                     possibleItems.Add(blueprintDatabase.blueprints[k].finalItem);
                     possibleItems[possibleItems.Count - 1].itemValue = blueprintDatabase.blueprints[k].amountOfFinalItem;
-                    possibletoCreate.Add(true);
+                    possibleToCreate.Add(true);
                 }
             }
         }

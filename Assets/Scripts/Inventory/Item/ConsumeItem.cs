@@ -27,7 +27,7 @@ public class ConsumeItem : MonoBehaviour, IPointerDownHandler
 
     public void OnPointerDown(PointerEventData data)
     {
-        if (this.gameObject.transform.parent.parent.parent.GetComponent<EquipmentSystem>() == null)
+        if (this.gameObject.transform.parent.parent.parent.GetComponent<EquipmentSystem>() == null) //Ааа!
         {
             bool gearable = false;
             Inventory inventory = transform.parent.parent.parent.GetComponent<Inventory>();
@@ -40,16 +40,17 @@ public class ConsumeItem : MonoBehaviour, IPointerDownHandler
              
                 if (transform.parent.GetComponent<CraftResultSlot>() != null)
                 {
-                    bool check = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerInventory>().inventory.GetComponent<Inventory>().checkIfItemAllreadyExist(item.itemID, item.itemValue);
+					GameObject player=GameObject.FindGameObjectWithTag("Player");
+					bool check = player.GetComponent<PlayerInventory>().inventory.GetComponent<Inventory>().checkIfItemAllreadyExist(item.itemID, item.itemValue);
 
                     if (!check)
                     {
-                        GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerInventory>().inventory.GetComponent<Inventory>().addItemToInventory(item.itemID, item.itemValue);
-                        GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerInventory>().inventory.GetComponent<Inventory>().stackableSettings();
+						player.GetComponent<PlayerInventory>().inventory.GetComponent<Inventory>().addItemToInventory(item.itemID, item.itemValue);
+						player.GetComponent<PlayerInventory>().inventory.GetComponent<Inventory>().stackableSettings();
                     }
-                    CraftSystem cS = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerInventory>().craftSystem.GetComponent<CraftSystem>();
+					CraftSystem cS = player.GetComponent<PlayerInventory>().craftSystem.GetComponent<CraftSystem>();
                     cS.deleteItems(item);
-                    CraftResultSlot result = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerInventory>().craftSystem.transform.GetChild(3).GetComponent<CraftResultSlot>();
+					CraftResultSlot result = player.GetComponent<PlayerInventory>().craftSystem.transform.GetChild(3).GetComponent<CraftResultSlot>();
                     result.temp = 0;
                     tooltip.deactivateTooltip();
                     gearable = true;

@@ -5,7 +5,6 @@ public class PickUpItem : MonoBehaviour
     public Item item;
     private Inventory _inventory;
     private GameObject _player;
-    // Use this for initialization
 
     void Start()
     {
@@ -14,7 +13,6 @@ public class PickUpItem : MonoBehaviour
             _inventory = _player.GetComponent<PlayerInventory>().inventory.GetComponent<Inventory>();
     }
 
-    // Update is called once per frame
     void Update()
     {
         if (_inventory != null && Input.GetKeyDown(KeyCode.E))

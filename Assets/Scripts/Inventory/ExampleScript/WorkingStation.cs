@@ -11,8 +11,6 @@ public class WorkingStation : MonoBehaviour
     Inventory craftInventory;
     CraftSystem cS;
 
-
-    // Use this for initialization
     void Start()
     {
         if (craftSystem != null)
@@ -22,7 +20,6 @@ public class WorkingStation : MonoBehaviour
         }
     }
 
-    // Update is called once per frame
     void Update()
     {
 

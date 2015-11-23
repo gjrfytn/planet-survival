@@ -11,8 +11,6 @@ public class CraftResultSlot : MonoBehaviour
     GameObject itemGameObject;
     //Inventory inventory;
 
-
-    // Use this for initialization
     void Start()
     {
         //inventory = GameObject.FindGameObjectWithTag("Inventory").GetComponent<Inventory>();
@@ -28,7 +26,6 @@ public class CraftResultSlot : MonoBehaviour
 
     }
 
-    // Update is called once per frame
     void Update()
     {
         if (craftSystem.possibleItems.Count != 0)
