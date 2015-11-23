@@ -26,7 +26,7 @@ public class FirstPersonController : MonoBehaviour
     Camera firstPersonCamera;
 
     CharacterController characterController;
-    // Use this for initialization
+
     void Start()
     {
         firstPersonCamera = Camera.main.GetComponent<Camera>();
@@ -44,7 +44,6 @@ public class FirstPersonController : MonoBehaviour
         }
     }
 
-    // Update is called once per frame
     void Update()
     {
 
@@ -83,11 +82,11 @@ public class FirstPersonController : MonoBehaviour
     {
         if (inventory != null && inventory.activeSelf)
             return true;
-        else if (characterSystem != null && characterSystem.activeSelf)
+        if (characterSystem != null && characterSystem.activeSelf)
             return true;
-        else if (craftSystem != null && craftSystem.activeSelf)
+        if (craftSystem != null && craftSystem.activeSelf)
             return true;
-        else
-            return false;
+
+		return false;
     }
 }

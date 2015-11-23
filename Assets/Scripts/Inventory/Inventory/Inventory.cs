@@ -209,35 +209,26 @@ public class Inventory : MonoBehaviour
     [MenuItem("Inventory System/Create/Inventory and Storage")]   
     public static void menuItemCreateInventory()  
     {
-        GameObject Canvas = null;
-        if (GameObject.FindGameObjectWithTag("Canvas") == null)
+		GameObject Canvas = GameObject.FindGameObjectWithTag("Canvas");
+		if (Canvas == null)
         {
             GameObject inventory = new GameObject();
             inventory.name = "Inventories";
             Canvas = (GameObject)Instantiate(Resources.Load("Prefabs/Canvas - Inventory") as GameObject);
-            Canvas.transform.SetParent(inventory.transform, true);
-            GameObject panel = (GameObject)Instantiate(Resources.Load("Prefabs/Panel - Inventory") as GameObject);
-            panel.GetComponent<RectTransform>().localPosition = new Vector3(0, 0, 0);
-            panel.transform.SetParent(Canvas.transform, true);
-            GameObject draggingItem = (GameObject)Instantiate(Resources.Load("Prefabs/DraggingItem") as GameObject);
-            draggingItem.transform.SetParent(Canvas.transform, true);
-            Inventory temp = panel.AddComponent<Inventory>();
-            Instantiate(Resources.Load("Prefabs/EventSystem") as GameObject);
-            panel.AddComponent<InventoryDesign>();
-            temp.getPrefabs();
+            Canvas.transform.SetParent(inventory.transform, true);          
+            Instantiate(Resources.Load("Prefabs/EventSystem"));
         }
         else
-        {
-            GameObject panel = (GameObject)Instantiate(Resources.Load("Prefabs/Panel - Inventory") as GameObject);
-            panel.transform.SetParent(GameObject.FindGameObjectWithTag("Canvas").transform, true);
-            panel.GetComponent<RectTransform>().localPosition = new Vector3(0, 0, 0);
-            Inventory temp = panel.AddComponent<Inventory>();
-            panel.AddComponent<InventoryDesign>();
             DestroyImmediate(GameObject.FindGameObjectWithTag("DraggingItem"));
-            GameObject draggingItem = (GameObject)Instantiate(Resources.Load("Prefabs/DraggingItem") as GameObject);
-            draggingItem.transform.SetParent(GameObject.FindGameObjectWithTag("Canvas").transform, true);
-            temp.getPrefabs();
-        }
+
+		GameObject draggingItem = Instantiate(Resources.Load("Prefabs/DraggingItem"))as GameObject;
+		draggingItem.transform.SetParent(Canvas.transform, true);
+		GameObject panel = Instantiate(Resources.Load("Prefabs/Panel - Inventory")) as GameObject;
+		panel.transform.SetParent(Canvas.transform, true);
+		panel.GetComponent<RectTransform>().localPosition = new Vector3(0, 0, 0);
+		panel.AddComponent<InventoryDesign>();
+		Inventory temp = panel.AddComponent<Inventory>();
+		temp.getPrefabs();
     }
 #endif
 
@@ -291,12 +282,8 @@ public class Inventory : MonoBehaviour
 
     public bool characterSystem()
     {
-        if (GetComponent<EquipmentSystem>() != null)
-            return true;
-        else
-            return false;
+      return GetComponent<EquipmentSystem>() != null? true : false;
     }
-
 
     public void setDefaultSettings()
     {
@@ -393,7 +380,8 @@ public class Inventory : MonoBehaviour
         List<GameObject> slotList = new List<GameObject>();
         foreach (Transform child in SlotContainer.transform)
         {
-            if (child.tag == "Slot") { slotList.Add(child.gameObject); }
+            if (child.tag == "Slot")  
+				slotList.Add(child.gameObject); 
         }
 
         while (slotList.Count > width * height)
@@ -439,7 +427,7 @@ public class Inventory : MonoBehaviour
 
         if (SlotContainer == null)
         {
-            SlotContainer = (GameObject)Instantiate(prefabSlotContainer);
+			SlotContainer = Instantiate(prefabSlotContainer) as GameObject;
             SlotContainer.transform.SetParent(PanelRectTransform.transform);
             SlotContainerRectTransform = SlotContainer.GetComponent<RectTransform>();
             SlotGridRectTransform = SlotContainer.GetComponent<RectTransform>();
@@ -454,7 +442,8 @@ public class Inventory : MonoBehaviour
         List<GameObject> slotList = new List<GameObject>();
         foreach (Transform child in SlotContainer.transform)
         {
-            if (child.tag == "Slot") { slotList.Add(child.gameObject); }
+            if (child.tag == "Slot")  
+				slotList.Add(child.gameObject); 
         }
 
         while (slotList.Count > width * height)
@@ -539,17 +528,17 @@ public class Inventory : MonoBehaviour
 
     public void addAllItemsToInventory()
     {
-        for (int k = 0; k < ItemsInInventory.Count; k++)
+		foreach(Item invItem in ItemsInInventory)
         {
             for (int i = 0; i < SlotContainer.transform.childCount; i++)
             {
                 if (SlotContainer.transform.GetChild(i).childCount == 0)
                 {
                     GameObject item = (GameObject)Instantiate(prefabItem);
-                    item.GetComponent<ItemOnObject>().item = ItemsInInventory[k];
+					item.GetComponent<ItemOnObject>().item = invItem;
                     item.transform.SetParent(SlotContainer.transform.GetChild(i));
                     item.GetComponent<RectTransform>().localPosition = Vector3.zero;
-                    item.transform.GetChild(0).GetComponent<Image>().sprite = ItemsInInventory[k].itemIcon;
+					item.transform.GetChild(0).GetComponent<Image>().sprite = invItem.itemIcon;
                     updateItemSize();
                     break;
                 }
@@ -563,15 +552,15 @@ public class Inventory : MonoBehaviour
     {
         updateItemList();
         int stack;
-        for (int i = 0; i < ItemsInInventory.Count; i++)
+		foreach(Item invItem in ItemsInInventory)
         {
-            if (ItemsInInventory[i].itemID == itemID)
+			if (invItem.itemID == itemID)
             {
-                stack = ItemsInInventory[i].itemValue + itemValue;
-                if (stack <= ItemsInInventory[i].maxStack)
+				stack = invItem.itemValue + itemValue;
+				if (stack <= invItem.maxStack)
                 {
-                    ItemsInInventory[i].itemValue = stack;
-                    GameObject temp = getItemGameObject(ItemsInInventory[i]);
+					invItem.itemValue = stack;
+					GameObject temp = getItemGameObject(invItem);
                     if (temp != null && temp.GetComponent<ConsumeItem>().duplication != null)
                         temp.GetComponent<ConsumeItem>().duplication.GetComponent<ItemOnObject>().item.itemValue = stack;
                     return true;
@@ -608,7 +597,7 @@ public class Inventory : MonoBehaviour
         {
             if (SlotContainer.transform.GetChild(i).childCount == 0)
             {
-                GameObject item = (GameObject)Instantiate(prefabItem);
+                GameObject item = Instantiate(prefabItem) as GameObject;
                 ItemOnObject itemOnObject = item.GetComponent<ItemOnObject>();
                 itemOnObject.item = itemDatabase.getItemByID(id);
                 if (itemOnObject.item.itemValue <= itemOnObject.item.maxStack && value <= itemOnObject.item.maxStack)
@@ -638,7 +627,7 @@ public class Inventory : MonoBehaviour
         {
             if (SlotContainer.transform.GetChild(i).childCount == 0)
             {
-                GameObject item = (GameObject)Instantiate(prefabItem);
+                GameObject item = Instantiate(prefabItem) as GameObject;
                 ItemOnObject itemOnObject = item.GetComponent<ItemOnObject>();
                 itemOnObject.item = itemDatabase.getItemByID(itemID);
                 if (itemOnObject.item.itemValue < itemOnObject.item.maxStack && value <= itemOnObject.item.maxStack)
@@ -800,33 +789,23 @@ public class Inventory : MonoBehaviour
 
     public void deleteItem(Item item)
     {
-        for (int i = 0; i < ItemsInInventory.Count; i++)
+        foreach(Item invItem in ItemsInInventory)
         {
-            if (item.Equals(ItemsInInventory[i]))
+			if (item.Equals(invItem))
                 ItemsInInventory.RemoveAt(item.indexItemInList);
         }
     }
 
     
 
-    public void deleteItemFromInventory(Item item)
+	public void deleteItemFromInventory(Item item) //Нужна ли вообще эта функция?
     {
-        for (int i = 0; i < ItemsInInventory.Count; i++)
-        {
-            if (item.Equals(ItemsInInventory[i]))
-                ItemsInInventory.RemoveAt(i);
-        }
+		ItemsInInventory.Remove(item);
     }
 
     public void deleteItemFromInventoryWithGameObject(Item item)
     {
-        for (int i = 0; i < ItemsInInventory.Count; i++)
-        {
-            if (item.Equals(ItemsInInventory[i]))
-            {
-                ItemsInInventory.RemoveAt(i);
-            }
-        }
+		ItemsInInventory.Remove(item);
 
         for (int k = 0; k < SlotContainer.transform.childCount; k++)
         {

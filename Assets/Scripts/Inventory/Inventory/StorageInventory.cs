@@ -81,8 +81,8 @@ public class StorageInventory : MonoBehaviour
 
         if (GameObject.FindGameObjectWithTag("Timer") != null)
         {
-            timerImage = GameObject.FindGameObjectWithTag("Timer").GetComponent<Image>();
-            timer = GameObject.FindGameObjectWithTag("Timer");
+			timer = GameObject.FindGameObjectWithTag("Timer"); //Ну ты дал тут конечно :) (См. коммит github)
+			timerImage = timer.GetComponent<Image>();
             timer.SetActive(false);
         }
         if (GameObject.FindGameObjectWithTag("Tooltip") != null)
@@ -173,12 +173,10 @@ public class StorageInventory : MonoBehaviour
 
     void addItemsToInventory()
     {
-        Inventory iV = inventory.GetComponent<Inventory>();
-        for (int i = 0; i < storageItems.Count; i++)
-        {
-            iV.addItemToInventory(storageItems[i].itemID, storageItems[i].itemValue);
-        }
-        iV.stackableSettings();
+		Inventory inv = inventory.GetComponent<Inventory>();
+		storageItems.ForEach(x=>inv.addItemToInventory(x.itemID,x.itemValue));
+
+		inv.stackableSettings();
     }
 
 

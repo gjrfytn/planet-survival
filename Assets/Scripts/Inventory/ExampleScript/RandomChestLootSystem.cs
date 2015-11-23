@@ -19,8 +19,6 @@ public class RandomChestLootSystem : MonoBehaviour
     int creatingItemsForChest = 0;
     int randomItemNumber;
 
-
-    // Use this for initialization
     void Start()
     {
 

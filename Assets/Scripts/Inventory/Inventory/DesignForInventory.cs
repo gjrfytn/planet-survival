@@ -11,7 +11,6 @@ public class DesignForInventory : MonoBehaviour
     public Image backgroundSlot;
     public Text amountSlot;
 
-    // Use this for initialization
     void Start()
     {
         inventoryTitle = transform.GetChild(0).GetComponent<Text>();
@@ -25,7 +24,7 @@ public class DesignForInventory : MonoBehaviour
         for (int i = 0; i < transform.GetChild(1).childCount; i++)
         {
             if (transform.GetChild(1).GetChild(i).childCount != 0)
-                return transform.GetChild(1).GetChild(i).GetChild(0).GetChild(1).GetComponent<Text>();
+                return transform.GetChild(1).GetChild(i).GetChild(0).GetChild(1).GetComponent<Text>(); //Жуть какая :)
         }
         return null;
     }
