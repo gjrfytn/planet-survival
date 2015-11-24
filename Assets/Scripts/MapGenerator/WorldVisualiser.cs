@@ -16,7 +16,6 @@ public class WorldVisualiser : MonoBehaviour
 
 	public float FadeInSpeed;
 	public float FadeSpeed;
-	//private World World_;
 	
 	private class ListType
 	{
@@ -35,13 +34,29 @@ public class WorldVisualiser : MonoBehaviour
 	}
 
 	private Queue<QueueType> SignQueue = new Queue<QueueType> ();
+
 	void Awake()
 	{
 		//TODO 100 - число пикселей на единицу (свойство спрайта), возможно стоит это число брать из самих спрайтов
 		HexSpriteSize.x/=100;
 		HexSpriteSize.y/=100;
 	}
-	
+
+	/// <summary>
+	/// Уничтожает все хексы.
+	/// </summary>
+	public void DestroyAllHexes()
+	{
+		RenderedHexes.ForEach(hex=>{hex.Trees.ForEach(tree=>Destroy(tree));Destroy(hex.Hex);});
+		RenderedHexes.Clear();
+	}
+
+	/// <summary>
+	/// Отображает только хексы в поле зрения игрока.
+	/// </summary>
+	/// <param name="mapPosition">Координаты в матрице.</param>
+	/// <param name="distance">Дальность обзора.</param>
+	/// <param name="currentMap">Активная карта.</param>
 	public void RenderVisibleHexes (Vector2 mapPosition, byte distance, Map currentMap)
 	{
 		Map = currentMap;
@@ -58,15 +73,21 @@ public class WorldVisualiser : MonoBehaviour
 		for (ushort i=0; i<RenderedHexes.Count; ++i)
 			if (!RenderedHexes [i].InSign) 
 			{
-			RenderedHexes[i].Trees.ForEach(tree=>StartCoroutine(FadeAndDestroy(tree)));
-			StartCoroutine(FadeAndDestroy(RenderedHexes [i].Hex));
+				RenderedHexes[i].Trees.ForEach(tree=>StartCoroutine(FadeAndDestroy(tree)));
+				StartCoroutine(FadeAndDestroy(RenderedHexes [i].Hex));
 				RenderedHexes.RemoveAt (i);
 				i--;
 			}
 	}
 
 	//TODO Корутины загружают процессор?
+	//TODO Возникают исключения при работе корутин, исправить!
 
+	/// <summary>
+	/// Постепенно отображает объект (корутина).
+	/// </summary>
+	/// <returns>(Корутина).</returns>
+	/// <param name="obj">Объект для отображения.</param>
 	IEnumerator FadeIn(GameObject obj) 
 	{
 		SpriteRenderer renderer=obj.GetComponent<SpriteRenderer>();
@@ -83,6 +104,11 @@ public class WorldVisualiser : MonoBehaviour
 		}
 	}
 
+	/// <summary>
+	/// Постепенно скрывает, затем уничтожает объект (корутина).
+	/// </summary>
+	/// <returns>(Корутина).</returns>
+	/// <param name="obj">Объект к уничтожению.</param>
 	IEnumerator FadeAndDestroy(GameObject obj) 
 	{
 		SpriteRenderer renderer=obj.GetComponent<SpriteRenderer>();
@@ -97,6 +123,11 @@ public class WorldVisualiser : MonoBehaviour
 		Destroy(obj);
 	}
 
+	/// <summary>
+	/// Рекурсивно заносит в очередь на отображение хексы.
+	/// </summary>
+	/// <param name="mapPosition">Координаты в матрице.</param>
+	/// <param name="distance">Оставшееся расстояние для распространения.</param>
 	void SpreadRender (Vector2 mapPosition, byte distance)
 	{
 		if (mapPosition.y < 0 || mapPosition.x < 0 || mapPosition.y >= Map.MatrixHeight.GetLength (0) || mapPosition.x >= Map.MatrixHeight.GetLength (0))
@@ -137,14 +168,24 @@ public class WorldVisualiser : MonoBehaviour
 		}
 	}
 
+	/// <summary>
+	/// Создаёт спрайты, необходимые для отображения хекса.
+	/// </summary>
+	/// <param name="hex">Хекс.</param>
+	/// <param name="mapCoords">Координаты в матрице.</param>
 	void MakeHexGraphics(ListType hex, Vector2 mapCoords)
 	{
 		ChooseHexSprite(hex.Hex,mapCoords);
 		StartCoroutine( FadeIn(hex.Hex));
 		MakeHexForest(hex,mapCoords);
 	}
-
-	void ChooseHexSprite (GameObject hex, Vector2 mapCoords)
+	
+	/// <summary>
+	/// Выбирает спрайт хекса.
+	/// </summary>
+	/// <param name="hex">Хекс.</param>
+	/// <param name="mapCoords">Координаты в матрице.</param>
+	void ChooseHexSprite (GameObject hex, Vector2 mapCoords) //UNDONE
 	{
 		if (Map.MatrixRiver [(int)mapCoords.y, (int)mapCoords.x])
 			hex.GetComponent<SpriteRenderer> ().sprite = River;
@@ -158,18 +199,23 @@ public class WorldVisualiser : MonoBehaviour
 			hex.GetComponent<SpriteRenderer> ().sprite = Grass;
 	}
 
+	/// <summary>
+	/// Создаёт лес на хексе.
+	/// </summary>
+	/// <param name="hex">Хекс.</param>
+	/// <param name="mapCoords">Координаты в матрице.</param>
 	void MakeHexForest (ListType hex, Vector2 mapCoords)
 	{
 		Quaternion rot=new Quaternion();
 		for(byte i=0;i<Map.MatrixForest[(int)mapCoords.y,(int)mapCoords.x]*ForestDensity;++i)
-	{
-		Vector2 v=Random.insideUnitCircle;
+		{
+			Vector2 v=Random.insideUnitCircle;
 			v.x*=HexSpriteSize.x*0.5f;
 			v.y*=HexSpriteSize.y*0.5f;
 			Vector3 vec=new Vector3(v.x+hex.Hex.transform.position.x,v.y+hex.Hex.transform.position.y,-0.1f);
 			hex.Trees.Add(Instantiate(Tree,vec,rot) as GameObject);
 			StartCoroutine( FadeIn(hex.Trees[hex.Trees.Count-1]));
-	}
+		}
 	}
 
 	/*

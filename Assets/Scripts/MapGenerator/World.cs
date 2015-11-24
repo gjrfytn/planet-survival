@@ -19,17 +19,13 @@ public class Map
 
 public class World : MonoBehaviour
 {
-	public Map CurrentMap; // Текущая карта, отображаемая на экране. Возможно должна храниться не здесь.
+	public Map CurrentMap; // Текущая карта, отображаемая на экране.
 
 	private Map GlobalMap;
 
 	private Map[,] LocalMaps;
-	//private List<Map> LocalMaps = new List<Map> ();
-	private WorldGenerator Generator; //readonly?
 
-	//TODO Можно ли использовать такую форму?
-	//public Map GlobalMap{get;private set;}
-	//public Map[] LocalMaps{get;private set;}
+	private WorldGenerator Generator; //readonly?
 
 	private WorldVisualiser Visualiser; //Временно
 
@@ -56,6 +52,9 @@ public class World : MonoBehaviour
 		//--
 	}
 
+	/// <summary>
+	/// Переключение карт.
+	/// </summary>
 	public void SwitchMap()
 	{
 		if(CurrentMap==GlobalMap)
@@ -64,6 +63,9 @@ public class World : MonoBehaviour
 			GotoGlobalMap();
 	}
 
+	/// <summary>
+	/// Переход на локальную карту.
+	/// </summary>
 	void GotoLocalMap()
 		{
 		//TEMP
@@ -82,6 +84,9 @@ public class World : MonoBehaviour
 		//
 	}
 
+	/// <summary>
+	/// Переход на глобальную карту.
+	/// </summary>
 	void GotoGlobalMap()
 	{
 		CurrentMap=GlobalMap;
