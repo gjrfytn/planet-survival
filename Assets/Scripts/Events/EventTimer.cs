@@ -7,10 +7,10 @@ public class EventTimer : MonoBehaviour
 		
 	void Update () 
 	{
-		if(TimeCountdown > 0)
-			TimeCountdown -= Time.deltaTime;
-		else
-			Debug.Log("GAME OVER");
+//		if(TimeCountdown > 0)
+//			TimeCountdown -= Time.deltaTime;
+//		else
+//			Debug.Log("GAME OVER");
 
 	}
 }

@@ -13,6 +13,7 @@ public class WorldVisualiser : MonoBehaviour
 	public Vector2 HexSpriteSize;
 	public GameObject Tree;
 	public byte ForestDensity;
+	public byte ForestGenGridSize;
 
 	public float FadeInSpeed;
 	public float FadeSpeed;
@@ -204,17 +205,41 @@ public class WorldVisualiser : MonoBehaviour
 	/// </summary>
 	/// <param name="hex">Хекс.</param>
 	/// <param name="mapCoords">Координаты в матрице.</param>
-	void MakeHexForest (ListType hex, Vector2 mapCoords)
+	void MakeHexForest (ListType hex, Vector2 mapCoords) //TODO (WIP)
 	{
-		Quaternion rot=new Quaternion();
-		for(byte i=0;i<Map.MatrixForest[(int)mapCoords.y,(int)mapCoords.x]*ForestDensity;++i)
+		if(Map.MatrixForest[(int)mapCoords.y,(int)mapCoords.x]*ForestDensity>=1)
 		{
-			Vector2 v=Random.insideUnitCircle;
-			v.x*=HexSpriteSize.x*0.5f;
-			v.y*=HexSpriteSize.y*0.5f;
-			Vector3 vec=new Vector3(v.x+hex.Hex.transform.position.x,v.y+hex.Hex.transform.position.y,-0.1f);
-			hex.Trees.Add(Instantiate(Tree,vec,rot) as GameObject);
-			StartCoroutine( FadeIn(hex.Trees[hex.Trees.Count-1]));
+			Quaternion rot=new Quaternion();
+			float gridStepX=HexSpriteSize.x/ForestGenGridSize;
+			float gridStepY=HexSpriteSize.y/ForestGenGridSize;
+			Vector2 gridOrigin=new Vector2(hex.Hex.transform.position.x-HexSpriteSize.x*0.375f, hex.Hex.transform.position.y-HexSpriteSize.y*0.5f);
+			byte treesCount=(byte)(Map.MatrixForest[(int)mapCoords.y,(int)mapCoords.x]*ForestDensity);
+
+			while(true)
+			{
+				if(treesCount>ForestGenGridSize*ForestGenGridSize)
+				{
+					for(float y=0;y<HexSpriteSize.y;y+=gridStepY)
+						for(float x=0;x<HexSpriteSize.x;x+=gridStepX)
+						{
+							Vector2 v=new Vector2(Random.value*gridStepX,Random.value*gridStepY);
+							hex.Trees.Add(Instantiate(Tree,new Vector3(gridOrigin.x+x+v.x, gridOrigin.y+y+v.y, -0.1f),rot) as GameObject);
+							StartCoroutine(FadeIn(hex.Trees[hex.Trees.Count-1]));
+							treesCount--;
+						}
+				}
+				else
+				{
+					Vector2 v=Random.insideUnitCircle;
+					v.x*=HexSpriteSize.x*0.5f;
+					v.y*=HexSpriteSize.y*0.5f;
+					hex.Trees.Add(Instantiate(Tree,new Vector3(hex.Hex.transform.position.x+v.x, hex.Hex.transform.position.y+v.y, -0.1f),rot) as GameObject);
+					StartCoroutine(FadeIn(hex.Trees[hex.Trees.Count-1]));
+					treesCount--;
+					if(treesCount==0)
+						return;
+				}
+			}
 		}
 	}
 
