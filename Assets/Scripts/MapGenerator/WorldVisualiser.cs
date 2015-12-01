@@ -4,12 +4,18 @@ using System.Collections.Generic;
 
 public class WorldVisualiser : MonoBehaviour
 {
+	[System.Serializable]
+	public class Terrain
+	{
+		public float StartingHeight;
+		public Sprite Sprite_;
+	}
+
 	public GameObject Hex;
-	public Sprite Grass;
-	public Sprite Sand;
+
+	public Sprite BottommostTerrainSprite;
+	public Terrain[] Terrains;
 	public Sprite River;
-	public Sprite Mud;
-	public Sprite Mountain;
 	public Vector2 HexSpriteSize;
 	public GameObject Tree;
 	public byte ForestDensity;
@@ -38,6 +44,9 @@ public class WorldVisualiser : MonoBehaviour
 
 	void Awake()
 	{
+		for(byte i=1;i<Terrains.Length;i++)
+			Debug.Assert(Terrains[i-1].StartingHeight<Terrains[i].StartingHeight);
+
 		//TODO 100 - число пикселей на единицу (свойство спрайта), возможно стоит это число брать из самих спрайтов
 		HexSpriteSize.x/=100;
 		HexSpriteSize.y/=100;
@@ -81,9 +90,6 @@ public class WorldVisualiser : MonoBehaviour
 			}
 	}
 
-	//TODO Корутины загружают процессор?
-	//TODO Возникают исключения при работе корутин, исправить!
-
 	/// <summary>
 	/// Постепенно отображает объект (корутина).
 	/// </summary>
@@ -96,7 +102,7 @@ public class WorldVisualiser : MonoBehaviour
 		cbuf.a=0;
 		renderer.material.color=cbuf;
 
-		while(renderer.material.color.a<1)
+		while(renderer!=null&&renderer.material.color.a<1)
 		{
 			Color buf=renderer.material.color;
 			buf.a+=FadeInSpeed;
@@ -190,14 +196,22 @@ public class WorldVisualiser : MonoBehaviour
 	{
 		if (Map.MatrixRiver [(int)mapCoords.y, (int)mapCoords.x])
 			hex.GetComponent<SpriteRenderer> ().sprite = River;
-		else if (Map.MatrixHeight [(int)mapCoords.y, (int)mapCoords.x] > 0.6f && Map.MatrixHeight [(int)mapCoords.y, (int)mapCoords.x] < 0.9f)
-			hex.GetComponent<SpriteRenderer> ().sprite = Sand;
-		else if (Map.MatrixHeight [(int)mapCoords.y, (int)mapCoords.x] < 0.1f)
-			hex.GetComponent<SpriteRenderer> ().sprite = Mud;
-		else if (Map.MatrixHeight [(int)mapCoords.y, (int)mapCoords.x] > 0.9f)
-			hex.GetComponent<SpriteRenderer> ().sprite = Mountain;
 		else
-			hex.GetComponent<SpriteRenderer> ().sprite = Grass;
+		{
+			if(Map.MatrixHeight [(int)mapCoords.y, (int)mapCoords.x]<Terrains[0].StartingHeight)
+			{
+				hex.GetComponent<SpriteRenderer> ().sprite=BottommostTerrainSprite;
+				return;
+			}
+			for(byte i=1;i<Terrains.Length;i++)
+				if(Map.MatrixHeight [(int)mapCoords.y, (int)mapCoords.x]>=Terrains[i-1].StartingHeight&&Map.MatrixHeight [(int)mapCoords.y, (int)mapCoords.x]<Terrains[i].StartingHeight)
+				{
+					hex.GetComponent<SpriteRenderer> ().sprite=Terrains[i-1].Sprite_;
+					return;
+				}
+			if(Map.MatrixHeight [(int)mapCoords.y, (int)mapCoords.x]>=Terrains[Terrains.Length-1].StartingHeight)
+				hex.GetComponent<SpriteRenderer> ().sprite=Terrains[Terrains.Length-1].Sprite_;
+		}
 	}
 
 	/// <summary>
