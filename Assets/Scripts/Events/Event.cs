@@ -1,41 +1,85 @@
-﻿using UnityEngine;
+﻿//using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class Event //UNDONE
-{	
-	// Описание события, выводимое на экран.
-	string Description;
+{
+    // Название события
+    public string Name;// {get; private set; }
 
-	// TODO Базовые возможности успеха реакции на событие, "0" - отсутствие такого варианта.
-	float RunAwayChance;
-	// и т.п.
+    // Определяет, "хорошее" это событие или "плохое", необходимо для правильного влияния параметра удачи.
+    public bool Good;// {get; private set; } { get; private set; }
+
+	//TODO Возможно стоит вместо этого разделить события на два списка?
+	// Определяет, может ли это событие произойти от действия.
+    public bool ByAction;// {get; private set; } { get; private set; }
+
+	// Определяет, может ли это событие произойти от таймера.
+    public bool ByTime;// {get; private set; } { get; private set; }
+
+	// Описание события, выводимое на экран.
+    public string Description;// {get; private set; } { get; private set; }
 
 	// Базовая вероятность возникновения события, на него будет влиять параметр удачи персонажа.
-	float Probability;
-	// Определяет, "хорошее" это событие или "плохое", необходимо для правильного влияния параметра удачи.
-	bool Good;
+    public float Probability;// {get; private set; } { get; private set; }
 
-	// TODO Коэффициент вероятности возникновения события в типе местности, "0" - событие не происходит в этом типе.
-	float ForestProb;
-	float RiverProb;
-	// и т.п.
+    // TODO Коэффициент вероятности возникновения события при различных факторах, "1" - максимальное значение, "0" - событие не происходит в этом типе.
+    public class TerrainCoefficients
+    {
+        public float ForestСoef;// {get; private set; } { get; private set; }
+        public float RiverСoef;// {get; private set; } { get; private set; }
+        // и т.п.
+    }
 
-	// TODO Результаты события.
-	string ResultDescription;
-	float HealthEffect;
-	float StaminaEffect;
-	// и т.п.
+    public TerrainCoefficients TerrainCoef;
 
-	public Event (string description, float runAwayChance, float probability, bool good, float forestProb, float riverProb, string resultDescription, float healthEffect, float staminaEffect)
+    public class TimeCoefficients
+    {
+        public float DayСoef;// {get; private set; } { get; private set; }
+        public float NightСoef;// {get; private set; } { get; private set; }
+        // и т.п.
+    }
+
+    public TimeCoefficients TimeCoef;
+
+    public class StateCoefficients
+    {
+        //TODO
+    }
+
+    public StateCoefficients StateCoef;
+
+    // TODO Реакции на событие.
+    public class Reaction
+    {
+        public string Description;// {get; private set; } { get; private set; }
+        //TODO
+        // и т.п.
+
+        public string ResultDescription;// {get; private set; } { get; private set; }
+        public float VitalityEffect;
+    }
+
+    public List<Reaction> Reactions;
+
+        //public struct Result
+        //{
+        //    
+        //}
+        // TODO Результаты события.
+        //public List<Result> Results;
+
+        public Event(string name, bool good, bool byAction, bool byTime, string description, float probability, TerrainCoefficients terrainCoef, TimeCoefficients timeCoef, StateCoefficients stateCoef, List<Reaction> reactions)
 	{
+        Name = name;
+		ByAction=byAction;
+		ByTime=byTime;
 		Description = description;
-		RunAwayChance = runAwayChance;
 		Probability = probability;
 		Good = good;
-		ForestProb = forestProb;
-		RiverProb = riverProb;
-		ResultDescription = resultDescription;
-		HealthEffect = healthEffect;
-		StaminaEffect = staminaEffect;
+        TerrainCoef = terrainCoef;
+        TimeCoef = timeCoef;
+        StateCoef = stateCoef;
+        Reactions = reactions;
 	}
 }
