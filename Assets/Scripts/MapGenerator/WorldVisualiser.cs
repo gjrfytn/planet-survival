@@ -4,25 +4,31 @@ using System.Collections.Generic;
 
 public class WorldVisualiser : MonoBehaviour
 {
+	[System.Serializable]
+	public class Terrain
+	{
+		public float StartingHeight;
+		public Sprite Sprite_;
+	}
+
 	public GameObject Hex;
-	public Sprite Grass;
-	public Sprite Sand;
+
+	public Sprite BottommostTerrainSprite;
+	public Terrain[] Terrains;
 	public Sprite River;
-	public Sprite Mud;
-	public Sprite Mountain;
+	public Vector2 HexSpriteSize;
 	public GameObject Tree;
+	public byte ForestDensity;
+	public byte ForestGenGridSize;
 
-	//private List<GameObject> Hexes=new List<GameObject>(16384);//TODO Оценить, сколько нужно выделять, чтобы повысить эффективность.
-	//private List<GameObject> Trees=new List<GameObject>(5000);  //То же самое.
-
-	//private World World_;
-
-	//private List<GameObject> RenderedHexes = new List<GameObject> ();
-	//private List<bool> Mask;
+	public float FadeInSpeed;
+	public float FadeSpeed;
+	
 	private class ListType
 	{
 		public GameObject Hex;
 		public bool InSign;
+		public List<GameObject> Trees=new List<GameObject>();
 	}
 
 	private List<ListType> RenderedHexes = new List<ListType> ();
@@ -35,18 +41,39 @@ public class WorldVisualiser : MonoBehaviour
 	}
 
 	private Queue<QueueType> SignQueue = new Queue<QueueType> ();
-//	void Start()
-//	{
-//		World_=GetComponent<World>();
-//	}
-	
-	public void RenderVisibleHexes (Vector2 position, byte distance, Map currentMap)
+
+	void Awake()
+	{
+		for(byte i=1;i<Terrains.Length;i++)
+			Debug.Assert(Terrains[i-1].StartingHeight<Terrains[i].StartingHeight);
+
+		//TODO 100 - число пикселей на единицу (свойство спрайта), возможно стоит это число брать из самих спрайтов
+		HexSpriteSize.x/=100;
+		HexSpriteSize.y/=100;
+	}
+
+	/// <summary>
+	/// Уничтожает все хексы.
+	/// </summary>
+	public void DestroyAllHexes()
+	{
+		RenderedHexes.ForEach(hex=>{hex.Trees.ForEach(tree=>Destroy(tree));Destroy(hex.Hex);});
+		RenderedHexes.Clear();
+	}
+
+	/// <summary>
+	/// Отображает только хексы в поле зрения игрока.
+	/// </summary>
+	/// <param name="mapPosition">Координаты в матрице.</param>
+	/// <param name="distance">Дальность обзора.</param>
+	/// <param name="currentMap">Активная карта.</param>
+	public void RenderVisibleHexes (Vector2 mapPosition, byte distance, Map currentMap)
 	{
 		Map = currentMap;
 
 		RenderedHexes.ForEach(hex=>hex.InSign=false);
 
-		SignQueue.Enqueue (new QueueType{Position=position, Distance=distance});
+		SignQueue.Enqueue (new QueueType{Position=mapPosition, Distance=distance});
 		while (SignQueue.Count!=0)
 		{
 			QueueType buf = SignQueue.Dequeue ();
@@ -56,24 +83,70 @@ public class WorldVisualiser : MonoBehaviour
 		for (ushort i=0; i<RenderedHexes.Count; ++i)
 			if (!RenderedHexes [i].InSign) 
 			{
-				Destroy (RenderedHexes [i].Hex);
+				RenderedHexes[i].Trees.ForEach(tree=>StartCoroutine(FadeAndDestroy(tree)));
+				StartCoroutine(FadeAndDestroy(RenderedHexes [i].Hex));
 				RenderedHexes.RemoveAt (i);
 				i--;
 			}
 	}
 
-	void SpreadRender (Vector2 position, byte distance)
+	/// <summary>
+	/// Постепенно отображает объект (корутина).
+	/// </summary>
+	/// <returns>(Корутина).</returns>
+	/// <param name="obj">Объект для отображения.</param>
+	IEnumerator FadeIn(GameObject obj) 
 	{
-		if (position.y < 0 || position.x < 0 || position.y >= Map.MatrixHeight.GetLength (0) || position.x >= Map.MatrixHeight.GetLength (0))
+		SpriteRenderer renderer=obj.GetComponent<SpriteRenderer>();
+		Color cbuf=renderer.material.color;
+		cbuf.a=0;
+		renderer.material.color=cbuf;
+
+		while(renderer!=null&&renderer.material.color.a<1)
+		{
+			Color buf=renderer.material.color;
+			buf.a+=FadeInSpeed;
+			renderer.material.color=buf;
+			yield return null;
+		}
+	}
+
+	/// <summary>
+	/// Постепенно скрывает, затем уничтожает объект (корутина).
+	/// </summary>
+	/// <returns>(Корутина).</returns>
+	/// <param name="obj">Объект к уничтожению.</param>
+	IEnumerator FadeAndDestroy(GameObject obj) 
+	{
+		SpriteRenderer renderer=obj.GetComponent<SpriteRenderer>();
+
+		while(renderer.material.color.a>0)
+		{
+			Color buf=renderer.material.color;
+			buf.a-=FadeSpeed;
+			renderer.material.color=buf;
+			yield return null;
+		}
+		Destroy(obj);
+	}
+
+	/// <summary>
+	/// Рекурсивно заносит в очередь на отображение хексы.
+	/// </summary>
+	/// <param name="mapPosition">Координаты в матрице.</param>
+	/// <param name="distance">Оставшееся расстояние для распространения.</param>
+	void SpreadRender (Vector2 mapPosition, byte distance)
+	{
+		if (mapPosition.y < 0 || mapPosition.x < 0 || mapPosition.y >= Map.MatrixHeight.GetLength (0) || mapPosition.x >= Map.MatrixHeight.GetLength (0))
 			return;
 
-		short index = (short)RenderedHexes.FindIndex (x => x.Hex.GetComponent<HexData> ().MapCoords == position);
+		short index = (short)RenderedHexes.FindIndex (x => x.Hex.GetComponent<HexData> ().MapCoords == mapPosition);
 		if (index == -1)
 		{
 			Quaternion rot = new Quaternion ();
-			ListType hex = new ListType{Hex= Instantiate (Hex, new Vector2 (position.x * 0.96f, position.y * 0.64f + ((position.x % 2) != 0 ? 1 : 0) * 0.32f), rot) as GameObject,InSign= true};
-			hex.Hex.GetComponent<HexData> ().MapCoords = position;
-			ChooseSprite (hex.Hex, position);
+			ListType hex = new ListType{Hex= Instantiate (Hex, new Vector2 (mapPosition.x * HexSpriteSize.x*0.75f, mapPosition.y * HexSpriteSize.y + ((mapPosition.x % 2) != 0 ? 1 : 0) * HexSpriteSize.y*0.5f), rot) as GameObject,InSign= true};
+			hex.Hex.GetComponent<HexData>().MapCoords = mapPosition;
+			MakeHexGraphics (hex, mapPosition);
 			RenderedHexes.Add (hex);
 		}
 		else
@@ -86,34 +159,102 @@ public class WorldVisualiser : MonoBehaviour
 
 		if (distance != 0)
 		{
-			byte k = (byte)((position.x % 2) != 0 ? 1 : 0); // Учитываем чётность/нечётность ряда хексов
+			byte k = (byte)((mapPosition.x % 2) != 0 ? 1 : 0); // Учитываем чётность/нечётность ряда хексов
 
-			SignQueue.Enqueue (new QueueType{Position=new Vector2 (position.x - 1, position.y - 1 + k),Distance=(byte)(distance - 1)});
+			SignQueue.Enqueue (new QueueType{Position=new Vector2 (mapPosition.x - 1, mapPosition.y - 1 + k),Distance=(byte)(distance - 1)});
 
-			SignQueue.Enqueue (new QueueType{Position=new Vector2 (position.x - 1, position.y + k),Distance= (byte)(distance - 1)});
+			SignQueue.Enqueue (new QueueType{Position=new Vector2 (mapPosition.x - 1, mapPosition.y + k),Distance= (byte)(distance - 1)});
 
-			SignQueue.Enqueue (new QueueType{Position=new Vector2 (position.x, position.y - 1), Distance=(byte)(distance - 1)});
+			SignQueue.Enqueue (new QueueType{Position=new Vector2 (mapPosition.x, mapPosition.y - 1), Distance=(byte)(distance - 1)});
 
-			SignQueue.Enqueue (new QueueType{Position=new Vector2 (position.x, position.y + 1), Distance=(byte)(distance - 1)});
+			SignQueue.Enqueue (new QueueType{Position=new Vector2 (mapPosition.x, mapPosition.y + 1), Distance=(byte)(distance - 1)});
 
-			SignQueue.Enqueue (new QueueType{Position=new Vector2 (position.x + 1, position.y - 1 + k),Distance=(byte) (distance - 1)});
+			SignQueue.Enqueue (new QueueType{Position=new Vector2 (mapPosition.x + 1, mapPosition.y - 1 + k),Distance=(byte) (distance - 1)});
 
-			SignQueue.Enqueue (new QueueType{Position=new Vector2 (position.x + 1, position.y + k), Distance=(byte)(distance - 1)});
+			SignQueue.Enqueue (new QueueType{Position=new Vector2 (mapPosition.x + 1, mapPosition.y + k), Distance=(byte)(distance - 1)});
 		}
 	}
 
-	void ChooseSprite (GameObject hex, Vector2 mapCoords)
+	/// <summary>
+	/// Создаёт спрайты, необходимые для отображения хекса.
+	/// </summary>
+	/// <param name="hex">Хекс.</param>
+	/// <param name="mapCoords">Координаты в матрице.</param>
+	void MakeHexGraphics(ListType hex, Vector2 mapCoords)
+	{
+		ChooseHexSprite(hex.Hex,mapCoords);
+		StartCoroutine( FadeIn(hex.Hex));
+		MakeHexForest(hex,mapCoords);
+	}
+	
+	/// <summary>
+	/// Выбирает спрайт хекса.
+	/// </summary>
+	/// <param name="hex">Хекс.</param>
+	/// <param name="mapCoords">Координаты в матрице.</param>
+	void ChooseHexSprite (GameObject hex, Vector2 mapCoords) //UNDONE
 	{
 		if (Map.MatrixRiver [(int)mapCoords.y, (int)mapCoords.x])
 			hex.GetComponent<SpriteRenderer> ().sprite = River;
-		else if (Map.MatrixHeight [(int)mapCoords.y, (int)mapCoords.x] > 0.6f && Map.MatrixHeight [(int)mapCoords.y, (int)mapCoords.x] < 0.9f)
-			hex.GetComponent<SpriteRenderer> ().sprite = Sand;
-		else if (Map.MatrixHeight [(int)mapCoords.y, (int)mapCoords.x] < 0.1f)
-			hex.GetComponent<SpriteRenderer> ().sprite = Mud;
-		else if (Map.MatrixHeight [(int)mapCoords.y, (int)mapCoords.x] > 0.9f)
-			hex.GetComponent<SpriteRenderer> ().sprite = Mountain;
 		else
-			hex.GetComponent<SpriteRenderer> ().sprite = Grass;
+		{
+			if(Map.MatrixHeight [(int)mapCoords.y, (int)mapCoords.x]<Terrains[0].StartingHeight)
+			{
+				hex.GetComponent<SpriteRenderer> ().sprite=BottommostTerrainSprite;
+				return;
+			}
+			for(byte i=1;i<Terrains.Length;i++)
+				if(Map.MatrixHeight [(int)mapCoords.y, (int)mapCoords.x]>=Terrains[i-1].StartingHeight&&Map.MatrixHeight [(int)mapCoords.y, (int)mapCoords.x]<Terrains[i].StartingHeight)
+				{
+					hex.GetComponent<SpriteRenderer> ().sprite=Terrains[i-1].Sprite_;
+					return;
+				}
+			if(Map.MatrixHeight [(int)mapCoords.y, (int)mapCoords.x]>=Terrains[Terrains.Length-1].StartingHeight)
+				hex.GetComponent<SpriteRenderer> ().sprite=Terrains[Terrains.Length-1].Sprite_;
+		}
+	}
+
+	/// <summary>
+	/// Создаёт лес на хексе.
+	/// </summary>
+	/// <param name="hex">Хекс.</param>
+	/// <param name="mapCoords">Координаты в матрице.</param>
+	void MakeHexForest (ListType hex, Vector2 mapCoords) //TODO (WIP)
+	{
+		if(Map.MatrixForest[(int)mapCoords.y,(int)mapCoords.x]*ForestDensity>=1)
+		{
+			Quaternion rot=new Quaternion();
+			float gridStepX=HexSpriteSize.x/ForestGenGridSize;
+			float gridStepY=HexSpriteSize.y/ForestGenGridSize;
+			Vector2 gridOrigin=new Vector2(hex.Hex.transform.position.x-HexSpriteSize.x*0.375f, hex.Hex.transform.position.y-HexSpriteSize.y*0.5f);
+			byte treesCount=(byte)(Map.MatrixForest[(int)mapCoords.y,(int)mapCoords.x]*ForestDensity);
+
+			while(true)
+			{
+				if(treesCount>ForestGenGridSize*ForestGenGridSize)
+				{
+					for(float y=0;y<HexSpriteSize.y;y+=gridStepY)
+						for(float x=0;x<HexSpriteSize.x;x+=gridStepX)
+						{
+							Vector2 v=new Vector2(Random.value*gridStepX,Random.value*gridStepY);
+							hex.Trees.Add(Instantiate(Tree,new Vector3(gridOrigin.x+x+v.x, gridOrigin.y+y+v.y, -0.1f),rot) as GameObject);
+							StartCoroutine(FadeIn(hex.Trees[hex.Trees.Count-1]));
+							treesCount--;
+						}
+				}
+				else
+				{
+					Vector2 v=Random.insideUnitCircle;
+					v.x*=HexSpriteSize.x*0.5f;
+					v.y*=HexSpriteSize.y*0.5f;
+					hex.Trees.Add(Instantiate(Tree,new Vector3(hex.Hex.transform.position.x+v.x, hex.Hex.transform.position.y+v.y, -0.1f),rot) as GameObject);
+					StartCoroutine(FadeIn(hex.Trees[hex.Trees.Count-1]));
+					treesCount--;
+					if(treesCount==0)
+						return;
+				}
+			}
+		}
 	}
 
 	/*

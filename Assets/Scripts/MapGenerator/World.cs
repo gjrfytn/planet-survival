@@ -19,17 +19,17 @@ public class Map
 
 public class World : MonoBehaviour
 {
-	public Map CurrentMap; // Текущая карта, отображаемая на экране. Возможно должна храниться не здесь.
+	public Map CurrentMap; // Текущая карта, отображаемая на экране.
 
 	private Map GlobalMap;
-	private List<Map> LocalMaps = new List<Map> ();
+
+	private Map[,] LocalMaps;
+
 	private WorldGenerator Generator; //readonly?
 
-	//TODO Можно ли использовать такую форму?
-	//public Map GlobalMap{get;private set;}
-	//public Map[] LocalMaps{get;private set;}
-
 	private WorldVisualiser Visualiser; //Временно
+
+	private Vector2 GlobalMapCoords;
 
 	void Start ()
 	{
@@ -39,6 +39,7 @@ public class World : MonoBehaviour
 		// Это всё временно, как пример. На самом деле карта должна создаваться только при начале новой игры, иначе загружаться из сохранения.
 		//--
 		GlobalMap = new Map (Generator.GlobalMapSize);
+		LocalMaps=new Map[Generator.GlobalMapSize,Generator.GlobalMapSize];
 
 		Generator.CreateHeightmap (GlobalMap.MatrixHeight, Generator.LandscapeRoughness);
 		Generator.CreateHeightmap (GlobalMap.MatrixForest, Generator.ForestRoughness);
@@ -47,15 +48,56 @@ public class World : MonoBehaviour
 		CurrentMap = GlobalMap;
 
 		//Visualiser.RenderNewMap(CurrentMap);
-		Visualiser.RenderVisibleHexes(new Vector2(5,5),GameObject.FindWithTag("Player").GetComponent<PlayerData>().ViewDistance,CurrentMap);
+		Visualiser.RenderVisibleHexes(GameObject.FindWithTag("Player").GetComponent<PlayerData>().MapCoords,GameObject.FindWithTag("Player").GetComponent<PlayerData>().ViewDistance,CurrentMap);
 		//--
+	}
+
+	/// <summary>
+	/// Переключение карт.
+	/// </summary>
+	public void SwitchMap()
+	{
+		if(CurrentMap==GlobalMap)
+			GotoLocalMap();
+		else
+			GotoGlobalMap();
+	}
+
+	/// <summary>
+	/// Переход на локальную карту.
+	/// </summary>
+	void GotoLocalMap()
+		{
+		//TEMP
+		GameObject player=GameObject.FindWithTag("Player");
+		Vector2 mapCoords=player.GetComponent<PlayerData>().MapCoords;
+		//
+
+			if(LocalMaps[(int)mapCoords.y,(int)mapCoords.x]==null)
+				CreateLocalMap(mapCoords);
+			CurrentMap=LocalMaps[(int)mapCoords.y,(int)mapCoords.x];
+			GlobalMapCoords=mapCoords;
+
+		//TEMP
+		player.GetComponent<PlayerData>().MapCoords.x=CurrentMap.MatrixHeight.GetLength(0)/2;
+		player.GetComponent<PlayerData>().MapCoords.y=CurrentMap.MatrixHeight.GetLength(0)/2;
+		//
+	}
+
+	/// <summary>
+	/// Переход на глобальную карту.
+	/// </summary>
+	void GotoGlobalMap()
+	{
+		CurrentMap=GlobalMap;
+		GameObject.FindWithTag("Player").GetComponent<PlayerData>().MapCoords=GlobalMapCoords; //TODO Поиск или объект?
 	}
 
 	/// <summary>
 	/// Создаёт локальную карту.
 	/// </summary>
-	/// <returns>Индекс новой карты.</returns>
-	public uint CreateLocalMap ()
+	/// <param name="coords">Координаты новой карты на глобальной.</param>
+	void CreateLocalMap (Vector2 mapCoords)
 	{
 		Map map = new Map (Generator.LocalMapSize);
 
@@ -63,7 +105,8 @@ public class World : MonoBehaviour
 		Generator.CreateHeightmap (map.MatrixForest, Generator.ForestRoughness);
 		Generator.CreateRivers (map.MatrixHeight, map.MatrixRiver);
 
-		LocalMaps.Add (map);
-		return (uint)LocalMaps.Count - 1;
+		LocalMaps[(int)mapCoords.y,(int)mapCoords.x]=map;
+		//LocalMaps.Add (map);
+		//return (uint)LocalMaps.Count - 1;
 	}
 }
