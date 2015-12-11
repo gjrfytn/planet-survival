@@ -21,15 +21,17 @@ public class World : MonoBehaviour
 {
 	public Map CurrentMap; // Текущая карта, отображаемая на экране.
 
-	private Map GlobalMap;
+	Map GlobalMap;
 
-	private Map[,] LocalMaps;
+	Map[,] LocalMaps;
 
-	private WorldGenerator Generator; //readonly?
+	WorldGenerator Generator; //readonly?
 
-	private WorldVisualiser Visualiser; //Временно
+	WorldVisualiser Visualiser; //Временно
 
-	private Vector2 GlobalMapCoords;
+	Vector2 GlobalMapCoords;
+
+	GameObject Player;
 
 	void Start ()
 	{
@@ -38,18 +40,25 @@ public class World : MonoBehaviour
 
 		// Это всё временно, как пример. На самом деле карта должна создаваться только при начале новой игры, иначе загружаться из сохранения.
 		//--
-		GlobalMap = new Map (Generator.GlobalMapSize);
-		LocalMaps=new Map[Generator.GlobalMapSize,Generator.GlobalMapSize];
+		GlobalMap = new Map (Generator.GlobalMapChunkSize);
+		LocalMaps = new Map[Generator.GlobalMapChunkSize,Generator.GlobalMapChunkSize];
 
-		Generator.CreateHeightmap (GlobalMap.MatrixHeight, Generator.LandscapeRoughness);
-		Generator.CreateHeightmap (GlobalMap.MatrixForest, Generator.ForestRoughness);
+		Generator.CreateHeightmap (GlobalMap.MatrixHeight, Generator.LandscapeRoughness,Random.value,Random.value,Random.value,Random.value);
+		Generator.CreateHeightmap (GlobalMap.MatrixForest, Generator.ForestRoughness,Random.value,Random.value,Random.value,Random.value);
 		Generator.CreateRivers (GlobalMap.MatrixHeight, GlobalMap.MatrixRiver);
 
 		CurrentMap = GlobalMap;
 
-		//Visualiser.RenderNewMap(CurrentMap);
-		Visualiser.RenderVisibleHexes(GameObject.FindWithTag("Player").GetComponent<PlayerData>().MapCoords,GameObject.FindWithTag("Player").GetComponent<PlayerData>().ViewDistance,CurrentMap);
+		//Visualiser.RenderWholeMap(CurrentMap);
+		Player=GameObject.FindWithTag("Player");
+		Visualiser.RenderVisibleHexes(Player.GetComponent<PlayerData>().MapCoords,Player.GetComponent<PlayerData>().ViewDistance,CurrentMap);
 		//--
+	}
+
+	public void OnGotoHex()
+	{
+		if(CurrentMap==GlobalMap)
+		Visualiser.RenderVisibleHexes(Player.GetComponent<PlayerData>().MapCoords,Player.GetComponent<PlayerData>().ViewDistance,CurrentMap);
 	}
 
 	/// <summary>
@@ -67,21 +76,18 @@ public class World : MonoBehaviour
 	/// Переход на локальную карту.
 	/// </summary>
 	void GotoLocalMap()
-		{
-		//TEMP
-		GameObject player=GameObject.FindWithTag("Player");
-		Vector2 mapCoords=player.GetComponent<PlayerData>().MapCoords;
-		//
-
+	{
+		Vector2 mapCoords=Player.GetComponent<PlayerData>().MapCoords;
 			if(LocalMaps[(int)mapCoords.y,(int)mapCoords.x]==null)
-				CreateLocalMap(mapCoords);
+				CreateLocalMap(mapCoords,GlobalMap.MatrixHeight[(int)mapCoords.y,(int)mapCoords.x],GlobalMap.MatrixForest[(int)mapCoords.y,(int)mapCoords.x]);
 			CurrentMap=LocalMaps[(int)mapCoords.y,(int)mapCoords.x];
 			GlobalMapCoords=mapCoords;
 
 		//TEMP
-		player.GetComponent<PlayerData>().MapCoords.x=CurrentMap.MatrixHeight.GetLength(0)/2;
-		player.GetComponent<PlayerData>().MapCoords.y=CurrentMap.MatrixHeight.GetLength(0)/2;
+		Player.GetComponent<PlayerData>().MapCoords.x=CurrentMap.MatrixHeight.GetLength(0)/2;
+		Player.GetComponent<PlayerData>().MapCoords.y=CurrentMap.MatrixHeight.GetLength(0)/2;
 		//
+		Visualiser.RenderWholeMap(CurrentMap);
 	}
 
 	/// <summary>
@@ -90,19 +96,20 @@ public class World : MonoBehaviour
 	void GotoGlobalMap()
 	{
 		CurrentMap=GlobalMap;
-		GameObject.FindWithTag("Player").GetComponent<PlayerData>().MapCoords=GlobalMapCoords; //TODO Поиск или объект?
+		Player.GetComponent<PlayerData>().MapCoords=GlobalMapCoords;
+		Visualiser.RenderVisibleHexes(Player.GetComponent<PlayerData>().MapCoords,Player.GetComponent<PlayerData>().ViewDistance,CurrentMap);
 	}
 
 	/// <summary>
 	/// Создаёт локальную карту.
 	/// </summary>
 	/// <param name="coords">Координаты новой карты на глобальной.</param>
-	void CreateLocalMap (Vector2 mapCoords)
+	void CreateLocalMap (Vector2 mapCoords,float height,float forest)
 	{
 		Map map = new Map (Generator.LocalMapSize);
 
-		Generator.CreateHeightmap (map.MatrixHeight, Generator.LandscapeRoughness);
-		Generator.CreateHeightmap (map.MatrixForest, Generator.ForestRoughness);
+		Generator.CreateHeightmap (map.MatrixHeight, Generator.LandscapeRoughness,height,height,height,height);
+		Generator.CreateHeightmap (map.MatrixForest, Generator.ForestRoughness,forest,forest,forest,forest);
 		Generator.CreateRivers (map.MatrixHeight, map.MatrixRiver);
 
 		LocalMaps[(int)mapCoords.y,(int)mapCoords.x]=map;

@@ -256,89 +256,28 @@ public class WorldVisualiser : MonoBehaviour
 			}
 		}
 	}
-
-	/*
+	
 	/// <summary>
 	/// Выводит хексы карты на сцену.
 	/// </summary>
 	/// <param name="map">Карта.</param>
-	public void RenderNewMap(Map map)
+	public void RenderWholeMap(Map map)
 	{
+		Map=map;
 		ushort size=(ushort)map.MatrixHeight.GetLength(0);
-
-		if(size!=GetComponent<WorldGenerator>().GlobalMapSize)
-		{
-			for(ushort i=4097;i<12315;++i)
-				Destroy(Hexes[i]);
-			Hexes.RemoveRange(4097,12315); //TODO Временно
-		}
-
-		Vector2 pos = new Vector2 (0, 0);
+		RenderedHexes.Capacity=size*size;
 		Quaternion rot = new Quaternion ();
-		ushort halfwidth = (ushort)(size / 2);
 
-		ushort hexIndex=0;
-		for (int x=-halfwidth; x<halfwidth; ++x) {
-			pos.x = x * 0.96f;
-			//pos.x = x;
-			for (ushort y=4; y<size+4; ++y) {
-				//pos.y = y + ((x % 2)!=0?1:0) * 0.5f;
-				pos.y = y * 0.64f + ((x % 2) != 0 ? 1 : 0) * 0.32f; //Смещаем каждый нечётный столбец хексов
-
-				GameObject newHex;
-				if(Hexes.Count==0)
-					newHex = Instantiate (Hex, pos, rot) as GameObject;
-					else
-				{
-					newHex=Hexes[hexIndex];
-					hexIndex++;
-				}
-				if (map.MatrixRiver [y - 4, x + halfwidth]) 
-					newHex.GetComponent<SpriteRenderer> ().sprite = River;
-				else if (map.MatrixHeight [y - 4, x + halfwidth] > 0.6f && map.MatrixHeight [y - 4, x + halfwidth] < 0.9f)
-					newHex.GetComponent<SpriteRenderer> ().sprite = Sand;
-				else if (map.MatrixHeight [y - 4, x + halfwidth] < 0.1f)
-					newHex.GetComponent<SpriteRenderer> ().sprite = Mud;
-				else if (map.MatrixHeight [y - 4, x + halfwidth] > 0.9f)
-					newHex.GetComponent<SpriteRenderer> ().sprite = Mountain;
-				else 
-					newHex.GetComponent<SpriteRenderer> ().sprite = Grass;
-				//				switch (Mathf.RoundToInt (Matrix [x + 32, y - 4])) 
-				//				{
-				//				case 0:
-				//					Instantiate (hexGrass, pos, rot);
-				//					break;
-				//				case 1:
-				//					Instantiate (hexSand, pos, rot);
-				//					break;
-				//				}
-			}
-		}
-
-		foreach (GameObject tree in Trees)
-			Destroy(tree);
-		Trees.Clear();
-
-
-		for (int x=-halfwidth; x<halfwidth; ++x) 
+		for(ushort y=0;y<size;++y)
+		for(ushort x=0;x<size;++x)
 		{
-			pos.x = x * 0.96f;
-			//pos.x = x;
-			for (ushort y=4; y<size+4; ++y) {
-				//pos.y = y + ((x % 2)!=0?1:0) * 0.5f;
-				pos.y = y * 0.64f + ((x % 2) != 0 ? 1 : 0) * 0.32f; //Смещаем каждый нечётный столбец хексов
-				
-				for(byte i=0;i<map.MatrixForest[y-4,x+halfwidth]*40;++i)
-				{
-					Vector2 v=Random.insideUnitCircle;
-					v.x*=0.6f;
-					v.y*=0.3f;
-					Vector3 vec=new Vector3(v.x+pos.x,v.y+pos.y,-0.1f);
-					Instantiate(Tree,vec,rot);
-				}
-			}
+			// TODO Возможно стоит заменить ListType на Hex?
+			ListType hex = new ListType{Hex= Instantiate (Hex, new Vector2 (x * HexSpriteSize.x*0.75f, y * HexSpriteSize.y + ((x % 2) != 0 ? 1 : 0) * HexSpriteSize.y*0.5f), rot) as GameObject,InSign= true};
+			hex.Hex.GetComponent<HexData>().MapCoords = new Vector2(y,x);
+			MakeHexGraphics (hex, new Vector2(y,x));
+			RenderedHexes.Add (hex);
 		}
 	}
-	 */
+	 
 
 }
