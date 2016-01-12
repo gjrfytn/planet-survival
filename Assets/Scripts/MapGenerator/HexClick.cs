@@ -26,7 +26,7 @@ public class HexClick : MonoBehaviour
 			Player.GetComponent<PlayerData>().MapCoords=GetComponent<HexData>().MapCoords;
 			Camera.transform.position=new Vector3(transform.position.x,transform.position.y,Camera.transform.position.z);
 			World_.GetComponent<World>().OnGotoHex();
-			EventManager.GetComponent<EventManager>().MakeActionEvent();
+			//EventManager.GetComponent<EventManager>().MakeActionEvent();
 		}
 	}
 }

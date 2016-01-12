@@ -16,8 +16,8 @@ public class WorldGenerator : MonoBehaviour
 {
 	//public ushort Width; //TODO Переменные размеры
 	//public ushort Height;
-	public ushort GlobalMapChunkSize; //Должен быть 2 в n-ой степени
-	public ushort LocalMapSize; //Должен быть 2 в n-ой степени
+	//public ushort GlobalMapChunkSize; //Должен быть 2 в n-ой степени
+	//public ushort LocalMapSize; //Должен быть 2 в n-ой степени
 	
 	public float LandscapeRoughness;
 	public float ForestRoughness;
@@ -25,15 +25,6 @@ public class WorldGenerator : MonoBehaviour
 
 	//TODO Проверить использование координат в RiverStack
 	private Stack<Vector2> RiverStack = new Stack<Vector2> (); //Стек для постройки реки
-
-	void Awake()
-	{
-		Debug.Assert (Mathf.IsPowerOfTwo (GlobalMapChunkSize));
-		Debug.Assert (Mathf.IsPowerOfTwo (LocalMapSize));
-		
-		GlobalMapChunkSize++;
-		LocalMapSize++;
-	}	
 
 	/// <summary>
 	/// Создаёт карту высот. 
