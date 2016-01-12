@@ -12,7 +12,6 @@ public class WorldVisualiser : MonoBehaviour
 	}
 
 	public GameObject Hex;
-
 	public Sprite BottommostTerrainSprite;
 	public Terrain[] Terrains;
 	public Sprite River;
@@ -20,45 +19,49 @@ public class WorldVisualiser : MonoBehaviour
 	public GameObject Tree;
 	public byte ForestDensity;
 	public byte ForestGenGridSize;
-
 	public float FadeInSpeed;
 	public float FadeSpeed;
 	
-	private class ListType
+	class ListType
 	{
 		public GameObject Hex;
 		public bool InSign;
-		public List<GameObject> Trees=new List<GameObject>();
+		public List<GameObject> Trees = new List<GameObject> ();
 	}
 
-	private List<ListType> RenderedHexes = new List<ListType> ();
-	private Map Map;
+	List<ListType> RenderedHexes = new List<ListType> ();
+	//Map Map;
+	Map[,] CashedChunks = new Map[3, 3];
+	int ChunkX, ChunkY;
 
-	private class QueueType
+
+	class QueueType
 	{
 		public Vector2 Position;
 		public byte Distance;
 	}
 
-	private Queue<QueueType> SignQueue = new Queue<QueueType> ();
+	Queue<QueueType> SignQueue = new Queue<QueueType> ();
 
-	void Awake()
+	void Awake ()
 	{
-		for(byte i=1;i<Terrains.Length;i++)
-			Debug.Assert(Terrains[i-1].StartingHeight<Terrains[i].StartingHeight);
+		for (byte i=1; i<Terrains.Length; i++)
+			Debug.Assert (Terrains [i - 1].StartingHeight < Terrains [i].StartingHeight);
 
 		//TODO 100 - число пикселей на единицу (свойство спрайта), возможно стоит это число брать из самих спрайтов
-		HexSpriteSize.x/=100;
-		HexSpriteSize.y/=100;
+		HexSpriteSize.x /= 100;
+		HexSpriteSize.y /= 100;
 	}
 
 	/// <summary>
 	/// Уничтожает все хексы.
 	/// </summary>
-	public void DestroyAllHexes()
+	public void DestroyAllHexes ()
 	{
-		RenderedHexes.ForEach(hex=>{hex.Trees.ForEach(tree=>Destroy(tree));Destroy(hex.Hex);});
-		RenderedHexes.Clear();
+		RenderedHexes.ForEach (hex => {
+			hex.Trees.ForEach (tree => Destroy (tree));
+			Destroy (hex.Hex);});
+		RenderedHexes.Clear ();
 	}
 
 	/// <summary>
@@ -67,11 +70,13 @@ public class WorldVisualiser : MonoBehaviour
 	/// <param name="mapPosition">Координаты в матрице.</param>
 	/// <param name="distance">Дальность обзора.</param>
 	/// <param name="currentMap">Активная карта.</param>
-	public void RenderVisibleHexes (Vector2 mapPosition, byte distance, Map currentMap)
+	public void RenderVisibleHexes (Vector2 mapPosition, byte distance, Map[,] cashedChunks, int chunkY, int chunkX)
 	{
-		Map = currentMap;
+		CashedChunks = cashedChunks;
+		ChunkX = chunkX;
+		ChunkY = chunkY;
 
-		RenderedHexes.ForEach(hex=>hex.InSign=false);
+		RenderedHexes.ForEach (hex => hex.InSign = false);
 
 		SignQueue.Enqueue (new QueueType{Position=mapPosition, Distance=distance});
 		while (SignQueue.Count!=0)
@@ -81,10 +86,10 @@ public class WorldVisualiser : MonoBehaviour
 		}
 
 		for (ushort i=0; i<RenderedHexes.Count; ++i)
-			if (!RenderedHexes [i].InSign) 
+			if (!RenderedHexes [i].InSign)
 			{
-				RenderedHexes[i].Trees.ForEach(tree=>StartCoroutine(FadeAndDestroy(tree)));
-				StartCoroutine(FadeAndDestroy(RenderedHexes [i].Hex));
+				RenderedHexes [i].Trees.ForEach (tree => StartCoroutine (FadeAndDestroy (tree)));
+				StartCoroutine (FadeAndDestroy (RenderedHexes [i].Hex));
 				RenderedHexes.RemoveAt (i);
 				i--;
 			}
@@ -95,18 +100,18 @@ public class WorldVisualiser : MonoBehaviour
 	/// </summary>
 	/// <returns>(Корутина).</returns>
 	/// <param name="obj">Объект для отображения.</param>
-	IEnumerator FadeIn(GameObject obj) 
+	IEnumerator FadeIn (GameObject obj)
 	{
-		SpriteRenderer renderer=obj.GetComponent<SpriteRenderer>();
-		Color cbuf=renderer.material.color;
-		cbuf.a=0;
-		renderer.material.color=cbuf;
+		SpriteRenderer renderer = obj.GetComponent<SpriteRenderer> ();
+		Color cbuf = renderer.material.color;
+		cbuf.a = 0;
+		renderer.material.color = cbuf;
 
-		while(renderer!=null&&renderer.material.color.a<1)
+		while (renderer!=null&&renderer.material.color.a<1) 
 		{
-			Color buf=renderer.material.color;
-			buf.a+=FadeInSpeed;
-			renderer.material.color=buf;
+			Color buf = renderer.material.color;
+			buf.a += FadeInSpeed;
+			renderer.material.color = buf;
 			yield return null;
 		}
 	}
@@ -116,18 +121,18 @@ public class WorldVisualiser : MonoBehaviour
 	/// </summary>
 	/// <returns>(Корутина).</returns>
 	/// <param name="obj">Объект к уничтожению.</param>
-	IEnumerator FadeAndDestroy(GameObject obj) 
+	IEnumerator FadeAndDestroy (GameObject obj)
 	{
-		SpriteRenderer renderer=obj.GetComponent<SpriteRenderer>();
+		SpriteRenderer renderer = obj.GetComponent<SpriteRenderer> ();
 
-		while(renderer.material.color.a>0)
+		while (renderer.material.color.a>0)
 		{
-			Color buf=renderer.material.color;
-			buf.a-=FadeSpeed;
-			renderer.material.color=buf;
+			Color buf = renderer.material.color;
+			buf.a -= FadeSpeed;
+			renderer.material.color = buf;
 			yield return null;
 		}
-		Destroy(obj);
+		Destroy (obj);
 	}
 
 	/// <summary>
@@ -137,16 +142,27 @@ public class WorldVisualiser : MonoBehaviour
 	/// <param name="distance">Оставшееся расстояние для распространения.</param>
 	void SpreadRender (Vector2 mapPosition, byte distance)
 	{
-		if (mapPosition.y < 0 || mapPosition.x < 0 || mapPosition.y >= Map.MatrixHeight.GetLength (0) || mapPosition.x >= Map.MatrixHeight.GetLength (0))
-			return;
+		Map map;
+		Vector2 chunkPos;
+		ushort chunkSize = (ushort)CashedChunks [1, 1].MatrixHeight.GetLength (0);
+
+		float chunkX = mapPosition.x / chunkSize, chunkY = mapPosition.y / chunkSize;
+
+		chunkX = Mathf.Floor (chunkX);
+		chunkY = Mathf.Floor (chunkY);
+
+		map = CashedChunks [(int)(chunkY - ChunkY + 1), (int)(chunkX - ChunkX + 1)];
+
+		chunkPos.x = mapPosition.x - chunkSize * chunkX;
+		chunkPos.y = mapPosition.y - chunkSize * chunkY;
 
 		short index = (short)RenderedHexes.FindIndex (x => x.Hex.GetComponent<HexData> ().MapCoords == mapPosition);
-		if (index == -1)
+		if (index == -1) 
 		{
 			Quaternion rot = new Quaternion ();
 			ListType hex = new ListType{Hex= Instantiate (Hex, new Vector2 (mapPosition.x * HexSpriteSize.x*0.75f, mapPosition.y * HexSpriteSize.y + ((mapPosition.x % 2) != 0 ? 1 : 0) * HexSpriteSize.y*0.5f), rot) as GameObject,InSign= true};
-			hex.Hex.GetComponent<HexData>().MapCoords = mapPosition;
-			MakeHexGraphics (hex, mapPosition);
+			hex.Hex.GetComponent<HexData> ().MapCoords = mapPosition;
+			MakeHexGraphics (hex, chunkPos, map);
 			RenderedHexes.Add (hex);
 		}
 		else
@@ -157,7 +173,7 @@ public class WorldVisualiser : MonoBehaviour
 				RenderedHexes [index].InSign = true;
 		}
 
-		if (distance != 0)
+		if (distance != 0) 
 		{
 			byte k = (byte)((mapPosition.x % 2) != 0 ? 1 : 0); // Учитываем чётность/нечётность ряда хексов
 
@@ -180,11 +196,11 @@ public class WorldVisualiser : MonoBehaviour
 	/// </summary>
 	/// <param name="hex">Хекс.</param>
 	/// <param name="mapCoords">Координаты в матрице.</param>
-	void MakeHexGraphics(ListType hex, Vector2 mapCoords)
+	void MakeHexGraphics (ListType hex, Vector2 mapCoords, Map map)
 	{
-		ChooseHexSprite(hex.Hex,mapCoords);
-		StartCoroutine( FadeIn(hex.Hex));
-		MakeHexForest(hex,mapCoords);
+		ChooseHexSprite (hex.Hex, mapCoords, map);
+		StartCoroutine (FadeIn (hex.Hex));
+		MakeHexForest (hex, mapCoords, map);
 	}
 	
 	/// <summary>
@@ -192,25 +208,25 @@ public class WorldVisualiser : MonoBehaviour
 	/// </summary>
 	/// <param name="hex">Хекс.</param>
 	/// <param name="mapCoords">Координаты в матрице.</param>
-	void ChooseHexSprite (GameObject hex, Vector2 mapCoords) //UNDONE
+	void ChooseHexSprite (GameObject hex, Vector2 mapCoords, Map map) //UNDONE
 	{
-		if (Map.MatrixRiver [(int)mapCoords.y, (int)mapCoords.x])
+		if (map.MatrixRiver [(int)mapCoords.y, (int)mapCoords.x])
 			hex.GetComponent<SpriteRenderer> ().sprite = River;
-		else
+		else 
 		{
-			if(Map.MatrixHeight [(int)mapCoords.y, (int)mapCoords.x]<Terrains[0].StartingHeight)
+			if (map.MatrixHeight [(int)mapCoords.y, (int)mapCoords.x] < Terrains [0].StartingHeight)
 			{
-				hex.GetComponent<SpriteRenderer> ().sprite=BottommostTerrainSprite;
+				hex.GetComponent<SpriteRenderer> ().sprite = BottommostTerrainSprite;
 				return;
 			}
-			for(byte i=1;i<Terrains.Length;i++)
-				if(Map.MatrixHeight [(int)mapCoords.y, (int)mapCoords.x]>=Terrains[i-1].StartingHeight&&Map.MatrixHeight [(int)mapCoords.y, (int)mapCoords.x]<Terrains[i].StartingHeight)
+			for (byte i=1; i<Terrains.Length; i++)
+				if (map.MatrixHeight [(int)mapCoords.y, (int)mapCoords.x] >= Terrains [i - 1].StartingHeight && map.MatrixHeight [(int)mapCoords.y, (int)mapCoords.x] < Terrains [i].StartingHeight) 
 				{
-					hex.GetComponent<SpriteRenderer> ().sprite=Terrains[i-1].Sprite_;
+					hex.GetComponent<SpriteRenderer> ().sprite = Terrains [i - 1].Sprite_;
 					return;
 				}
-			if(Map.MatrixHeight [(int)mapCoords.y, (int)mapCoords.x]>=Terrains[Terrains.Length-1].StartingHeight)
-				hex.GetComponent<SpriteRenderer> ().sprite=Terrains[Terrains.Length-1].Sprite_;
+			if (map.MatrixHeight [(int)mapCoords.y, (int)mapCoords.x] >= Terrains [Terrains.Length - 1].StartingHeight)
+				hex.GetComponent<SpriteRenderer> ().sprite = Terrains [Terrains.Length - 1].Sprite_;
 		}
 	}
 
@@ -219,126 +235,62 @@ public class WorldVisualiser : MonoBehaviour
 	/// </summary>
 	/// <param name="hex">Хекс.</param>
 	/// <param name="mapCoords">Координаты в матрице.</param>
-	void MakeHexForest (ListType hex, Vector2 mapCoords) //TODO (WIP)
+	void MakeHexForest (ListType hex, Vector2 mapCoords, Map map) //TODO (WIP)
 	{
-		if(Map.MatrixForest[(int)mapCoords.y,(int)mapCoords.x]*ForestDensity>=1)
+		if (map.MatrixForest [(int)mapCoords.y, (int)mapCoords.x] * ForestDensity >= 1) 
 		{
-			Quaternion rot=new Quaternion();
-			float gridStepX=HexSpriteSize.x/ForestGenGridSize;
-			float gridStepY=HexSpriteSize.y/ForestGenGridSize;
-			Vector2 gridOrigin=new Vector2(hex.Hex.transform.position.x-HexSpriteSize.x*0.375f, hex.Hex.transform.position.y-HexSpriteSize.y*0.5f);
-			byte treesCount=(byte)(Map.MatrixForest[(int)mapCoords.y,(int)mapCoords.x]*ForestDensity);
+			Quaternion rot = new Quaternion ();
+			float gridStepX = HexSpriteSize.x / ForestGenGridSize;
+			float gridStepY = HexSpriteSize.y / ForestGenGridSize;
+			Vector2 gridOrigin = new Vector2 (hex.Hex.transform.position.x - HexSpriteSize.x * 0.375f, hex.Hex.transform.position.y - HexSpriteSize.y * 0.5f);
+			byte treesCount = (byte)(map.MatrixForest [(int)mapCoords.y, (int)mapCoords.x] * ForestDensity);
 
-			while(true)
+			while (true) 
 			{
-				if(treesCount>ForestGenGridSize*ForestGenGridSize)
+				if (treesCount > ForestGenGridSize * ForestGenGridSize) 
 				{
-					for(float y=0;y<HexSpriteSize.y;y+=gridStepY)
-						for(float x=0;x<HexSpriteSize.x;x+=gridStepX)
+					for (float y=0; y<HexSpriteSize.y; y+=gridStepY)
+						for (float x=0; x<HexSpriteSize.x; x+=gridStepX) 
 						{
-							Vector2 v=new Vector2(Random.value*gridStepX,Random.value*gridStepY);
-							hex.Trees.Add(Instantiate(Tree,new Vector3(gridOrigin.x+x+v.x, gridOrigin.y+y+v.y, -0.1f),rot) as GameObject);
-							StartCoroutine(FadeIn(hex.Trees[hex.Trees.Count-1]));
+							Vector2 v = new Vector2 (Random.value * gridStepX, Random.value * gridStepY);
+							hex.Trees.Add (Instantiate (Tree, new Vector3 (gridOrigin.x + x + v.x, gridOrigin.y + y + v.y, -0.1f), rot) as GameObject);
+							StartCoroutine (FadeIn (hex.Trees [hex.Trees.Count - 1]));
 							treesCount--;
 						}
 				}
 				else
 				{
-					Vector2 v=Random.insideUnitCircle;
-					v.x*=HexSpriteSize.x*0.5f;
-					v.y*=HexSpriteSize.y*0.5f;
-					hex.Trees.Add(Instantiate(Tree,new Vector3(hex.Hex.transform.position.x+v.x, hex.Hex.transform.position.y+v.y, -0.1f),rot) as GameObject);
-					StartCoroutine(FadeIn(hex.Trees[hex.Trees.Count-1]));
+					Vector2 v = Random.insideUnitCircle;
+					v.x *= HexSpriteSize.x * 0.5f;
+					v.y *= HexSpriteSize.y * 0.5f;
+					hex.Trees.Add (Instantiate (Tree, new Vector3 (hex.Hex.transform.position.x + v.x, hex.Hex.transform.position.y + v.y, -0.1f), rot) as GameObject);
+					StartCoroutine (FadeIn (hex.Trees [hex.Trees.Count - 1]));
 					treesCount--;
-					if(treesCount==0)
+					if (treesCount == 0)
 						return;
 				}
 			}
 		}
 	}
-
-	/*
+	
 	/// <summary>
 	/// Выводит хексы карты на сцену.
 	/// </summary>
 	/// <param name="map">Карта.</param>
-	public void RenderNewMap(Map map)
+	public void RenderWholeMap (Map map)
 	{
-		ushort size=(ushort)map.MatrixHeight.GetLength(0);
-
-		if(size!=GetComponent<WorldGenerator>().GlobalMapSize)
-		{
-			for(ushort i=4097;i<12315;++i)
-				Destroy(Hexes[i]);
-			Hexes.RemoveRange(4097,12315); //TODO Временно
-		}
-
-		Vector2 pos = new Vector2 (0, 0);
+		ushort size = (ushort)map.MatrixHeight.GetLength (0);
+		RenderedHexes.Capacity = size * size;
 		Quaternion rot = new Quaternion ();
-		ushort halfwidth = (ushort)(size / 2);
 
-		ushort hexIndex=0;
-		for (int x=-halfwidth; x<halfwidth; ++x) {
-			pos.x = x * 0.96f;
-			//pos.x = x;
-			for (ushort y=4; y<size+4; ++y) {
-				//pos.y = y + ((x % 2)!=0?1:0) * 0.5f;
-				pos.y = y * 0.64f + ((x % 2) != 0 ? 1 : 0) * 0.32f; //Смещаем каждый нечётный столбец хексов
-
-				GameObject newHex;
-				if(Hexes.Count==0)
-					newHex = Instantiate (Hex, pos, rot) as GameObject;
-					else
-				{
-					newHex=Hexes[hexIndex];
-					hexIndex++;
-				}
-				if (map.MatrixRiver [y - 4, x + halfwidth]) 
-					newHex.GetComponent<SpriteRenderer> ().sprite = River;
-				else if (map.MatrixHeight [y - 4, x + halfwidth] > 0.6f && map.MatrixHeight [y - 4, x + halfwidth] < 0.9f)
-					newHex.GetComponent<SpriteRenderer> ().sprite = Sand;
-				else if (map.MatrixHeight [y - 4, x + halfwidth] < 0.1f)
-					newHex.GetComponent<SpriteRenderer> ().sprite = Mud;
-				else if (map.MatrixHeight [y - 4, x + halfwidth] > 0.9f)
-					newHex.GetComponent<SpriteRenderer> ().sprite = Mountain;
-				else 
-					newHex.GetComponent<SpriteRenderer> ().sprite = Grass;
-				//				switch (Mathf.RoundToInt (Matrix [x + 32, y - 4])) 
-				//				{
-				//				case 0:
-				//					Instantiate (hexGrass, pos, rot);
-				//					break;
-				//				case 1:
-				//					Instantiate (hexSand, pos, rot);
-				//					break;
-				//				}
+		for (ushort y=0; y<size; ++y)
+			for (ushort x=0; x<size; ++x) 
+			{
+				// TODO Возможно стоит заменить ListType на Hex?
+				ListType hex = new ListType{Hex= Instantiate (Hex, new Vector2 (x * HexSpriteSize.x*0.75f, y * HexSpriteSize.y + ((x % 2) != 0 ? 1 : 0) * HexSpriteSize.y*0.5f), rot) as GameObject,InSign= true};
+				hex.Hex.GetComponent<HexData> ().MapCoords = new Vector2 (y, x);
+				MakeHexGraphics (hex, new Vector2 (y, x), map);
+				RenderedHexes.Add (hex);
 			}
-		}
-
-		foreach (GameObject tree in Trees)
-			Destroy(tree);
-		Trees.Clear();
-
-
-		for (int x=-halfwidth; x<halfwidth; ++x) 
-		{
-			pos.x = x * 0.96f;
-			//pos.x = x;
-			for (ushort y=4; y<size+4; ++y) {
-				//pos.y = y + ((x % 2)!=0?1:0) * 0.5f;
-				pos.y = y * 0.64f + ((x % 2) != 0 ? 1 : 0) * 0.32f; //Смещаем каждый нечётный столбец хексов
-				
-				for(byte i=0;i<map.MatrixForest[y-4,x+halfwidth]*40;++i)
-				{
-					Vector2 v=Random.insideUnitCircle;
-					v.x*=0.6f;
-					v.y*=0.3f;
-					Vector3 vec=new Vector3(v.x+pos.x,v.y+pos.y,-0.1f);
-					Instantiate(Tree,vec,rot);
-				}
-			}
-		}
 	}
-	 */
-
 }

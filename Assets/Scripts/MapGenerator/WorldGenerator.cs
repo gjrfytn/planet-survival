@@ -16,8 +16,8 @@ public class WorldGenerator : MonoBehaviour
 {
 	//public ushort Width; //TODO Переменные размеры
 	//public ushort Height;
-	public ushort GlobalMapSize; //Должен быть 2 в n-ой степени
-	public ushort LocalMapSize; //Должен быть 2 в n-ой степени
+	//public ushort GlobalMapChunkSize; //Должен быть 2 в n-ой степени
+	//public ushort LocalMapSize; //Должен быть 2 в n-ой степени
 	
 	public float LandscapeRoughness;
 	public float ForestRoughness;
@@ -26,30 +26,21 @@ public class WorldGenerator : MonoBehaviour
 	//TODO Проверить использование координат в RiverStack
 	private Stack<Vector2> RiverStack = new Stack<Vector2> (); //Стек для постройки реки
 
-	void Awake()
-	{
-		Debug.Assert (Mathf.IsPowerOfTwo (GlobalMapSize));
-		Debug.Assert (Mathf.IsPowerOfTwo (LocalMapSize));
-		
-		GlobalMapSize++;
-		LocalMapSize++;
-	}	
-
 	/// <summary>
 	/// Создаёт карту высот. 
 	/// </summary>
 	/// <param name="matrix">[out] Карта высот.</param>
 	/// <param name="r">Шероховатость.</param>
 	/// Использует фрактальный алгоритм Diamond Square
-	public void CreateHeightmap (float[,] matrix, float r)
+	public void CreateHeightmap (float[,] matrix, float r, float topLeft,float topRight,float bottomLeft,float bottomRight)
 	{
 		ushort size = (ushort)matrix.GetLength (0);
 
 		//Задаём начальные значения по углам
-		matrix [0, 0] = Random.value; 
-		matrix [0, size - 1] = Random.value;
-		matrix [size - 1, 0] = Random.value;
-		matrix [size - 1, size - 1] =Random.value;
+		matrix [0, 0] = topLeft; 
+		matrix [0, size - 1] = topRight;
+		matrix [size - 1, 0] = bottomLeft;
+		matrix [size - 1, size - 1] =bottomRight;
 
 		for (ushort step=(ushort)(size -1), half=(ushort)(step/2); half!=0; step/=2, half/=2) 
 		{
