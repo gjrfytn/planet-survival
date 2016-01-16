@@ -12,6 +12,7 @@ public class WorldVisualiser : MonoBehaviour
 	}
 
 	public GameObject Hex;
+	public GameObject InteractableHex;
 	public Sprite BottommostTerrainSprite;
 	public Terrain[] Terrains;
 	public Sprite River;
@@ -21,7 +22,9 @@ public class WorldVisualiser : MonoBehaviour
 	public byte ForestGenGridSize;
 	public float FadeInSpeed;
 	public float FadeSpeed;
-	
+
+	public Sprite BlueHexSprite;
+
 	class ListType
 	{
 		public GameObject Hex;
@@ -37,11 +40,13 @@ public class WorldVisualiser : MonoBehaviour
 
 	class QueueType
 	{
-		public Vector2 Position;
+		public Vector2 MapCoords;
 		public byte Distance;
 	}
 
 	Queue<QueueType> SignQueue = new Queue<QueueType> ();
+
+	List<GameObject> RenderedObjects=new List<GameObject>();
 
 	void Awake ()
 	{
@@ -64,13 +69,19 @@ public class WorldVisualiser : MonoBehaviour
 		RenderedHexes.Clear ();
 	}
 
+	public void DestroyAllObjects ()
+	{
+	RenderedObjects.ForEach(obj =>Destroy (obj));
+	RenderedObjects.Clear();
+	}
+
 	/// <summary>
 	/// Отображает только хексы в поле зрения игрока.
 	/// </summary>
 	/// <param name="mapPosition">Координаты в матрице.</param>
 	/// <param name="distance">Дальность обзора.</param>
 	/// <param name="currentMap">Активная карта.</param>
-	public void RenderVisibleHexes (Vector2 mapPosition, byte distance, Map[,] cashedChunks, int chunkY, int chunkX)
+	public void RenderVisibleHexes (Vector2 mapCoords, byte distance, Map[,] cashedChunks, int chunkY, int chunkX)
 	{
 		CashedChunks = cashedChunks;
 		ChunkX = chunkX;
@@ -78,11 +89,11 @@ public class WorldVisualiser : MonoBehaviour
 
 		RenderedHexes.ForEach (hex => hex.InSign = false);
 
-		SignQueue.Enqueue (new QueueType{Position=mapPosition, Distance=distance});
+		SignQueue.Enqueue (new QueueType{MapCoords=mapCoords, Distance=distance});
 		while (SignQueue.Count!=0)
 		{
 			QueueType buf = SignQueue.Dequeue ();
-			SpreadRender (buf.Position, buf.Distance);
+			SpreadRender (buf.MapCoords, buf.Distance);
 		}
 
 		for (ushort i=0; i<RenderedHexes.Count; ++i)
@@ -140,29 +151,29 @@ public class WorldVisualiser : MonoBehaviour
 	/// </summary>
 	/// <param name="mapPosition">Координаты в матрице.</param>
 	/// <param name="distance">Оставшееся расстояние для распространения.</param>
-	void SpreadRender (Vector2 mapPosition, byte distance)
+	void SpreadRender (Vector2 mapCoords, byte distance)
 	{
 		Map map;
-		Vector2 chunkPos;
+		Vector2 chunkCoords;
 		ushort chunkSize = (ushort)CashedChunks [1, 1].MatrixHeight.GetLength (0);
 
-		float chunkX = mapPosition.x / chunkSize, chunkY = mapPosition.y / chunkSize;
+		float chunkX = mapCoords.x / chunkSize, chunkY = mapCoords.y / chunkSize;
 
 		chunkX = Mathf.Floor (chunkX);
 		chunkY = Mathf.Floor (chunkY);
 
 		map = CashedChunks [(int)(chunkY - ChunkY + 1), (int)(chunkX - ChunkX + 1)];
 
-		chunkPos.x = mapPosition.x - chunkSize * chunkX;
-		chunkPos.y = mapPosition.y - chunkSize * chunkY;
+		chunkCoords.x = mapCoords.x - chunkSize * chunkX;
+		chunkCoords.y = mapCoords.y - chunkSize * chunkY;
 
-		short index = (short)RenderedHexes.FindIndex (x => x.Hex.GetComponent<HexData> ().MapCoords == mapPosition);
+		short index = (short)RenderedHexes.FindIndex (x => x.Hex.GetComponent<HexData> ().MapCoords == mapCoords);
 		if (index == -1) 
 		{
 			Quaternion rot = new Quaternion ();
-			ListType hex = new ListType{Hex= Instantiate (Hex, new Vector2 (mapPosition.x * HexSpriteSize.x*0.75f, mapPosition.y * HexSpriteSize.y + ((mapPosition.x % 2) != 0 ? 1 : 0) * HexSpriteSize.y*0.5f), rot) as GameObject,InSign= true};
-			hex.Hex.GetComponent<HexData> ().MapCoords = mapPosition;
-			MakeHexGraphics (hex, chunkPos, map);
+			ListType hex = new ListType{Hex= Instantiate (Hex, GetTransformPosFromMapCoords(mapCoords), rot) as GameObject,InSign= true};
+			hex.Hex.GetComponent<HexData> ().MapCoords = mapCoords;
+			MakeHexGraphics (hex, chunkCoords, map);
 			RenderedHexes.Add (hex);
 		}
 		else
@@ -175,19 +186,19 @@ public class WorldVisualiser : MonoBehaviour
 
 		if (distance != 0) 
 		{
-			byte k = (byte)((mapPosition.x % 2) != 0 ? 1 : 0); // Учитываем чётность/нечётность ряда хексов
+			byte k = (byte)((mapCoords.x % 2) != 0 ? 1 : 0); // Учитываем чётность/нечётность ряда хексов
 
-			SignQueue.Enqueue (new QueueType{Position=new Vector2 (mapPosition.x - 1, mapPosition.y - 1 + k),Distance=(byte)(distance - 1)});
+			SignQueue.Enqueue (new QueueType{MapCoords=new Vector2 (mapCoords.x - 1, mapCoords.y - 1 + k),Distance=(byte)(distance - 1)});
 
-			SignQueue.Enqueue (new QueueType{Position=new Vector2 (mapPosition.x - 1, mapPosition.y + k),Distance= (byte)(distance - 1)});
+			SignQueue.Enqueue (new QueueType{MapCoords=new Vector2 (mapCoords.x - 1, mapCoords.y + k),Distance= (byte)(distance - 1)});
 
-			SignQueue.Enqueue (new QueueType{Position=new Vector2 (mapPosition.x, mapPosition.y - 1), Distance=(byte)(distance - 1)});
+			SignQueue.Enqueue (new QueueType{MapCoords=new Vector2 (mapCoords.x, mapCoords.y - 1), Distance=(byte)(distance - 1)});
 
-			SignQueue.Enqueue (new QueueType{Position=new Vector2 (mapPosition.x, mapPosition.y + 1), Distance=(byte)(distance - 1)});
+			SignQueue.Enqueue (new QueueType{MapCoords=new Vector2 (mapCoords.x, mapCoords.y + 1), Distance=(byte)(distance - 1)});
 
-			SignQueue.Enqueue (new QueueType{Position=new Vector2 (mapPosition.x + 1, mapPosition.y - 1 + k),Distance=(byte) (distance - 1)});
+			SignQueue.Enqueue (new QueueType{MapCoords=new Vector2 (mapCoords.x + 1, mapCoords.y - 1 + k),Distance=(byte) (distance - 1)});
 
-			SignQueue.Enqueue (new QueueType{Position=new Vector2 (mapPosition.x + 1, mapPosition.y + k), Distance=(byte)(distance - 1)});
+			SignQueue.Enqueue (new QueueType{MapCoords=new Vector2 (mapCoords.x + 1, mapCoords.y + k), Distance=(byte)(distance - 1)});
 		}
 	}
 
@@ -199,6 +210,7 @@ public class WorldVisualiser : MonoBehaviour
 	void MakeHexGraphics (ListType hex, Vector2 mapCoords, Map map)
 	{
 		ChooseHexSprite (hex.Hex, mapCoords, map);
+		hex.Hex.GetComponent<SpriteRenderer>().sortingLayerName="Landscape";//
 		StartCoroutine (FadeIn (hex.Hex));
 		MakeHexForest (hex, mapCoords, map);
 	}
@@ -253,7 +265,8 @@ public class WorldVisualiser : MonoBehaviour
 						for (float x=0; x<HexSpriteSize.x; x+=gridStepX) 
 						{
 							Vector2 v = new Vector2 (Random.value * gridStepX, Random.value * gridStepY);
-							hex.Trees.Add (Instantiate (Tree, new Vector3 (gridOrigin.x + x + v.x, gridOrigin.y + y + v.y, -0.1f), rot) as GameObject);
+							hex.Trees.Add (Instantiate (Tree, new Vector2 (gridOrigin.x + x + v.x, gridOrigin.y + y + v.y), rot) as GameObject);
+						hex.Trees[hex.Trees.Count-1].GetComponent<SpriteRenderer>().sortingLayerName="LandscapeObjects";//
 							StartCoroutine (FadeIn (hex.Trees [hex.Trees.Count - 1]));
 							treesCount--;
 						}
@@ -263,7 +276,8 @@ public class WorldVisualiser : MonoBehaviour
 					Vector2 v = Random.insideUnitCircle;
 					v.x *= HexSpriteSize.x * 0.5f;
 					v.y *= HexSpriteSize.y * 0.5f;
-					hex.Trees.Add (Instantiate (Tree, new Vector3 (hex.Hex.transform.position.x + v.x, hex.Hex.transform.position.y + v.y, -0.1f), rot) as GameObject);
+					hex.Trees.Add (Instantiate (Tree, new Vector2 (hex.Hex.transform.position.x + v.x, hex.Hex.transform.position.y + v.y), rot) as GameObject);
+					hex.Trees[hex.Trees.Count-1].GetComponent<SpriteRenderer>().sortingLayerName="LandscapeObjects";//
 					StartCoroutine (FadeIn (hex.Trees [hex.Trees.Count - 1]));
 					treesCount--;
 					if (treesCount == 0)
@@ -287,10 +301,34 @@ public class WorldVisualiser : MonoBehaviour
 			for (ushort x=0; x<size; ++x) 
 			{
 				// TODO Возможно стоит заменить ListType на Hex?
-				ListType hex = new ListType{Hex= Instantiate (Hex, new Vector2 (x * HexSpriteSize.x*0.75f, y * HexSpriteSize.y + ((x % 2) != 0 ? 1 : 0) * HexSpriteSize.y*0.5f), rot) as GameObject,InSign= true};
-				hex.Hex.GetComponent<HexData> ().MapCoords = new Vector2 (y, x);
+				ListType hex = new ListType{Hex= Instantiate (Hex,GetTransformPosFromMapCoords(new Vector2(x,y)), rot) as GameObject,InSign= true};
+				hex.Hex.GetComponent<HexData> ().MapCoords = new Vector2 (x, y);
 				MakeHexGraphics (hex, new Vector2 (y, x), map);
 				RenderedHexes.Add (hex);
 			}
+	}
+
+	/// <summary>
+	/// Вычисляет координаты в сцене из координат на карте.
+	/// </summary>
+	/// <returns>Координаты в сцене.</returns>
+	/// <param name="mapCoords">Координаты на карте.</param>
+	public Vector2 GetTransformPosFromMapCoords(Vector2 mapCoords)
+	{
+		return new Vector2 (mapCoords.x * HexSpriteSize.x*0.75f, mapCoords.y * HexSpriteSize.y + ((mapCoords.x % 2) != 0 ? 1 : 0) * HexSpriteSize.y*0.5f);
+	}
+
+	/// <summary>
+	/// Накладывает на хекс спрайт.
+	/// </summary>
+	/// <param name="mapCoords">Координаты хекса.</param>
+	/// <param name="highlightHexSprite">Спрайт.</param>
+	public void HighlightHex(Vector2 mapCoords,Sprite highlightHexSprite)
+	{
+		RenderedObjects.Add(Instantiate(InteractableHex,GetTransformPosFromMapCoords(mapCoords),new Quaternion(0,0,0,0)) as GameObject);
+		RenderedObjects[RenderedObjects.Count-1].GetComponent<SpriteRenderer>().sprite=highlightHexSprite;
+		RenderedObjects[RenderedObjects.Count-1].GetComponent<SpriteRenderer>().sortingLayerName="LandscapeHighlights";
+
+		RenderedObjects[RenderedObjects.Count-1].GetComponent<HexData>().MapCoords=mapCoords;//TODO временно
 	}
 }

@@ -5,28 +5,37 @@ public class HexClick : MonoBehaviour
 {
 	private GameObject Player;
 	private GameObject Camera;
-	private GameObject World_;
+	private GameObject World;
 	private GameObject EventManager;
 
 	void Start ()
 	{
 		Player=GameObject.FindWithTag("Player");
 		Camera=GameObject.FindWithTag("MainCamera");
-		World_=GameObject.FindWithTag("World");
+		World=GameObject.FindWithTag("World");
 		EventManager=GameObject.FindWithTag("EventManager");
 	}
 
 
 	public void OnMouseDown ()
 	{
-		float dist=Vector2.Distance(Player.GetComponent<PlayerData>().MapCoords,GetComponent<HexData>().MapCoords);
-		if(dist<1.5f&&dist!=0)
+		if(World.GetComponent<World>().IsMapCoordsAdjacent(Player.GetComponent<Player>().MapCoords,GetComponent<HexData>().MapCoords))//dist<1.5f&&dist!=0)
 		{
-			Player.transform.position=new Vector3(transform.position.x,transform.position.y,-0.1f);
-			Player.GetComponent<PlayerData>().MapCoords=GetComponent<HexData>().MapCoords;
-			Camera.transform.position=new Vector3(transform.position.x,transform.position.y,Camera.transform.position.z);
-			World_.GetComponent<World>().OnGotoHex();
+			Player.GetComponent<Player>().MoveToMapCoords(GetComponent<HexData>().MapCoords);
+			Player.GetComponent<Player>().MakeTurn();
+			Camera.transform.position=new Vector3(transform.position.x,transform.position.y+Camera.transform.position.z*(Mathf.Tan((360-Camera.transform.rotation.eulerAngles.x)/57.3f)),Camera.transform.position.z);
+			World.GetComponent<World>().OnGotoHex();
 			//EventManager.GetComponent<EventManager>().MakeActionEvent();
 		}
+	}
+
+	public void OnMouseEnter ()
+	{
+		GetComponent<SpriteRenderer>().material.color=GetComponent<SpriteRenderer>().material.color*1.5f;
+	}
+
+	public void OnMouseExit ()
+	{
+		GetComponent<SpriteRenderer>().material.color=GetComponent<SpriteRenderer>().material.color*0.666f;
 	}
 }

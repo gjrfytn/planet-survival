@@ -112,14 +112,20 @@ public class World : MonoBehaviour
 		CurrentMap = CashedGlobalMapChunks [1, 1];
 
 		Player = GameObject.FindWithTag ("Player");
-		Visualiser.RenderVisibleHexes (Player.GetComponent<PlayerData> ().MapCoords, Player.GetComponent<PlayerData> ().ViewDistance, CashedGlobalMapChunks, ChunkY, ChunkX);
+		Visualiser.RenderVisibleHexes (Player.GetComponent<Player> ().MapCoords, Player.GetComponent<Player> ().ViewDistance, CashedGlobalMapChunks, ChunkY, ChunkX);
+		Visualiser.HighlightHex(GetTopLeftMapCoords(Player.GetComponent<Player> ().MapCoords),Visualiser.BlueHexSprite);
+		Visualiser.HighlightHex(GetTopMapCoords(Player.GetComponent<Player> ().MapCoords),Visualiser.BlueHexSprite);
+		Visualiser.HighlightHex(GetTopRightMapCoords(Player.GetComponent<Player> ().MapCoords),Visualiser.BlueHexSprite);
+		Visualiser.HighlightHex(GetBottomRightMapCoords(Player.GetComponent<Player> ().MapCoords),Visualiser.BlueHexSprite);
+		Visualiser.HighlightHex(GetBottomMapCoords(Player.GetComponent<Player> ().MapCoords),Visualiser.BlueHexSprite);
+		Visualiser.HighlightHex(GetBottomLeftMapCoords(Player.GetComponent<Player> ().MapCoords),Visualiser.BlueHexSprite);
 	}
 
 	public void OnGotoHex ()
 	{
 		if (CurrentMap == CashedGlobalMapChunks [1, 1]) 
 		{
-			float chunkX = Player.GetComponent<PlayerData> ().MapCoords.x / GlobalMapChunkSize, chunkY = Player.GetComponent<PlayerData> ().MapCoords.y / GlobalMapChunkSize;
+			float chunkX = Player.GetComponent<Player> ().MapCoords.x / GlobalMapChunkSize, chunkY = Player.GetComponent<Player> ().MapCoords.y / GlobalMapChunkSize;
 			chunkX = Mathf.Floor (chunkX);
 			chunkY = Mathf.Floor (chunkY);
 			sbyte dx = (sbyte)(chunkX - ChunkX), dy = (sbyte)(chunkY - ChunkY);
@@ -148,8 +154,15 @@ public class World : MonoBehaviour
 			ChunkY += dy;
 			CurrentMap = CashedGlobalMapChunks [1, 1];
 
-			Visualiser.RenderVisibleHexes (Player.GetComponent<PlayerData> ().MapCoords, Player.GetComponent<PlayerData> ().ViewDistance, CashedGlobalMapChunks, ChunkY, ChunkX);
+			Visualiser.RenderVisibleHexes (Player.GetComponent<Player> ().MapCoords, Player.GetComponent<Player> ().ViewDistance, CashedGlobalMapChunks, ChunkY, ChunkX);
 		}
+			Visualiser.DestroyAllObjects();//TODO Временно
+			Visualiser.HighlightHex(GetTopLeftMapCoords(Player.GetComponent<Player> ().MapCoords),Visualiser.BlueHexSprite);
+			Visualiser.HighlightHex(GetTopMapCoords(Player.GetComponent<Player> ().MapCoords),Visualiser.BlueHexSprite);
+			Visualiser.HighlightHex(GetTopRightMapCoords(Player.GetComponent<Player> ().MapCoords),Visualiser.BlueHexSprite);
+			Visualiser.HighlightHex(GetBottomRightMapCoords(Player.GetComponent<Player> ().MapCoords),Visualiser.BlueHexSprite);
+			Visualiser.HighlightHex(GetBottomMapCoords(Player.GetComponent<Player> ().MapCoords),Visualiser.BlueHexSprite);
+			Visualiser.HighlightHex(GetBottomLeftMapCoords(Player.GetComponent<Player> ().MapCoords),Visualiser.BlueHexSprite);
 	}
 
 	/// <summary>
@@ -168,17 +181,25 @@ public class World : MonoBehaviour
 	/// </summary>
 	void GotoLocalMap ()
 	{
-		Vector2 mapCoords = Player.GetComponent<PlayerData> ().MapCoords;
+		Vector2 mapCoords = Player.GetComponent<Player> ().MapCoords;
 		if (LocalMaps [(int)mapCoords.y, (int)mapCoords.x] == null)
 			CreateLocalMap (mapCoords, CashedGlobalMapChunks [1, 1].MatrixHeight [(int)mapCoords.y, (int)mapCoords.x], CashedGlobalMapChunks [1, 1].MatrixForest [(int)mapCoords.y, (int)mapCoords.x]);
 		CurrentMap = LocalMaps [(int)mapCoords.y, (int)mapCoords.x];
 		GlobalMapCoords = mapCoords;
 
 		//TEMP
-		Player.GetComponent<PlayerData> ().MapCoords.x = CurrentMap.MatrixHeight.GetLength (0) / 2;
-		Player.GetComponent<PlayerData> ().MapCoords.y = CurrentMap.MatrixHeight.GetLength (0) / 2;
+		Player.GetComponent<Player> ().MapCoords.x = CurrentMap.MatrixHeight.GetLength (0) / 2;
+		Player.GetComponent<Player> ().MapCoords.y = CurrentMap.MatrixHeight.GetLength (0) / 2;
 		//
+		Visualiser.DestroyAllObjects();
 		Visualiser.RenderWholeMap (CurrentMap);
+
+		Visualiser.HighlightHex(GetTopLeftMapCoords(Player.GetComponent<Player> ().MapCoords),Visualiser.BlueHexSprite);
+		Visualiser.HighlightHex(GetTopMapCoords(Player.GetComponent<Player> ().MapCoords),Visualiser.BlueHexSprite);
+		Visualiser.HighlightHex(GetTopRightMapCoords(Player.GetComponent<Player> ().MapCoords),Visualiser.BlueHexSprite);
+		Visualiser.HighlightHex(GetBottomRightMapCoords(Player.GetComponent<Player> ().MapCoords),Visualiser.BlueHexSprite);
+		Visualiser.HighlightHex(GetBottomMapCoords(Player.GetComponent<Player> ().MapCoords),Visualiser.BlueHexSprite);
+		Visualiser.HighlightHex(GetBottomLeftMapCoords(Player.GetComponent<Player> ().MapCoords),Visualiser.BlueHexSprite);
 	}
 
 	/// <summary>
@@ -187,8 +208,16 @@ public class World : MonoBehaviour
 	void GotoGlobalMap ()
 	{
 		CurrentMap = CashedGlobalMapChunks [1, 1];
-		Player.GetComponent<PlayerData> ().MapCoords = GlobalMapCoords;
-		Visualiser.RenderVisibleHexes (Player.GetComponent<PlayerData> ().MapCoords, Player.GetComponent<PlayerData> ().ViewDistance, CashedGlobalMapChunks, ChunkY, ChunkX);
+		Player.GetComponent<Player> ().MapCoords = GlobalMapCoords;
+		Visualiser.RenderVisibleHexes (Player.GetComponent<Player> ().MapCoords, Player.GetComponent<Player> ().ViewDistance, CashedGlobalMapChunks, ChunkY, ChunkX);
+
+		Visualiser.DestroyAllObjects();
+		Visualiser.HighlightHex(GetTopLeftMapCoords(Player.GetComponent<Player> ().MapCoords),Visualiser.BlueHexSprite);
+		Visualiser.HighlightHex(GetTopMapCoords(Player.GetComponent<Player> ().MapCoords),Visualiser.BlueHexSprite);
+		Visualiser.HighlightHex(GetTopRightMapCoords(Player.GetComponent<Player> ().MapCoords),Visualiser.BlueHexSprite);
+		Visualiser.HighlightHex(GetBottomRightMapCoords(Player.GetComponent<Player> ().MapCoords),Visualiser.BlueHexSprite);
+		Visualiser.HighlightHex(GetBottomMapCoords(Player.GetComponent<Player> ().MapCoords),Visualiser.BlueHexSprite);
+		Visualiser.HighlightHex(GetBottomLeftMapCoords(Player.GetComponent<Player> ().MapCoords),Visualiser.BlueHexSprite);
 	}
 
 	/// <summary>
@@ -468,5 +497,63 @@ public class World : MonoBehaviour
 				for (ushort x=0; x<GlobalMapChunkSize; ++x)
 					writer.Write (chunk.MatrixRiver [y, x]);
 		}
+	}
+
+	public Vector2 GetTopLeftMapCoords(Vector2 mapCoords)
+	{
+		return new Vector2(mapCoords.x-1,mapCoords.y-1+((mapCoords.x % 2) != 0 ? 1 : 0));
+	}
+
+	public Vector2 GetTopMapCoords(Vector2 mapCoords)
+	{
+		return new Vector2(mapCoords.x,mapCoords.y-1);
+	}
+
+	public Vector2 GetTopRightMapCoords(Vector2 mapCoords)
+	{
+		return new Vector2(mapCoords.x+1,mapCoords.y-1+((mapCoords.x % 2) != 0 ? 1 : 0));
+	}
+
+	public Vector2 GetBottomRightMapCoords(Vector2 mapCoords)
+	{
+		return new Vector2(mapCoords.x+1,mapCoords.y+((mapCoords.x % 2) != 0 ? 1 : 0));
+	}
+
+	public Vector2 GetBottomMapCoords(Vector2 mapCoords)
+	{
+		return new Vector2(mapCoords.x,mapCoords.y+1);
+	}
+
+	public Vector2 GetBottomLeftMapCoords(Vector2 mapCoords)
+	{
+		return new Vector2(mapCoords.x-1,mapCoords.y+((mapCoords.x % 2) != 0 ? 1 : 0));
+	}
+
+/// <summary>
+/// Определяет, прилегают ли к друг другу данные координаты.
+/// </summary>
+/// <returns><c>true</c> если прилегают, иначе <c>false</c>.</returns>
+/// <param name="mapCoords1">1 координаты.</param>
+/// <param name="mapCoords2">2 координаты.</param>
+	public bool IsMapCoordsAdjacent(Vector2 mapCoords1,Vector2 mapCoords2)
+	{
+		byte k=(byte)((mapCoords1.x % 2) != 0 ? 1 : 0);
+		if(mapCoords1.x-1==mapCoords2.x||mapCoords1.x+1==mapCoords2.x)
+		{
+			if(mapCoords1.y-1+k==mapCoords2.y)
+				return true;
+			if(mapCoords1.y+k==mapCoords2.y)
+					return true;
+			return false;
+		}
+		if(mapCoords1.x==mapCoords2.x)
+		{
+			if(mapCoords1.y-1==mapCoords2.y)
+				return true;
+			if(mapCoords1.y+1==mapCoords2.y)
+				return true;
+			return false;
+		}
+		return false;
 	}
 }
