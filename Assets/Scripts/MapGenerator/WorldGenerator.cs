@@ -16,8 +16,6 @@ public class WorldGenerator : MonoBehaviour
 {
 	//public ushort Width; //TODO Переменные размеры
 	//public ushort Height;
-	//public ushort GlobalMapChunkSize; //Должен быть 2 в n-ой степени
-	//public ushort LocalMapSize; //Должен быть 2 в n-ой степени
 	
 	public float LandscapeRoughness;
 	public float ForestRoughness;
@@ -34,34 +32,43 @@ public class WorldGenerator : MonoBehaviour
 	/// Использует фрактальный алгоритм Diamond Square
 	public void CreateHeightmap (float[,] matrix, float r, float topLeft,float topRight,float bottomLeft,float bottomRight)
 	{
-		ushort size = (ushort)matrix.GetLength (0);
+		ushort height = (ushort)matrix.GetLength (0);
+		ushort width = (ushort)matrix.GetLength (1);
+
 
 		//Задаём начальные значения по углам
 		matrix [0, 0] = topLeft; 
-		matrix [0, size - 1] = topRight;
-		matrix [size - 1, 0] = bottomLeft;
-		matrix [size - 1, size - 1] =bottomRight;
+		matrix [0, width - 1] = topRight;
+		matrix [height - 1, 0] = bottomLeft;
+		matrix [height - 1, width - 1] =bottomRight;
 
-		for (ushort step=(ushort)(size -1), half=(ushort)(step/2); half!=0; step/=2, half/=2) 
+		for (ushort stepY=(ushort)(height-1),stepX=(ushort)(width-1),halfY=(ushort)(stepY/2),halfX=(ushort)(stepX/2); halfY!=0; stepY/=2, halfY/=2,stepX/=2, halfX/=2)
 		{
-			for (ushort y=half; y<size; y+=step)
-				for (ushort x=half; x<size; x+=step)
-					matrix [y, x] = (matrix [y - half, x - half] + matrix [y + half, x - half] + matrix [y - half, x + half] + matrix [y + half, x + half]) / 4 + (Random.Range ((-half / (float)size) * r, (half / (float)size) * r));
+			float randRange=((halfY+halfX)/2f)/((height+width)/2f);
 
-			for (ushort i=half; i<size; i+=step) 
+			for (ushort y=halfY; y<height; y+=stepY)
+				for (ushort x=halfX; x<width; x+=stepX)
+					matrix [y, x] = (matrix [y - halfY, x - halfX] + matrix [y + halfY, x - halfX] + matrix [y - halfY, x + halfX] + matrix [y + halfY, x + halfX]) / 4 + (Random.Range (-randRange * r, randRange * r));
+
+			for (ushort y=halfY; y<height; y+=stepY) 
 			{
-				matrix [0, i] = (0 + matrix [0, i - half] + matrix [0 + half, i] + matrix [0, i + half]) / 4 + (Random.Range ((-half / (float)size) * r, (half / (float)size) * r));
-				matrix [size - 1, i] = (matrix [size - 1 - half, i] + matrix [size - 1, i - half] + 0 + matrix [size - 1, i + half]) / 4 + (Random.Range ((-half / (float)size) * r, (half / (float)size) * r));
-				matrix [i, 0] = (matrix [i - half, 0] + 0 + matrix [i + half, 0] + matrix [i, 0 + half]) / 4 + (Random.Range ((-half / (float)size) * r, (half / (float)size) * r));
-				matrix [i, size - 1] = (matrix [i - half, size - 1] + matrix [i, size  - 1 - half] + matrix [i + half, size - 1] + 0) / 4 + (Random.Range ((-half / (float)size) * r, (half / (float)size) * r));
+				matrix [y, 0] = (matrix [y - halfY, 0] + 0 + matrix [y + halfY, 0] + matrix [y, 0 + halfX]) / 4 + (Random.Range (-randRange * r, randRange * r));
+				matrix [y, width - 1] = (matrix [y - halfY, width - 1] + matrix [y, width  - 1 - halfX] + matrix [y + halfY, width - 1] + 0) / 4 + (Random.Range (-randRange * r, randRange * r));
 			}
 
-			for (ushort i=half; i<size -1; i+=step)
-				for (ushort j=step; j<size -1; j+=step) 
-				{
-					matrix [j, i] = (matrix [j - half, i] + matrix [j, i - half] + matrix [j + half, i] + matrix [j, i + half]) / 4 + (Random.Range ((-half / (float)size) * r, (half / (float)size) * r));
-					matrix [i, j] = (matrix [i, j - half] + matrix [i - half, j] + matrix [i, j + half] + matrix [i + half, j]) / 4 + (Random.Range ((-half / (float)size) * r, (half / (float)size) * r));
-				}
+			for (ushort x=halfX; x<width; x+=stepX) 
+			{
+				matrix [0, x] = (0 + matrix [0, x - halfX] + matrix [0 + halfY, x] + matrix [0, x + halfX]) / 4 + (Random.Range (-randRange * r, randRange * r));
+				matrix [height - 1, x] = (matrix [height - 1 - halfY, x] + matrix [height - 1, x - halfX] + 0 + matrix [height - 1, x + halfX]) / 4 + (Random.Range (-randRange * r, randRange * r));
+			}
+
+			for(ushort y=halfY;y<height-1;y+=stepY)
+				for(ushort x=stepX;x<width-1;x+=stepX)
+					matrix[y,x]=(matrix [y, x - halfX] + matrix [y - halfY, x] + matrix [y, x + halfX] + matrix [y + halfY, x]) / 4 + (Random.Range (-randRange * r, randRange * r));
+
+			for(ushort x=halfX;x<width-1;x+=stepX)
+				for(ushort y=stepY;y<height-1;y+=stepY)
+					matrix[y,x]=(matrix [y, x - halfX] + matrix [y - halfY, x] + matrix [y, x + halfX] + matrix [y + halfY, x]) / 4 + (Random.Range (-randRange * r, randRange * r));
 		}
 	}
 
@@ -72,19 +79,20 @@ public class WorldGenerator : MonoBehaviour
 	/// <param name="matrix">[out] Карта рек.</param>
 	public void CreateRivers (float[,] heightMatrix, bool[,] matrix)
 	{
-		ushort size = (ushort)matrix.GetLength (0);
+		ushort height = (ushort)matrix.GetLength (0);
+		ushort width = (ushort)matrix.GetLength (1);
 
 		double avg = 0;
-		foreach (float height in heightMatrix)
-			avg += height;
-		avg /= size * size;
+		foreach (float h in heightMatrix)
+			avg += h;
+		avg /= height * width;
 		float minRiverHeight = (float)avg * RiversParam.Height;
 
 		for (byte i=0; i<RiversParam.Count; ++i) 
 		{
 			bool riverCreated = false;
-			for (ushort y=1; y<size - 1 && !riverCreated; ++y) 
-				for (ushort x=1; x<size -1 && !riverCreated; ++x) 
+			for (ushort y=1; y<height - 1 && !riverCreated; ++y) 
+				for (ushort x=1; x<width -1 && !riverCreated; ++x) 
 					if (heightMatrix [y, x] > minRiverHeight && !matrix [y, x] && RiverNeighbours (y, x, matrix) == 0) //Проверяем, можно ли нам начать создание реки с этого хекса
 						for (byte k=0; k<RiversParam.Attempts&&!riverCreated; ++k) 
 						{
@@ -120,9 +128,10 @@ public class WorldGenerator : MonoBehaviour
 	/// <param name="matrix">Карта рек.</param>
 	void DirectRiver (ushort y, ushort x, float[,] heightMatrix, bool[,] matrix)
 	{
-		ushort size = (ushort)matrix.GetLength (0);
+		ushort height = (ushort)matrix.GetLength (0);
+		ushort width = (ushort)matrix.GetLength (1);
 
-		if (y > 0 && y < size - 1 && x > 0 && x < size - 1) 
+		if (y > 0 && y < height - 1 && x > 0 && x < width - 1) 
 		{
 			byte limiter = 0; //Переменная, контролирующая проверку всех направлений и выход из цикла, если ни одно не подходит
 			bool dirFound = false;
@@ -202,22 +211,23 @@ public class WorldGenerator : MonoBehaviour
 	/// TODO Проверить работу стека реки
 	byte RiverNeighbours (ushort y, ushort x, bool[,] matrix)
 	{
-		ushort size = (ushort)matrix.GetLength (0);
+		ushort height = (ushort)matrix.GetLength (0);
+		ushort width = (ushort)matrix.GetLength (1);
 
 		byte k = (byte)((x % 2) != 0 ? 1 : 0);
 
 		byte riversCount = 0;
 		if (y > 0 && x > 0 && (matrix [y - 1 + k, x - 1] || RiverStack.Contains (new Vector2 (x - 1, y - 1 + k)))) 
 			riversCount++;
-		if (x > 0 && y < size - 1 && (matrix [y + k, x - 1] || RiverStack.Contains (new Vector2 (x - 1, y + k)))) 
+		if (x > 0 && y < height - 1 && (matrix [y + k, x - 1] || RiverStack.Contains (new Vector2 (x - 1, y + k)))) 
 			riversCount++;
 		if (y > 0 && (matrix [y - 1, x] || RiverStack.Contains (new Vector2 (x, y - 1)))) 
 			riversCount++;
-		if (y < size - 1 && (matrix [y + 1, x] || RiverStack.Contains (new Vector2 (x, y + 1)))) 
+		if (y < height - 1 && (matrix [y + 1, x] || RiverStack.Contains (new Vector2 (x, y + 1)))) 
 			riversCount++;
-		if (y > 0 && x < size - 1 && (matrix [y - 1 + k, x + 1] || RiverStack.Contains (new Vector2 (x + 1, y - 1 + k)))) 
+		if (y > 0 && x < width - 1 && (matrix [y - 1 + k, x + 1] || RiverStack.Contains (new Vector2 (x + 1, y - 1 + k)))) 
 			riversCount++;
-		if (x < size - 1 && y < size - 1 && (matrix [y + k, x + 1] || RiverStack.Contains (new Vector2 (x + 1, y + k)))) 
+		if (x < width - 1 && y < height - 1 && (matrix [y + k, x + 1] || RiverStack.Contains (new Vector2 (x + 1, y + k)))) 
 			riversCount++;
 
 		return riversCount;

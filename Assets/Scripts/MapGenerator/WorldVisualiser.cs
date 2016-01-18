@@ -8,22 +8,26 @@ public class WorldVisualiser : MonoBehaviour
 	public class Terrain
 	{
 		public float StartingHeight;
-		public Sprite Sprite_;
+		public Sprite Sprite;
 	}
 
 	public GameObject Hex;
 	public GameObject InteractableHex;
+	public GameObject Background;
+	public Vector2 LocalMapBackgroundOffset;
 	public Sprite BottommostTerrainSprite;
 	public Terrain[] Terrains;
 	public Sprite River;
-	public Vector2 HexSpriteSize;
 	public GameObject Tree;
 	public byte ForestDensity;
 	public byte ForestGenGridSize;
 	public float FadeInSpeed;
 	public float FadeSpeed;
 
+	public Sprite TransparentSprite;
 	public Sprite BlueHexSprite;
+
+	Vector2 HexSpriteSize;
 
 	class ListType
 	{
@@ -48,14 +52,21 @@ public class WorldVisualiser : MonoBehaviour
 
 	List<GameObject> RenderedObjects=new List<GameObject>();
 
+	GameObject RenderedBackground;
+
 	void Awake ()
 	{
+		//Assert
+		Debug.Assert(BottommostTerrainSprite.bounds.size.x==River.bounds.size.x&&River.bounds.size.x==BlueHexSprite.bounds.size.x&&BottommostTerrainSprite.bounds.size.y==River.bounds.size.y&&River.bounds.size.y==BlueHexSprite.bounds.size.y);
 		for (byte i=1; i<Terrains.Length; i++)
+		{
 			Debug.Assert (Terrains [i - 1].StartingHeight < Terrains [i].StartingHeight);
+			Debug.Assert(Terrains [i - 1].Sprite.bounds.size.x == Terrains [i].Sprite.bounds.size.x&&Terrains [i - 1].Sprite.bounds.size.y==Terrains [i].Sprite.bounds.size.y);
+		}
+		//--
 
-		//TODO 100 - число пикселей на единицу (свойство спрайта), возможно стоит это число брать из самих спрайтов
-		HexSpriteSize.x /= 100;
-		HexSpriteSize.y /= 100;
+		HexSpriteSize.x = BottommostTerrainSprite.bounds.size.x;
+		HexSpriteSize.y = BottommostTerrainSprite.bounds.size.y;
 	}
 
 	/// <summary>
@@ -234,11 +245,11 @@ public class WorldVisualiser : MonoBehaviour
 			for (byte i=1; i<Terrains.Length; i++)
 				if (map.MatrixHeight [(int)mapCoords.y, (int)mapCoords.x] >= Terrains [i - 1].StartingHeight && map.MatrixHeight [(int)mapCoords.y, (int)mapCoords.x] < Terrains [i].StartingHeight) 
 				{
-					hex.GetComponent<SpriteRenderer> ().sprite = Terrains [i - 1].Sprite_;
+					hex.GetComponent<SpriteRenderer> ().sprite = Terrains [i - 1].Sprite;
 					return;
 				}
 			if (map.MatrixHeight [(int)mapCoords.y, (int)mapCoords.x] >= Terrains [Terrains.Length - 1].StartingHeight)
-				hex.GetComponent<SpriteRenderer> ().sprite = Terrains [Terrains.Length - 1].Sprite_;
+				hex.GetComponent<SpriteRenderer> ().sprite = Terrains [Terrains.Length - 1].Sprite;
 		}
 	}
 
@@ -306,6 +317,30 @@ public class WorldVisualiser : MonoBehaviour
 				MakeHexGraphics (hex, new Vector2 (y, x), map);
 				RenderedHexes.Add (hex);
 			}
+	}
+
+	public void RenderLocalMap ()
+	{
+		RenderedBackground=Instantiate(Background,new Vector2(Background.GetComponent<SpriteRenderer>().sprite.bounds.extents.x-HexSpriteSize.x/2-LocalMapBackgroundOffset.x,Background.GetComponent<SpriteRenderer>().sprite.bounds.extents.y-HexSpriteSize.y/2-LocalMapBackgroundOffset.y),new Quaternion()) as GameObject;
+		RenderedBackground.GetComponent<SpriteRenderer>().sortingLayerName="Background";
+
+		RenderedHexes.Capacity =(int)( GetComponent<World>().LocalMapSize.y * GetComponent<World>().LocalMapSize.x);
+		Quaternion rot = new Quaternion ();
+		
+		for (ushort y=0; y<GetComponent<World>().LocalMapSize.y; ++y)
+			for (ushort x=0; x<GetComponent<World>().LocalMapSize.x; ++x) 
+		{
+			// TODO Возможно стоит заменить ListType на Hex?
+			ListType hex = new ListType{Hex= Instantiate (Hex,GetTransformPosFromMapCoords(new Vector2(x,y)), rot) as GameObject,InSign= true};
+			hex.Hex.GetComponent<HexData> ().MapCoords = new Vector2 (x, y);
+			hex.Hex.GetComponent<SpriteRenderer>().sprite=TransparentSprite;
+			RenderedHexes.Add (hex);
+		}
+	}
+	
+	public void DestroyBackgound ()
+	{
+		Destroy(RenderedBackground);
 	}
 
 	/// <summary>

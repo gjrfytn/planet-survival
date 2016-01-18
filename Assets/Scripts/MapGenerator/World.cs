@@ -21,14 +21,14 @@ public class Map
 public class World : MonoBehaviour
 {
 	public ushort GlobalMapChunkSize; //Должен быть 2 в n-ой степени
-	public ushort LocalMapSize; //Должен быть 2 в n-ой степени
+	public Vector2 LocalMapSize; //Должен быть 2 в n-ой степени
 
-	public Map CurrentMap; // Карта, на которой находится игрок.
+	Map CurrentMap; //TODO Возможно, можно будет убрать. Карта, на которой находится игрок.
 
 	//const byte CashedChunksSize=3;
 
 	Map[,] CashedGlobalMapChunks = new Map[3, 3];
-	Map[,] LocalMaps;
+	//Map[,] LocalMaps;
 	WorldGenerator Generator; //readonly?
 
 	WorldVisualiser Visualiser; //Временно
@@ -42,10 +42,12 @@ public class World : MonoBehaviour
 	void Awake ()
 	{
 		Debug.Assert (Mathf.IsPowerOfTwo (GlobalMapChunkSize));
-		Debug.Assert (Mathf.IsPowerOfTwo (LocalMapSize));
+		Debug.Assert (Mathf.IsPowerOfTwo ((int)LocalMapSize.x));
+		Debug.Assert (Mathf.IsPowerOfTwo ((int)LocalMapSize.y));
 
 		GlobalMapChunkSize++; //TODO !!!
-		LocalMapSize++; //TODO !!!
+		LocalMapSize.x++; //TODO !!!
+		LocalMapSize.y++; //TODO !!!
 	}
 
 	void Start ()
@@ -107,7 +109,7 @@ public class World : MonoBehaviour
 		Generator.CreateHeightmap (CashedGlobalMapChunks [2, 2].MatrixForest, Generator.ForestRoughness, Random.value, Random.value, Random.value, Random.value);
 		Generator.CreateRivers (CashedGlobalMapChunks [2, 2].MatrixHeight, CashedGlobalMapChunks [2, 2].MatrixRiver);
 
-		LocalMaps = new Map[GlobalMapChunkSize, GlobalMapChunkSize];
+		//LocalMaps = new Map[GlobalMapChunkSize, GlobalMapChunkSize];
 
 		CurrentMap = CashedGlobalMapChunks [1, 1];
 
@@ -121,9 +123,14 @@ public class World : MonoBehaviour
 		Visualiser.HighlightHex(GetBottomLeftMapCoords(Player.GetComponent<Player> ().MapCoords),Visualiser.BlueHexSprite);
 	}
 
+	public bool IsCurrentMapLocal()
+	{
+		return CurrentMap == CashedGlobalMapChunks [1, 1]?false:true;
+	}
+
 	public void OnGotoHex ()
 	{
-		if (CurrentMap == CashedGlobalMapChunks [1, 1]) 
+		if (!IsCurrentMapLocal()) 
 		{
 			float chunkX = Player.GetComponent<Player> ().MapCoords.x / GlobalMapChunkSize, chunkY = Player.GetComponent<Player> ().MapCoords.y / GlobalMapChunkSize;
 			chunkX = Mathf.Floor (chunkX);
@@ -155,7 +162,6 @@ public class World : MonoBehaviour
 			CurrentMap = CashedGlobalMapChunks [1, 1];
 
 			Visualiser.RenderVisibleHexes (Player.GetComponent<Player> ().MapCoords, Player.GetComponent<Player> ().ViewDistance, CashedGlobalMapChunks, ChunkY, ChunkX);
-		}
 			Visualiser.DestroyAllObjects();//TODO Временно
 			Visualiser.HighlightHex(GetTopLeftMapCoords(Player.GetComponent<Player> ().MapCoords),Visualiser.BlueHexSprite);
 			Visualiser.HighlightHex(GetTopMapCoords(Player.GetComponent<Player> ().MapCoords),Visualiser.BlueHexSprite);
@@ -163,6 +169,23 @@ public class World : MonoBehaviour
 			Visualiser.HighlightHex(GetBottomRightMapCoords(Player.GetComponent<Player> ().MapCoords),Visualiser.BlueHexSprite);
 			Visualiser.HighlightHex(GetBottomMapCoords(Player.GetComponent<Player> ().MapCoords),Visualiser.BlueHexSprite);
 			Visualiser.HighlightHex(GetBottomLeftMapCoords(Player.GetComponent<Player> ().MapCoords),Visualiser.BlueHexSprite);
+		}
+		else
+		{
+			Visualiser.DestroyAllObjects();//TODO Временно
+			if(Player.GetComponent<Player> ().MapCoords.x>0&&Player.GetComponent<Player> ().MapCoords.y<LocalMapSize.y-1+((Player.GetComponent<Player> ().MapCoords.x % 2) != 0 ? 0 : 1))
+				Visualiser.HighlightHex(GetTopLeftMapCoords(Player.GetComponent<Player> ().MapCoords),Visualiser.BlueHexSprite);
+			if(Player.GetComponent<Player> ().MapCoords.y<LocalMapSize.y-1)
+				Visualiser.HighlightHex(GetTopMapCoords(Player.GetComponent<Player> ().MapCoords),Visualiser.BlueHexSprite);
+			if(Player.GetComponent<Player> ().MapCoords.x<LocalMapSize.x-1&&Player.GetComponent<Player> ().MapCoords.y<LocalMapSize.y-1+((Player.GetComponent<Player> ().MapCoords.x % 2) != 0 ? 0 : 1))
+				Visualiser.HighlightHex(GetTopRightMapCoords(Player.GetComponent<Player> ().MapCoords),Visualiser.BlueHexSprite);
+			if(Player.GetComponent<Player> ().MapCoords.x<LocalMapSize.x-1&&Player.GetComponent<Player> ().MapCoords.y>0-((Player.GetComponent<Player> ().MapCoords.x % 2) != 0 ? 1 : 0))
+				Visualiser.HighlightHex(GetBottomRightMapCoords(Player.GetComponent<Player> ().MapCoords),Visualiser.BlueHexSprite);
+			if(Player.GetComponent<Player> ().MapCoords.y>0)
+				Visualiser.HighlightHex(GetBottomMapCoords(Player.GetComponent<Player> ().MapCoords),Visualiser.BlueHexSprite);
+			if(Player.GetComponent<Player> ().MapCoords.x>0&&Player.GetComponent<Player> ().MapCoords.y>0-((Player.GetComponent<Player> ().MapCoords.x % 2) != 0 ? 1 : 0))
+				Visualiser.HighlightHex(GetBottomLeftMapCoords(Player.GetComponent<Player> ().MapCoords),Visualiser.BlueHexSprite);
+		}
 	}
 
 	/// <summary>
@@ -170,7 +193,7 @@ public class World : MonoBehaviour
 	/// </summary>
 	public void SwitchMap ()
 	{
-		if (CurrentMap == CashedGlobalMapChunks [1, 1])
+		if (!IsCurrentMapLocal())
 			GotoLocalMap ();
 		else
 			GotoGlobalMap ();
@@ -182,17 +205,20 @@ public class World : MonoBehaviour
 	void GotoLocalMap ()
 	{
 		Vector2 mapCoords = Player.GetComponent<Player> ().MapCoords;
-		if (LocalMaps [(int)mapCoords.y, (int)mapCoords.x] == null)
-			CreateLocalMap (mapCoords, CashedGlobalMapChunks [1, 1].MatrixHeight [(int)mapCoords.y, (int)mapCoords.x], CashedGlobalMapChunks [1, 1].MatrixForest [(int)mapCoords.y, (int)mapCoords.x]);
-		CurrentMap = LocalMaps [(int)mapCoords.y, (int)mapCoords.x];
+		//if (LocalMaps [(int)mapCoords.y, (int)mapCoords.x] == null)
+		//	CreateLocalMap (mapCoords, CashedGlobalMapChunks [1, 1].MatrixHeight [(int)mapCoords.y, (int)mapCoords.x], CashedGlobalMapChunks [1, 1].MatrixForest [(int)mapCoords.y, (int)mapCoords.x]);
+		//CurrentMap = LocalMaps [(int)mapCoords.y, (int)mapCoords.x];
+		CurrentMap=null;//
+
 		GlobalMapCoords = mapCoords;
 
 		//TEMP
-		Player.GetComponent<Player> ().MapCoords.x = CurrentMap.MatrixHeight.GetLength (0) / 2;
-		Player.GetComponent<Player> ().MapCoords.y = CurrentMap.MatrixHeight.GetLength (0) / 2;
+		Player.GetComponent<Player> ().MapCoords.x =(ushort) LocalMapSize.x / 2;
+		Player.GetComponent<Player> ().MapCoords.y =(ushort) LocalMapSize.y / 2;
 		//
 		Visualiser.DestroyAllObjects();
-		Visualiser.RenderWholeMap (CurrentMap);
+		//Visualiser.RenderWholeMap (CurrentMap);
+		Visualiser.RenderLocalMap();//
 
 		Visualiser.HighlightHex(GetTopLeftMapCoords(Player.GetComponent<Player> ().MapCoords),Visualiser.BlueHexSprite);
 		Visualiser.HighlightHex(GetTopMapCoords(Player.GetComponent<Player> ().MapCoords),Visualiser.BlueHexSprite);
@@ -218,13 +244,15 @@ public class World : MonoBehaviour
 		Visualiser.HighlightHex(GetBottomRightMapCoords(Player.GetComponent<Player> ().MapCoords),Visualiser.BlueHexSprite);
 		Visualiser.HighlightHex(GetBottomMapCoords(Player.GetComponent<Player> ().MapCoords),Visualiser.BlueHexSprite);
 		Visualiser.HighlightHex(GetBottomLeftMapCoords(Player.GetComponent<Player> ().MapCoords),Visualiser.BlueHexSprite);
+
+		Visualiser.DestroyBackgound();//
 	}
 
 	/// <summary>
 	/// Создаёт локальную карту.
 	/// </summary>
 	/// <param name="coords">Координаты новой карты на глобальной.</param>
-	void CreateLocalMap (Vector2 mapCoords, float height, float forest)
+	/*void CreateLocalMap (Vector2 mapCoords, float height, float forest)
 	{
 		Map map = new Map (LocalMapSize);
 
@@ -235,7 +263,7 @@ public class World : MonoBehaviour
 		LocalMaps [(int)mapCoords.y, (int)mapCoords.x] = map;
 		//LocalMaps.Add (map);
 		//return (uint)LocalMaps.Count - 1;
-	}
+	}*/
 
 	Map GetChunk (int chunkY, int chunkX)
 	{
@@ -501,32 +529,32 @@ public class World : MonoBehaviour
 
 	public Vector2 GetTopLeftMapCoords(Vector2 mapCoords)
 	{
-		return new Vector2(mapCoords.x-1,mapCoords.y-1+((mapCoords.x % 2) != 0 ? 1 : 0));
+		return new Vector2(mapCoords.x-1,mapCoords.y+1-((mapCoords.x % 2) != 0 ? 0 : 1));
 	}
 
 	public Vector2 GetTopMapCoords(Vector2 mapCoords)
 	{
-		return new Vector2(mapCoords.x,mapCoords.y-1);
+		return new Vector2(mapCoords.x,mapCoords.y+1);
 	}
 
 	public Vector2 GetTopRightMapCoords(Vector2 mapCoords)
 	{
-		return new Vector2(mapCoords.x+1,mapCoords.y-1+((mapCoords.x % 2) != 0 ? 1 : 0));
+		return new Vector2(mapCoords.x+1,mapCoords.y+1-((mapCoords.x % 2) != 0 ? 0 : 1));
 	}
 
 	public Vector2 GetBottomRightMapCoords(Vector2 mapCoords)
 	{
-		return new Vector2(mapCoords.x+1,mapCoords.y+((mapCoords.x % 2) != 0 ? 1 : 0));
+		return new Vector2(mapCoords.x+1,mapCoords.y-((mapCoords.x % 2) != 0 ? 0 : 1));
 	}
 
 	public Vector2 GetBottomMapCoords(Vector2 mapCoords)
 	{
-		return new Vector2(mapCoords.x,mapCoords.y+1);
+		return new Vector2(mapCoords.x,mapCoords.y-1);
 	}
 
 	public Vector2 GetBottomLeftMapCoords(Vector2 mapCoords)
 	{
-		return new Vector2(mapCoords.x-1,mapCoords.y+((mapCoords.x % 2) != 0 ? 1 : 0));
+		return new Vector2(mapCoords.x-1,mapCoords.y-((mapCoords.x % 2) != 0 ? 0 : 1));
 	}
 
 /// <summary>
