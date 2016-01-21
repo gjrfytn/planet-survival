@@ -158,12 +158,7 @@ public class PlayerInventory : MonoBehaviour
 		for (int i = 0; i < item.itemAttributes.Count; i++)
 		{
 			if (item.itemAttributes[i].attributeName == "Health")
-			{
-				if ((PlayerChars.Health + item.itemAttributes[i].attributeValue) > PlayerChars.MaxHealth)
-					PlayerChars.Health = PlayerChars.MaxHealth;
-				else
-					PlayerChars.Health += item.itemAttributes[i].attributeValue;
-			}
+					PlayerChars.TakeHeal(item.itemAttributes[i].attributeValue);
 			if (item.itemAttributes[i].attributeName == "Mana")
 			{
 				if ((PlayerChars.CurrentEnergy + item.itemAttributes[i].attributeValue) > PlayerChars.MaxEnergy)

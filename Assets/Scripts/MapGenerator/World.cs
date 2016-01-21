@@ -23,6 +23,8 @@ public class World : MonoBehaviour
 	public ushort GlobalMapChunkSize; //Должен быть 2 в n-ой степени
 	public Vector2 LocalMapSize; //Должен быть 2 в n-ой степени
 
+	public GameObject[] Enemies;
+
 	Map CurrentMap; //TODO Возможно, можно будет убрать. Карта, на которой находится игрок.
 
 	//const byte CashedChunksSize=3;
@@ -33,6 +35,8 @@ public class World : MonoBehaviour
 
 	WorldVisualiser Visualiser; //Временно
 
+	EventManager EventManager;
+
 	Vector2 GlobalMapCoords;
 	GameObject Player;
 	int ChunkX, ChunkY;
@@ -41,6 +45,8 @@ public class World : MonoBehaviour
 
 	void Awake ()
 	{
+		EventManager=GameObject.Find("EventManager").GetComponent<EventManager>();
+
 		Debug.Assert (Mathf.IsPowerOfTwo (GlobalMapChunkSize));
 		Debug.Assert (Mathf.IsPowerOfTwo ((int)LocalMapSize.x));
 		Debug.Assert (Mathf.IsPowerOfTwo ((int)LocalMapSize.y));
@@ -194,9 +200,18 @@ public class World : MonoBehaviour
 	public void SwitchMap ()
 	{
 		if (!IsCurrentMapLocal())
+		{
 			GotoLocalMap ();
+			SpawnRandomEnemy();
+			//GameObject.FindWithTag("AI_Controller").GetComponent<AI_Controller>().AddEnemy(new Vector2(1,1));
+		}
 		else
+		{
 			GotoGlobalMap ();
+			EventManager.OnLocalMapLeave();
+			//GameObject.FindWithTag("AI_Controller").GetComponent<AI_Controller>().DeleteAll();
+
+		}
 	}
 
 	/// <summary>
@@ -527,32 +542,32 @@ public class World : MonoBehaviour
 		}
 	}
 
-	public Vector2 GetTopLeftMapCoords(Vector2 mapCoords)
+	public static Vector2 GetTopLeftMapCoords(Vector2 mapCoords)
 	{
 		return new Vector2(mapCoords.x-1,mapCoords.y+1-((mapCoords.x % 2) != 0 ? 0 : 1));
 	}
 
-	public Vector2 GetTopMapCoords(Vector2 mapCoords)
+	public static Vector2 GetTopMapCoords(Vector2 mapCoords)
 	{
 		return new Vector2(mapCoords.x,mapCoords.y+1);
 	}
 
-	public Vector2 GetTopRightMapCoords(Vector2 mapCoords)
+	public static Vector2 GetTopRightMapCoords(Vector2 mapCoords)
 	{
 		return new Vector2(mapCoords.x+1,mapCoords.y+1-((mapCoords.x % 2) != 0 ? 0 : 1));
 	}
 
-	public Vector2 GetBottomRightMapCoords(Vector2 mapCoords)
+	public static Vector2 GetBottomRightMapCoords(Vector2 mapCoords)
 	{
 		return new Vector2(mapCoords.x+1,mapCoords.y-((mapCoords.x % 2) != 0 ? 0 : 1));
 	}
 
-	public Vector2 GetBottomMapCoords(Vector2 mapCoords)
+	public static Vector2 GetBottomMapCoords(Vector2 mapCoords)
 	{
 		return new Vector2(mapCoords.x,mapCoords.y-1);
 	}
 
-	public Vector2 GetBottomLeftMapCoords(Vector2 mapCoords)
+	public static Vector2 GetBottomLeftMapCoords(Vector2 mapCoords)
 	{
 		return new Vector2(mapCoords.x-1,mapCoords.y-((mapCoords.x % 2) != 0 ? 0 : 1));
 	}
@@ -563,7 +578,7 @@ public class World : MonoBehaviour
 /// <returns><c>true</c> если прилегают, иначе <c>false</c>.</returns>
 /// <param name="mapCoords1">1 координаты.</param>
 /// <param name="mapCoords2">2 координаты.</param>
-	public bool IsMapCoordsAdjacent(Vector2 mapCoords1,Vector2 mapCoords2)
+	public static bool IsMapCoordsAdjacent(Vector2 mapCoords1,Vector2 mapCoords2)
 	{
 		byte k=(byte)((mapCoords1.x % 2) != 0 ? 1 : 0);
 		if(mapCoords1.x-1==mapCoords2.x||mapCoords1.x+1==mapCoords2.x)
@@ -583,5 +598,13 @@ public class World : MonoBehaviour
 			return false;
 		}
 		return false;
+	}
+
+	void SpawnRandomEnemy()
+	{
+		Vector2 mapCoords=new Vector2(Random.Range(0,(int)LocalMapSize.x),Random.Range(0,(int)LocalMapSize.y));
+		GameObject enemy=Instantiate(Enemies[Random.Range(0,Enemies.Length)],Visualiser.GetTransformPosFromMapCoords(mapCoords),new Quaternion()) as GameObject;
+		enemy.GetComponent<Creature>().MapCoords=mapCoords;
+		enemy.GetComponent<Creature>().Attack(Player);
 	}
 }

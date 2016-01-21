@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class Player : Creature 
+public sealed class Player : Creature 
 {
 	//[Header("Текст на панели характеристик")]
 	//public Text CurrentHealthText;
@@ -26,19 +26,32 @@ public class Player : Creature
 	[Header("Дальность обзора")]
 	public byte ViewDistance;
 
-	void Start()
+	new void OnEnable()
 	{
+		base.OnEnable();
+		EventManager.LocalMapLeft-=Destroy;
+	}
+	
+	new void OnDisable()
+	{
+		base.OnDisable();
+		//EventManager.LocalMapLeft-=Destroy;
+	}
+
+	new void Start()
+	{
+		base.Start();
 		MapCoords=new Vector2(5,5);
 		GetComponent<SpriteRenderer>().sortingLayerName="Player";
 	}
 
-	void Update()
+	new void Update()
 	{
 		base.Update();
 
 		if(Health<=0){
-			Health=0;
-			Application.LoadLevel("GameOver");
+			//Health=0;
+			Application.LoadLevel("Menu");
 		}
 		if(CurrentEnergy<=0){ //Если жизни меньше или равно 0
 			CurrentEnergy=0; // Задаём значение 0

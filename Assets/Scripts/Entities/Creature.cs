@@ -5,17 +5,18 @@ public class Creature : Entity
 {
 	public enum AI_State{STATE_IDLE, STATE_MOVE, STATE_ATTACK};
 
-	public GameObject World; //TODO Возможно, надо будет перенести выше по иерархии наследования.
-
 	public float MoveAnimationTime;
 
 	public float MaxHealth;
-	public float Health;
 	
 	public float Damage;
 	public float Armor;
 	//public float Experience;
-	
+
+	public float Health{get;private set;}
+
+	WorldVisualiser Visualiser;
+
 	bool Moving;
 	Vector2 TargetCoords;
 	float MoveTime;
@@ -23,15 +24,33 @@ public class Creature : Entity
 	AI_State State;
 	GameObject Target;
 
+	protected new void OnEnable()
+	{
+		base.OnEnable();
+		EventManager.TurnMade+=MakeTurn;
+	}
+
+	protected new void OnDisable()
+	{
+		base.OnDisable();
+		EventManager.TurnMade-=MakeTurn;
+	}
+
+	protected void Start()
+	{
+		Health=MaxHealth;
+		Visualiser=GameObject.FindWithTag("World").GetComponent<WorldVisualiser>();
+	}
+
 	protected void Update ()
 	{
 		if (Moving) 
 		{
 			MoveTime -= Time.deltaTime;
 			float tstep = MoveTime / Time.deltaTime;
-			float dstep = Vector2.Distance (transform.position, World.GetComponent<WorldVisualiser> ().GetTransformPosFromMapCoords (MapCoords)) / tstep;
+			float dstep = Vector2.Distance (transform.position, Visualiser.GetTransformPosFromMapCoords (MapCoords)) / tstep;
 			if (MoveTime > 0) 
-				transform.position = Vector2.MoveTowards (transform.position, World.GetComponent<WorldVisualiser> ().GetTransformPosFromMapCoords (MapCoords), dstep);
+				transform.position = Vector2.MoveTowards (transform.position, Visualiser.GetTransformPosFromMapCoords (MapCoords), dstep);
 			else 
 				Moving = false;
 		}
@@ -47,6 +66,7 @@ public class Creature : Entity
 	{
 		State = AI_State.STATE_ATTACK;
 		Target = target;
+		TargetCoords = Target.GetComponent<Creature> ().MapCoords;
 	}
 
 	public void Idle ()
@@ -77,10 +97,19 @@ public class Creature : Entity
 
 	public void TakeDamage (float damage)
 	{
+		Debug.Assert(damage>=0);
 		Health -= Mathf.Clamp (damage - Armor, 0, damage);
+		if(Health<=0)
+			Destroy(gameObject);
 	}
 
-	public void MakeTurn ()
+	public void TakeHeal(float heal)
+	{
+		Debug.Assert(heal>=0);
+		Health=Mathf.Clamp(Health+heal,0,MaxHealth);
+	}
+
+	void MakeTurn ()
 	{
 		switch (State) 
 		{
@@ -93,13 +122,13 @@ public class Creature : Entity
 				Move ();
 			break;
 		case AI_State.STATE_ATTACK:
-			if (World.GetComponent<World> ().IsMapCoordsAdjacent (TargetCoords, MapCoords)) 
+			TargetCoords = Target.GetComponent<Creature> ().MapCoords;
+			if (World.IsMapCoordsAdjacent (TargetCoords, MapCoords)) 
 			{
 				PerformAttack ();
 			}
 			else 
 			{
-				TargetCoords = Target.GetComponent<Creature> ().MapCoords;
 				Move ();
 			}
 			break;
