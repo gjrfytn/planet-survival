@@ -10,17 +10,17 @@ public class GameEvent //UNDONE
     // Определяет, "хорошее" это событие или "плохое", необходимо для правильного влияния параметра удачи.
     public bool Good;// {get; private set; }
 
-	//TODO Возможно стоит вместо этого разделить события на два списка?
-	// Определяет, может ли это событие произойти от действия.
+    //TODO Возможно стоит вместо этого разделить события на два списка?
+    // Определяет, может ли это событие произойти от действия.
     public bool ByAction;// {get; private set; }
 
-	// Определяет, может ли это событие произойти от таймера.
+    // Определяет, может ли это событие произойти от таймера.
     public bool ByTime;// {get; private set; }
 
-	// Описание события, выводимое на экран.
+    // Описание события, выводимое на экран.
     public string Description;// {get; private set; }
 
-	// Базовая вероятность возникновения события, на него будет влиять параметр удачи персонажа.
+    // Базовая вероятность возникновения события, на него будет влиять параметр удачи персонажа.
     public float Probability;// {get; private set; }
 
     // TODO Коэффициент вероятности возникновения события при различных факторах, "1" - максимальное значение, "0" - событие не происходит в этом типе.
@@ -55,7 +55,7 @@ public class GameEvent //UNDONE
         public class Result
         {
             public string Description;
-            public float Probability; 
+            public float Probability;
         }
         public string Description;// {get; private set; }
         //TODO
@@ -65,17 +65,17 @@ public class GameEvent //UNDONE
 
     public List<Reaction> Reactions;
 
-	public GameEvent(string name, bool good, bool byAction, bool byTime, string description, float probability, TerrainCoefficients terrainCoef, TimeCoefficients timeCoef, StateCoefficients stateCoef, List<Reaction> reactions)
-	{
+    public GameEvent(string name, bool good, bool byAction, bool byTime, string description, float probability, TerrainCoefficients terrainCoef, TimeCoefficients timeCoef, StateCoefficients stateCoef, List<Reaction> reactions)
+    {
         Name = name;
-		ByAction=byAction;
-		ByTime=byTime;
-		Description = description;
-		Probability = probability;
-		Good = good;
+        ByAction = byAction;
+        ByTime = byTime;
+        Description = description;
+        Probability = probability;
+        Good = good;
         TerrainCoef = terrainCoef;
         TimeCoef = timeCoef;
         StateCoef = stateCoef;
         Reactions = reactions;
-	}
+    }
 }

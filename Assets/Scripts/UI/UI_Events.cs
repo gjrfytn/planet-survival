@@ -1,22 +1,22 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class UI_Events : MonoBehaviour 
+public class UI_Events : MonoBehaviour
 {
 	EventManager EventManager;
 
-	void Awake()
+	void Awake ()
 	{
-		EventManager=GameObject.Find("EventManager").GetComponent<EventManager>();
+		EventManager = GameObject.Find ("EventManager").GetComponent<EventManager> ();
 	}
 
-	void OnEnable () 
+	void OnEnable ()
 	{
-		EventManager.OnUIShow();
+		EventManager.OnUIShow ();
 	}
 
-	void OnDisable () 
+	void OnDisable ()
 	{
-		EventManager.OnUIHide();
+		EventManager.OnUIHide ();
 	}
 }

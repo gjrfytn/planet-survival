@@ -1,30 +1,30 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class Entity : MonoBehaviour 
+public class Entity : MonoBehaviour
 {
-	[HideInInspector]
-	public Vector2 MapCoords;
+    [HideInInspector]
+    public Vector2 MapCoords;
 
-	protected EventManager EventManager;
+    protected EventManager EventManager;
 
-	protected void OnEnable()
-	{
-		EventManager.LocalMapLeft+=Destroy;
-	}
-	
-	protected void OnDisable()
-	{
-		EventManager.LocalMapLeft-=Destroy;
-	}
-	
-	protected void Awake()
-	{
-		EventManager=GameObject.Find("EventManager").GetComponent<EventManager>();
-	}
+    protected void OnEnable()
+    {
+        EventManager.LocalMapLeft += Destroy;
+    }
 
-	protected void Destroy()
-	{
-		Destroy(gameObject);
-	}
+    protected void OnDisable()
+    {
+        EventManager.LocalMapLeft -= Destroy;
+    }
+
+    protected void Awake()
+    {
+        EventManager = GameObject.Find("EventManager").GetComponent<EventManager>();
+    }
+
+    protected void Destroy()
+    {
+        Destroy(gameObject);
+    }
 }

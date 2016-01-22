@@ -1,13 +1,13 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class EventButtonTest : MonoBehaviour 
+public class EventButtonTest : MonoBehaviour
 {
-	[HideInInspector]
-	public byte Index;
-	
-	public void Click()
-	{
-		GetComponentInParent<GameEventManager>().EventPanelButtonPress(Index);
-	}
+    [HideInInspector]
+    public byte Index;
+
+    public void Click()
+    {
+        GetComponentInParent<GameEventManager>().EventPanelButtonPress(Index);
+    }
 }
