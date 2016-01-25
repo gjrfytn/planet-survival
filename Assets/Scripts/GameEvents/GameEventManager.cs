@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -34,7 +34,7 @@ public class GameEventManager : MonoBehaviour
             {
                 CurrentEvent = evnt;
                 EventPanel.SetActive(true);
-                EventPanel.transform.GetChild(0).GetComponent<Text>().text = evnt.Description;
+                EventPanel.transform.GetChild(0).GetComponent<Text>().text = ParseEventDescription(evnt.Description);
                 sbyte d = (sbyte)(evnt.Reactions.Count - ReactionButtons.Count - 1);
                 if (d > 0)
                     for (byte i = 0; i < d; ++i)
@@ -87,7 +87,7 @@ public class GameEventManager : MonoBehaviour
                     resultLst.Remove(result);
             }
         }
-        Debug.Log(result.Description);
+		Debug.Log(ParseResultDescription(result.Description));
         EventPanel.SetActive(false);
         CurrentEvent = null;
     }
@@ -143,7 +143,6 @@ public class GameEventManager : MonoBehaviour
                                           Results = results
                                       });
                     }
-
                     Events.Add(new GameEvent(name, good, byAction, byTime, description, probability, terrCoef, timeCoef, stateCoef, reactions));
                 }
             }
@@ -151,4 +150,50 @@ public class GameEventManager : MonoBehaviour
         else
             throw new IOException("File with events do not exist.");
     }
+
+	string ParseEventDescription(string description)
+	{
+		string parsedDesc=description;
+		for(ushort i=0;i<parsedDesc.Length;++i)
+			if(parsedDesc[i]=='<')
+			{
+			string tag=string.Empty;
+			byte j;
+			for(j=1;parsedDesc[i+j]!='>';++j)
+				tag+=parsedDesc[i+j];
+			parsedDesc=parsedDesc.Remove(i,j+1);
+			if(tag.EndsWith("!"))
+			{
+				tag=tag.Remove(tag.Length-1);
+				//TODO Поиск по Dictionary.
+				parsedDesc=parsedDesc.Insert(i,"Замена "+tag);//TODO Прибавлять i?
+			}
+			parsedDesc=parsedDesc.Insert(i,"Удаление "+tag);
+			//TODO Применение эффекта.
+			}
+		return parsedDesc;
+	}
+
+	string ParseResultDescription(string description)
+	{
+		string parsedDesc=description;
+		for(ushort i=0;i<parsedDesc.Length;++i)
+			if(parsedDesc[i]=='<')
+			{
+			string tag=string.Empty;
+			byte j;
+			for(j=1;parsedDesc[i+j]!='>';++j)
+				tag+=parsedDesc[i+j];
+			parsedDesc=parsedDesc.Remove(i,j+1);
+			if(tag.EndsWith("!"))
+			{
+				tag=tag.Remove(tag.Length-1);
+				//TODO Поиск по Dictionary.
+				parsedDesc=parsedDesc.Insert(i,"Замена "+tag);//TODO Прибавлять i?
+			}
+			parsedDesc=parsedDesc.Insert(i,"Удаление "+tag);
+			//TODO Применение эффекта.
+			}
+		return parsedDesc;
+	}
 }

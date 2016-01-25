@@ -22,7 +22,7 @@ public class WorldGenerator : MonoBehaviour
     public RiversParameters RiversParam;
 
     //TODO Проверить использование координат в RiverStack
-    private Stack<Vector2> RiverStack = new Stack<Vector2>(); //Стек для постройки реки
+    Stack<Vector2> RiverStack = new Stack<Vector2>(); //Стек для постройки реки
 
     /// <summary>
     /// Создаёт карту высот. 

@@ -672,7 +672,7 @@ public class World : MonoBehaviour
     void SpawnRandomEnemy()
     {
         Vector2 mapCoords = new Vector2(Random.Range(0, (int)LocalMapSize.x), Random.Range(0, (int)LocalMapSize.y));
-        GameObject enemy = Instantiate(Enemies[Random.Range(0, Enemies.Length)], Visualiser.GetTransformPosFromMapCoords(mapCoords), new Quaternion()) as GameObject;
+        GameObject enemy = Instantiate(Enemies[Random.Range(0, Enemies.Length)], WorldVisualiser.GetTransformPosFromMapCoords(mapCoords), Quaternion.identity) as GameObject;
         enemy.GetComponent<Creature>().MapCoords = mapCoords;
         enemy.GetComponent<Creature>().Attack(Player);
         CurrentMap.BlockMatrix[(int)mapCoords.y, (int)mapCoords.x] = true;

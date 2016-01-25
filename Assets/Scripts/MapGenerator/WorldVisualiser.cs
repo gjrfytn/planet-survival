@@ -21,11 +21,11 @@ public class WorldVisualiser : MonoBehaviour
     public GameObject Tree;
     public byte ForestDensity;
     public byte ForestGenGridSize;
-    public float FadeInSpeed;
-    public float FadeSpeed;
+    public float FadeInTime;
+    public float FadeTime;
     public Sprite TransparentSprite;
     public Sprite BlueHexSprite;
-    Vector2 HexSpriteSize;
+    static Vector2 HexSpriteSize;
 
     class ListType
     {
@@ -35,7 +35,6 @@ public class WorldVisualiser : MonoBehaviour
     }
 
     List<ListType> RenderedHexes = new List<ListType>();
-    //Map Map;
     Map[,] CashedChunks = new Map[3, 3];
     int ChunkX, ChunkY;
 
@@ -108,51 +107,11 @@ public class WorldVisualiser : MonoBehaviour
         for (ushort i = 0; i < RenderedHexes.Count; ++i)
             if (!RenderedHexes[i].InSign)
             {
-                RenderedHexes[i].Trees.ForEach(tree => StartCoroutine(FadeAndDestroy(tree)));
-                StartCoroutine(FadeAndDestroy(RenderedHexes[i].Hex));
-                RenderedHexes.RemoveAt(i);
-                i--;
+				RenderedHexes[i].Trees.ForEach(tree => StartCoroutine(RenderHelper.FadeAndDestroyObject(tree.GetComponent<Renderer>(),FadeTime)));
+			StartCoroutine(RenderHelper.FadeAndDestroyObject(RenderedHexes[i].Hex.GetComponent<Renderer>(),FadeTime));
+           		RenderedHexes.RemoveAt(i);
+                --i;
             }
-    }
-
-    /// <summary>
-    /// Постепенно отображает объект (корутина).
-    /// </summary>
-    /// <returns>(Корутина).</returns>
-    /// <param name="obj">Объект для отображения.</param>
-    IEnumerator FadeIn(GameObject obj)
-    {
-        SpriteRenderer renderer = obj.GetComponent<SpriteRenderer>();
-        Color cbuf = renderer.material.color;
-        cbuf.a = 0;
-        renderer.material.color = cbuf;
-
-        while (renderer != null && renderer.material.color.a < 1)
-        {
-            Color buf = renderer.material.color;
-            buf.a += FadeInSpeed;
-            renderer.material.color = buf;
-            yield return null;
-        }
-    }
-
-    /// <summary>
-    /// Постепенно скрывает, затем уничтожает объект (корутина).
-    /// </summary>
-    /// <returns>(Корутина).</returns>
-    /// <param name="obj">Объект к уничтожению.</param>
-    IEnumerator FadeAndDestroy(GameObject obj)
-    {
-        SpriteRenderer renderer = obj.GetComponent<SpriteRenderer>();
-
-        while (renderer.material.color.a > 0)
-        {
-            Color buf = renderer.material.color;
-            buf.a -= FadeSpeed;
-            renderer.material.color = buf;
-            yield return null;
-        }
-        Destroy(obj);
     }
 
     /// <summary>
@@ -179,8 +138,7 @@ public class WorldVisualiser : MonoBehaviour
         short index = (short)RenderedHexes.FindIndex(x => x.Hex.GetComponent<HexData>().MapCoords == mapCoords);
         if (index == -1)
         {
-            Quaternion rot = new Quaternion();
-            ListType hex = new ListType { Hex = Instantiate(Hex, GetTransformPosFromMapCoords(mapCoords), rot) as GameObject, InSign = true };
+			ListType hex = new ListType { Hex = Instantiate(Hex, GetTransformPosFromMapCoords(mapCoords), Quaternion.identity) as GameObject, InSign = true };
             hex.Hex.GetComponent<HexData>().MapCoords = mapCoords;
             MakeHexGraphics(hex, chunkCoords, map);
             RenderedHexes.Add(hex);
@@ -220,7 +178,7 @@ public class WorldVisualiser : MonoBehaviour
     {
         ChooseHexSprite(hex.Hex, mapCoords, map);
         hex.Hex.GetComponent<SpriteRenderer>().sortingLayerName = "Landscape";//
-        StartCoroutine(FadeIn(hex.Hex));
+		StartCoroutine(RenderHelper.FadeIn(hex.Hex.GetComponent<Renderer>(),FadeInTime));
         MakeHexForest(hex, mapCoords, map);
     }
 
@@ -260,7 +218,6 @@ public class WorldVisualiser : MonoBehaviour
     {
         if (map.ForestMatrix[(int)mapCoords.y, (int)mapCoords.x] * ForestDensity >= 1)
         {
-            Quaternion rot = new Quaternion();
             float gridStepX = HexSpriteSize.x / ForestGenGridSize;
             float gridStepY = HexSpriteSize.y / ForestGenGridSize;
             Vector2 gridOrigin = new Vector2(hex.Hex.transform.position.x - HexSpriteSize.x * 0.375f, hex.Hex.transform.position.y - HexSpriteSize.y * 0.5f);
@@ -274,10 +231,10 @@ public class WorldVisualiser : MonoBehaviour
                         for (float x = 0; x < HexSpriteSize.x; x += gridStepX)
                         {
                             Vector2 v = new Vector2(Random.value * gridStepX, Random.value * gridStepY);
-                            hex.Trees.Add(Instantiate(Tree, new Vector2(gridOrigin.x + x + v.x, gridOrigin.y + y + v.y), rot) as GameObject);
+						hex.Trees.Add(Instantiate(Tree, new Vector2(gridOrigin.x + x + v.x, gridOrigin.y + y + v.y), Quaternion.identity) as GameObject);
                             hex.Trees[hex.Trees.Count - 1].GetComponent<SpriteRenderer>().sortingLayerName = "LandscapeObjects";//
-                            StartCoroutine(FadeIn(hex.Trees[hex.Trees.Count - 1]));
-                            treesCount--;
+						StartCoroutine(RenderHelper.FadeIn(hex.Trees[hex.Trees.Count - 1].GetComponent<Renderer>(),FadeInTime));
+                            --treesCount;
                         }
                 }
                 else
@@ -285,10 +242,10 @@ public class WorldVisualiser : MonoBehaviour
                     Vector2 v = Random.insideUnitCircle;
                     v.x *= HexSpriteSize.x * 0.5f;
                     v.y *= HexSpriteSize.y * 0.5f;
-                    hex.Trees.Add(Instantiate(Tree, new Vector2(hex.Hex.transform.position.x + v.x, hex.Hex.transform.position.y + v.y), rot) as GameObject);
+					hex.Trees.Add(Instantiate(Tree, new Vector2(hex.Hex.transform.position.x + v.x, hex.Hex.transform.position.y + v.y), Quaternion.identity) as GameObject);
                     hex.Trees[hex.Trees.Count - 1].GetComponent<SpriteRenderer>().sortingLayerName = "LandscapeObjects";//
-                    StartCoroutine(FadeIn(hex.Trees[hex.Trees.Count - 1]));
-                    treesCount--;
+					StartCoroutine(RenderHelper.FadeIn(hex.Trees[hex.Trees.Count - 1].GetComponent<Renderer>(),FadeInTime));
+                    --treesCount;
                     if (treesCount == 0)
                         return;
                 }
@@ -304,13 +261,12 @@ public class WorldVisualiser : MonoBehaviour
     {
         ushort size = (ushort)map.HeightMatrix.GetLength(0);
         RenderedHexes.Capacity = size * size;
-        Quaternion rot = new Quaternion();
 
         for (ushort y = 0; y < size; ++y)
             for (ushort x = 0; x < size; ++x)
             {
                 // TODO Возможно стоит заменить ListType на Hex?
-                ListType hex = new ListType { Hex = Instantiate(Hex, GetTransformPosFromMapCoords(new Vector2(x, y)), rot) as GameObject, InSign = true };
+			ListType hex = new ListType { Hex = Instantiate(Hex, GetTransformPosFromMapCoords(new Vector2(x, y)), Quaternion.identity) as GameObject, InSign = true };
                 hex.Hex.GetComponent<HexData>().MapCoords = new Vector2(x, y);
                 MakeHexGraphics(hex, new Vector2(y, x), map);
                 RenderedHexes.Add(hex);
@@ -319,17 +275,16 @@ public class WorldVisualiser : MonoBehaviour
 
     public void RenderLocalMap()
     {
-        RenderedBackground = Instantiate(Background, new Vector2(Background.GetComponent<SpriteRenderer>().sprite.bounds.extents.x - HexSpriteSize.x / 2 - LocalMapBackgroundOffset.x, Background.GetComponent<SpriteRenderer>().sprite.bounds.extents.y - HexSpriteSize.y / 2 - LocalMapBackgroundOffset.y), new Quaternion()) as GameObject;
+		RenderedBackground = Instantiate(Background, new Vector2(Background.GetComponent<SpriteRenderer>().sprite.bounds.extents.x - HexSpriteSize.x / 2 - LocalMapBackgroundOffset.x, Background.GetComponent<SpriteRenderer>().sprite.bounds.extents.y - HexSpriteSize.y / 2 - LocalMapBackgroundOffset.y), Quaternion.identity) as GameObject;
         RenderedBackground.GetComponent<SpriteRenderer>().sortingLayerName = "Background";
 
         RenderedHexes.Capacity = (int)(GetComponent<World>().LocalMapSize.y * GetComponent<World>().LocalMapSize.x);
-        Quaternion rot = new Quaternion();
 
         for (ushort y = 0; y < GetComponent<World>().LocalMapSize.y; ++y)
             for (ushort x = 0; x < GetComponent<World>().LocalMapSize.x; ++x)
             {
                 // TODO Возможно стоит заменить ListType на Hex?
-                ListType hex = new ListType { Hex = Instantiate(Hex, GetTransformPosFromMapCoords(new Vector2(x, y)), rot) as GameObject, InSign = true };
+			ListType hex = new ListType { Hex = Instantiate(Hex, GetTransformPosFromMapCoords(new Vector2(x, y)), Quaternion.identity) as GameObject, InSign = true };
                 hex.Hex.GetComponent<HexData>().MapCoords = new Vector2(x, y);
                 hex.Hex.GetComponent<SpriteRenderer>().sprite = TransparentSprite;
                 RenderedHexes.Add(hex);
@@ -346,7 +301,7 @@ public class WorldVisualiser : MonoBehaviour
     /// </summary>
     /// <returns>Координаты в сцене.</returns>
     /// <param name="mapCoords">Координаты на карте.</param>
-    public Vector2 GetTransformPosFromMapCoords(Vector2 mapCoords)
+    public static Vector2 GetTransformPosFromMapCoords(Vector2 mapCoords)
     {
         return new Vector2(mapCoords.x * HexSpriteSize.x * 0.75f, mapCoords.y * HexSpriteSize.y + ((mapCoords.x % 2) != 0 ? 1 : 0) * HexSpriteSize.y * 0.5f);
     }
@@ -358,7 +313,7 @@ public class WorldVisualiser : MonoBehaviour
     /// <param name="highlightHexSprite">Спрайт.</param>
     public void HighlightHex(Vector2 mapCoords, Sprite highlightHexSprite)
     {
-        RenderedObjects.Add(Instantiate(InteractableHex, GetTransformPosFromMapCoords(mapCoords), new Quaternion(0, 0, 0, 0)) as GameObject);
+		RenderedObjects.Add(Instantiate(InteractableHex, GetTransformPosFromMapCoords(mapCoords), Quaternion.identity) as GameObject);
         RenderedObjects[RenderedObjects.Count - 1].GetComponent<SpriteRenderer>().sprite = highlightHexSprite;
         RenderedObjects[RenderedObjects.Count - 1].GetComponent<SpriteRenderer>().sortingLayerName = "LandscapeHighlights";
 

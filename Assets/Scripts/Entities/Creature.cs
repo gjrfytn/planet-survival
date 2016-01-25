@@ -13,7 +13,7 @@ public class Creature : Entity
 
     public float Health { get; private set; }
 
-    GameObject World_;
+    World World;
     bool Moving;
     Vector2 TargetCoords;
     float MoveTime;
@@ -36,19 +36,21 @@ public class Creature : Entity
     protected void Start()
     {
         Health = MaxHealth;
-        World_ = GameObject.FindWithTag("World");
+        World = GameObject.FindWithTag("World").GetComponent<World>();
     }
 
     protected void Update()
     {
         if (Moving)
         {
-            MoveTime -= Time.deltaTime;
-            float tstep = MoveTime / Time.deltaTime;
-            float dstep = Vector2.Distance(transform.position, World_.GetComponent<WorldVisualiser>().GetTransformPosFromMapCoords(MapCoords)) / tstep;
-            if (MoveTime > 0)
-                transform.position = Vector2.MoveTowards(transform.position, World_.GetComponent<WorldVisualiser>().GetTransformPosFromMapCoords(MapCoords), dstep);
-            else
+			if (MoveTime > 0)
+			{
+            	float tstep = MoveTime / Time.deltaTime;
+				MoveTime -= Time.deltaTime;
+           		float dstep = Vector2.Distance(transform.position, WorldVisualiser.GetTransformPosFromMapCoords(MapCoords)) / tstep;
+            	transform.position = Vector2.MoveTowards(transform.position, WorldVisualiser.GetTransformPosFromMapCoords(MapCoords), dstep);
+			}
+			else
                 Moving = false;
         }
     }
@@ -82,11 +84,11 @@ public class Creature : Entity
         if (dy != 0)
             dy = (sbyte)(dy > 0 ? 1 : -1);
 
-        if (!World_.GetComponent<World>().IsHexFree(new Vector2(MapCoords.x + dx, MapCoords.y + dy)))
+        if (!World.IsHexFree(new Vector2(MapCoords.x + dx, MapCoords.y + dy)))
         {
-            if (!World_.GetComponent<World>().IsHexFree(new Vector2(MapCoords.x, MapCoords.y + dy)))
+            if (!World.IsHexFree(new Vector2(MapCoords.x, MapCoords.y + dy)))
             {
-                if (!World_.GetComponent<World>().IsHexFree(new Vector2(MapCoords.x + dx, MapCoords.y)))
+                if (!World.IsHexFree(new Vector2(MapCoords.x + dx, MapCoords.y)))
                 {
                     Debug.Log("Pathfind error.");
                     return;
