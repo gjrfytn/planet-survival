@@ -3,8 +3,6 @@ using System.Collections;
 
 public class Blocker : MonoBehaviour 
 {
-	EventManager EventManager;
-
 	void OnEnable()
 	{
 		EventManager.UIShowed+=Switch;
@@ -15,11 +13,6 @@ public class Blocker : MonoBehaviour
 	{
 		EventManager.UIShowed-=Switch;
 		EventManager.UIHided-=Switch;
-	}
-
-	void Awake()
-	{
-		EventManager=GameObject.Find("EventManager").GetComponent<EventManager>();
 	}
 
 	void Switch()

@@ -32,7 +32,12 @@ public class PopupButtons : MonoBehaviour
 			Vector2 screenPos = Camera.main.WorldToScreenPoint (transform.position);
 			Vector2 screenCenter=new Vector2(Screen.width/2,Screen.height/2);
 
-			Vector2 axis=(screenCenter-screenPos).normalized*Radius;
+			Vector2 axis=-(screenCenter-screenPos).normalized*Radius;
+
+			Vector2 check=(Vector2)Camera.main.WorldToScreenPoint(axis)+screenPos;
+			if(check.x<0||check.x>Screen.width||check.y<0||check.y>Screen.height)
+				axis=-axis;
+
 			float radAngle=Angle;
 			for(byte i=0;i<4;++i)///TODO
 			{

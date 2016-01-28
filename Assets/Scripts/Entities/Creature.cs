@@ -14,7 +14,7 @@ public class Creature : Entity
     public float Health { get; private set; }
 
     World World;
-    bool Moving;
+	protected bool Moving{ get; private set; }
     Vector2 TargetCoords;
     float MoveTime;
     Vector2 PreviousCoords;

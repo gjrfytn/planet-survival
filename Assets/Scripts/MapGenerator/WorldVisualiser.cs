@@ -8,7 +8,7 @@ public class WorldVisualiser : MonoBehaviour
     public class Terrain
     {
         public float StartingHeight;
-        public Sprite Sprite;
+        public Sprite[] Sprites;
     }
 
     public GameObject Hex;
@@ -17,8 +17,11 @@ public class WorldVisualiser : MonoBehaviour
     public Vector2 LocalMapBackgroundOffset;
     public Sprite BottommostTerrainSprite;
     public Terrain[] Terrains;
-    public Sprite River;
-    public GameObject Tree;
+	public Sprite RiverStart;
+    public Sprite RiverStraight;
+	public Sprite RiverTurn;
+	public Sprite RiverEnd;
+	public Sprite[] TreeSprites;
     public byte ForestDensity;
     public byte ForestGenGridSize;
     public float FadeInTime;
@@ -32,6 +35,7 @@ public class WorldVisualiser : MonoBehaviour
         public GameObject Hex;
         public bool InSign;
         public List<GameObject> Trees = new List<GameObject>();
+		public GameObject RiverSprite;
     }
 
     List<ListType> RenderedHexes = new List<ListType>();
@@ -46,17 +50,20 @@ public class WorldVisualiser : MonoBehaviour
     }
 
     Queue<QueueType> SignQueue = new Queue<QueueType>();
+
     List<GameObject> RenderedObjects = new List<GameObject>();
     GameObject RenderedBackground;
 
     void Awake()
     {
-        //Assert
-        Debug.Assert(BottommostTerrainSprite.bounds.size.x == River.bounds.size.x && River.bounds.size.x == BlueHexSprite.bounds.size.x && BottommostTerrainSprite.bounds.size.y == River.bounds.size.y && River.bounds.size.y == BlueHexSprite.bounds.size.y);
-        for (byte i = 1; i < Terrains.Length; i++)
+        //Assert UNDONE
+        //Debug.Assert(BottommostTerrainSprite.bounds.size.x == River.bounds.size.x && River.bounds.size.x == BlueHexSprite.bounds.size.x && BottommostTerrainSprite.bounds.size.y == River.bounds.size.y && River.bounds.size.y == BlueHexSprite.bounds.size.y); //TODO Временно
+       
+		for (byte i = 1; i < Terrains.Length; ++i)
         {
             Debug.Assert(Terrains[i - 1].StartingHeight < Terrains[i].StartingHeight);
-            Debug.Assert(Terrains[i - 1].Sprite.bounds.size.x == Terrains[i].Sprite.bounds.size.x && Terrains[i - 1].Sprite.bounds.size.y == Terrains[i].Sprite.bounds.size.y);
+			for(byte j = 1; j < Terrains[i-1].Sprites.Length; ++j)
+				Debug.Assert(Terrains[i - 1].Sprites[j-1].bounds.size.x == Terrains[i-1].Sprites[j].bounds.size.x && Terrains[i - 1].Sprites[j-1].bounds.size.y == Terrains[i-1].Sprites[j].bounds.size.y);
         }
         //--
 
@@ -72,6 +79,7 @@ public class WorldVisualiser : MonoBehaviour
         RenderedHexes.ForEach(hex =>
         {
             hex.Trees.ForEach(tree => Destroy(tree));
+			Destroy(hex.RiverSprite);
             Destroy(hex.Hex);
         });
         RenderedHexes.Clear();
@@ -179,6 +187,9 @@ public class WorldVisualiser : MonoBehaviour
         ChooseHexSprite(hex.Hex, mapCoords, map);
         hex.Hex.GetComponent<SpriteRenderer>().sortingLayerName = "Landscape";//
 		StartCoroutine(RenderHelper.FadeIn(hex.Hex.GetComponent<Renderer>(),FadeInTime));
+		if(map.RiverMatrix[(int)mapCoords.y, (int)mapCoords.x])
+			MakeHexRiver(hex, mapCoords, map);
+				else
         MakeHexForest(hex, mapCoords, map);
     }
 
@@ -189,10 +200,6 @@ public class WorldVisualiser : MonoBehaviour
     /// <param name="mapCoords">Координаты в матрице.</param>
     void ChooseHexSprite(GameObject hex, Vector2 mapCoords, Map map) //UNDONE
     {
-        if (map.RiverMatrix[(int)mapCoords.y, (int)mapCoords.x])
-            hex.GetComponent<SpriteRenderer>().sprite = River;
-        else
-        {
             if (map.HeightMatrix[(int)mapCoords.y, (int)mapCoords.x] < Terrains[0].StartingHeight)
             {
                 hex.GetComponent<SpriteRenderer>().sprite = BottommostTerrainSprite;
@@ -201,13 +208,63 @@ public class WorldVisualiser : MonoBehaviour
             for (byte i = 1; i < Terrains.Length; i++)
                 if (map.HeightMatrix[(int)mapCoords.y, (int)mapCoords.x] >= Terrains[i - 1].StartingHeight && map.HeightMatrix[(int)mapCoords.y, (int)mapCoords.x] < Terrains[i].StartingHeight)
                 {
-                    hex.GetComponent<SpriteRenderer>().sprite = Terrains[i - 1].Sprite;
+			hex.GetComponent<SpriteRenderer>().sprite = Terrains[i - 1].Sprites[Random.Range(0,Terrains[i - 1].Sprites.Length)];
                     return;
                 }
             if (map.HeightMatrix[(int)mapCoords.y, (int)mapCoords.x] >= Terrains[Terrains.Length - 1].StartingHeight)
-                hex.GetComponent<SpriteRenderer>().sprite = Terrains[Terrains.Length - 1].Sprite;
-        }
+			hex.GetComponent<SpriteRenderer>().sprite = Terrains[Terrains.Length - 1].Sprites[Random.Range(0,Terrains[Terrains.Length - 1].Sprites.Length)];
     }
+
+	void MakeHexRiver(ListType hex, Vector2 mapCoords, Map map)
+	{
+			hex.RiverSprite=new GameObject();
+			hex.RiverSprite.transform.position=GetTransformPosFromMapCoords(mapCoords);
+			hex.RiverSprite.AddComponent<SpriteRenderer>();
+			hex.RiverSprite.GetComponent<SpriteRenderer>().sortingLayerName = "LandscapeObjects";
+			if(map.RiverMatrix[(int)World.GetBottomMapCoords(mapCoords).y, (int)World.GetBottomMapCoords(mapCoords).x]&&map.RiverMatrix[(int)World.GetTopMapCoords(mapCoords).y, (int)World.GetTopMapCoords(mapCoords).x])
+			{
+				hex.RiverSprite.GetComponent<SpriteRenderer>().sprite = RiverStraight;
+			}
+			else if(map.RiverMatrix[(int)World.GetBottomMapCoords(mapCoords).y, (int)World.GetBottomMapCoords(mapCoords).x]&&map.RiverMatrix[(int)World.GetTopRightMapCoords(mapCoords).y, (int)World.GetTopRightMapCoords(mapCoords).x])
+			{
+				hex.RiverSprite.GetComponent<SpriteRenderer>().sprite = RiverTurn;
+			}
+			else if(map.RiverMatrix[(int)World.GetBottomMapCoords(mapCoords).y, (int)World.GetBottomMapCoords(mapCoords).x]&&map.RiverMatrix[(int)World.GetTopLeftMapCoords(mapCoords).y, (int)World.GetTopLeftMapCoords(mapCoords).x])
+			{
+				hex.RiverSprite.GetComponent<SpriteRenderer>().sprite = RiverTurn;
+				hex.RiverSprite.transform.localScale=new Vector2(-1,1);
+			}
+			else if(map.RiverMatrix[(int)World.GetBottomLeftMapCoords(mapCoords).y, (int)World.GetBottomLeftMapCoords(mapCoords).x]&&map.RiverMatrix[(int)World.GetTopMapCoords(mapCoords).y, (int)World.GetTopMapCoords(mapCoords).x])
+			{
+				hex.RiverSprite.GetComponent<SpriteRenderer>().sprite = RiverTurn;
+				hex.RiverSprite.transform.Rotate(new Vector3(0,0,180));
+			}
+			else if(map.RiverMatrix[(int)World.GetBottomRightMapCoords(mapCoords).y, (int)World.GetBottomRightMapCoords(mapCoords).x]&&map.RiverMatrix[(int)World.GetTopMapCoords(mapCoords).y, (int)World.GetTopMapCoords(mapCoords).x])
+			{
+				hex.RiverSprite.GetComponent<SpriteRenderer>().sprite = RiverTurn;
+				hex.RiverSprite.transform.localScale=new Vector2(1,-1);
+			}
+			else if(map.RiverMatrix[(int)World.GetBottomRightMapCoords(mapCoords).y, (int)World.GetBottomRightMapCoords(mapCoords).x]&&map.RiverMatrix[(int)World.GetTopLeftMapCoords(mapCoords).y, (int)World.GetTopLeftMapCoords(mapCoords).x])
+			{
+				hex.RiverSprite.GetComponent<SpriteRenderer>().sprite = RiverStraight;
+				hex.RiverSprite.transform.Rotate(new Vector3(0,0,60));
+			}
+			else if(map.RiverMatrix[(int)World.GetBottomLeftMapCoords(mapCoords).y, (int)World.GetBottomLeftMapCoords(mapCoords).x]&&map.RiverMatrix[(int)World.GetTopRightMapCoords(mapCoords).y, (int)World.GetTopRightMapCoords(mapCoords).x])
+			{
+				hex.RiverSprite.GetComponent<SpriteRenderer>().sprite = RiverStraight;
+				hex.RiverSprite.transform.Rotate(new Vector3(0,0,-60));
+			}
+			else if(map.RiverMatrix[(int)World.GetBottomLeftMapCoords(mapCoords).y, (int)World.GetBottomLeftMapCoords(mapCoords).x]&&map.RiverMatrix[(int)World.GetBottomRightMapCoords(mapCoords).y, (int)World.GetBottomRightMapCoords(mapCoords).x])
+			{
+				hex.RiverSprite.GetComponent<SpriteRenderer>().sprite = RiverTurn;
+				hex.RiverSprite.transform.Rotate(new Vector3(0,0,-60));
+			}
+			else if(map.RiverMatrix[(int)World.GetTopLeftMapCoords(mapCoords).y, (int)World.GetTopLeftMapCoords(mapCoords).x]&&map.RiverMatrix[(int)World.GetTopRightMapCoords(mapCoords).y, (int)World.GetTopRightMapCoords(mapCoords).x])
+			{
+				hex.RiverSprite.GetComponent<SpriteRenderer>().sprite = RiverTurn;
+				hex.RiverSprite.transform.Rotate(new Vector3(0,0,120));
+			}
+	}
 
     /// <summary>
     /// Создаёт лес на хексе.
@@ -231,9 +288,13 @@ public class WorldVisualiser : MonoBehaviour
                         for (float x = 0; x < HexSpriteSize.x; x += gridStepX)
                         {
                             Vector2 v = new Vector2(Random.value * gridStepX, Random.value * gridStepY);
-						hex.Trees.Add(Instantiate(Tree, new Vector2(gridOrigin.x + x + v.x, gridOrigin.y + y + v.y), Quaternion.identity) as GameObject);
-                            hex.Trees[hex.Trees.Count - 1].GetComponent<SpriteRenderer>().sortingLayerName = "LandscapeObjects";//
-						StartCoroutine(RenderHelper.FadeIn(hex.Trees[hex.Trees.Count - 1].GetComponent<Renderer>(),FadeInTime));
+						GameObject tree=new GameObject();
+						hex.Trees.Add(tree); 
+						tree.transform.position=new Vector2(gridOrigin.x + x + v.x, gridOrigin.y + y + v.y);
+						tree.AddComponent<SpriteRenderer>();
+						tree.GetComponent<SpriteRenderer>().sortingLayerName = "LandscapeObjects";//
+						tree.GetComponent<SpriteRenderer>().sprite=TreeSprites[Random.Range(0,TreeSprites.Length)];
+						StartCoroutine(RenderHelper.FadeIn(tree.GetComponent<Renderer>(),FadeInTime));
                             --treesCount;
                         }
                 }
@@ -242,9 +303,13 @@ public class WorldVisualiser : MonoBehaviour
                     Vector2 v = Random.insideUnitCircle;
                     v.x *= HexSpriteSize.x * 0.5f;
                     v.y *= HexSpriteSize.y * 0.5f;
-					hex.Trees.Add(Instantiate(Tree, new Vector2(hex.Hex.transform.position.x + v.x, hex.Hex.transform.position.y + v.y), Quaternion.identity) as GameObject);
-                    hex.Trees[hex.Trees.Count - 1].GetComponent<SpriteRenderer>().sortingLayerName = "LandscapeObjects";//
-					StartCoroutine(RenderHelper.FadeIn(hex.Trees[hex.Trees.Count - 1].GetComponent<Renderer>(),FadeInTime));
+					GameObject tree=new GameObject();
+					hex.Trees.Add(tree);
+					tree.transform.position=new Vector2(hex.Hex.transform.position.x + v.x, hex.Hex.transform.position.y + v.y);
+					tree.AddComponent<SpriteRenderer>();
+					tree.GetComponent<SpriteRenderer>().sortingLayerName = "LandscapeObjects";//
+					tree.GetComponent<SpriteRenderer>().sprite=TreeSprites[Random.Range(0,TreeSprites.Length)];
+					StartCoroutine(RenderHelper.FadeIn(tree.GetComponent<Renderer>(),FadeInTime));
                     --treesCount;
                     if (treesCount == 0)
                         return;
@@ -252,6 +317,65 @@ public class WorldVisualiser : MonoBehaviour
             }
         }
     }
+
+	/*void RenderRivers(List<List<Vector2>> rivers)
+	{
+		foreach(List<Vector2> river in rivers)
+		{
+			GameObject riverPart=new GameObject();
+			RiverSprites.Add(riverPart);
+			riverPart.transform.position=GetTransformPosFromMapCoords(river[0]);
+			riverPart.AddComponent<SpriteRenderer>();
+			riverPart.GetComponent<SpriteRenderer>().sortingLayerName = "LandscapeObjects";
+			riverPart.GetComponent<SpriteRenderer>().sprite = RiverStart;
+			if(river[1]==World.GetTopMapCoords(river[0]))
+				riverPart.transform.Rotate(new Vector3(0,0,180));
+			else if(river[1]==World.GetTopRightMapCoords(river[0]))
+				riverPart.transform.Rotate(new Vector3(0,0,120));
+			else if(river[1]==World.GetBottomRightMapCoords(river[0]))
+				riverPart.transform.Rotate(new Vector3(0,0,60));
+			else if(river[1]==World.GetBottomLeftMapCoords(river[0]))
+				riverPart.transform.Rotate(new Vector3(0,0,-60));
+			else if(river[1]==World.GetTopLeftMapCoords(river[0]))
+				riverPart.transform.Rotate(new Vector3(0,0,-120));
+
+            for(ushort i=1;i<river.Count-1;++i)
+			{
+				riverPart=new GameObject();
+				RiverSprites.Add(riverPart);
+				riverPart.transform.position=GetTransformPosFromMapCoords(river[i]);
+				riverPart.AddComponent<SpriteRenderer>();
+				riverPart.GetComponent<SpriteRenderer>().sortingLayerName = "LandscapeObjects";
+				if(river[1]==World.GetTopMapCoords(river[0]))
+					riverPart.transform.Rotate(new Vector3(0,0,180));
+				else if(river[1]==World.GetTopRightMapCoords(river[0]))
+					riverPart.transform.Rotate(new Vector3(0,0,120));
+				else if(river[1]==World.GetBottomRightMapCoords(river[0]))
+					riverPart.transform.Rotate(new Vector3(0,0,60));
+				else if(river[1]==World.GetBottomLeftMapCoords(river[0]))
+                    riverPart.transform.Rotate(new Vector3(0,0,-60));
+                else if(river[1]==World.GetTopLeftMapCoords(river[0]))
+                    riverPart.transform.Rotate(new Vector3(0,0,-120));
+			}
+
+			riverPart=new GameObject();
+			RiverSprites.Add(riverPart);
+			riverPart.transform.position=GetTransformPosFromMapCoords(river[river.Count-1]);
+			riverPart.AddComponent<SpriteRenderer>();
+			riverPart.GetComponent<SpriteRenderer>().sortingLayerName = "LandscapeObjects";
+			riverPart.GetComponent<SpriteRenderer>().sprite = RiverEnd;
+			if(river[river.Count-2]==World.GetTopMapCoords(river[river.Count-1]))
+				riverPart.transform.Rotate(new Vector3(0,0,180));
+			else if(river[river.Count-2]==World.GetTopRightMapCoords(river[river.Count-1]))
+				riverPart.transform.Rotate(new Vector3(0,0,120));
+			else if(river[river.Count-2]==World.GetBottomRightMapCoords(river[river.Count-1]))
+				riverPart.transform.Rotate(new Vector3(0,0,60));
+			else if(river[river.Count-2]==World.GetBottomLeftMapCoords(river[river.Count-1]))
+				riverPart.transform.Rotate(new Vector3(0,0,-60));
+			else if(river[river.Count-2]==World.GetTopLeftMapCoords(river[river.Count-1]))
+                riverPart.transform.Rotate(new Vector3(0,0,-120));
+		}
+	}*/
 
     /// <summary>
     /// Выводит хексы карты на сцену.
@@ -275,7 +399,7 @@ public class WorldVisualiser : MonoBehaviour
 
     public void RenderLocalMap()
     {
-		RenderedBackground = Instantiate(Background, new Vector2(Background.GetComponent<SpriteRenderer>().sprite.bounds.extents.x - HexSpriteSize.x / 2 - LocalMapBackgroundOffset.x, Background.GetComponent<SpriteRenderer>().sprite.bounds.extents.y - HexSpriteSize.y / 2 - LocalMapBackgroundOffset.y), Quaternion.identity) as GameObject;
+		RenderedBackground = Instantiate(Background, new Vector2(Background.GetComponent<SpriteRenderer>().sprite.bounds.extents.x*Background.transform.localScale.x - HexSpriteSize.x / 2 - LocalMapBackgroundOffset.x, Background.GetComponent<SpriteRenderer>().sprite.bounds.extents.y*Background.transform.localScale.y - HexSpriteSize.y / 2 - LocalMapBackgroundOffset.y), Quaternion.identity) as GameObject;
         RenderedBackground.GetComponent<SpriteRenderer>().sortingLayerName = "Background";
 
         RenderedHexes.Capacity = (int)(GetComponent<World>().LocalMapSize.y * GetComponent<World>().LocalMapSize.x);

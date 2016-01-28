@@ -72,15 +72,22 @@ public class WorldGenerator : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Создаёт реки.
-    /// </summary>
-    /// <param name="heightMatrix">Карта высот.</param>
-    /// <param name="matrix">[out] Карта рек.</param>
-    public void CreateRivers(float[,] heightMatrix, bool[,] matrix)
+    // <summary>
+    // Создаёт реки.
+    // </summary>
+    // <param name="heightMatrix">Карта высот.</param>
+    // <param name="matrix">[out] Карта рек.</param>
+
+	/// <summary>
+	/// Создаёт реки.
+	/// </summary>
+	/// <returns>Список рек.</returns>
+	/// <param name="heightMatrix">Карта высот.</param>
+	/// <param name="riverMatrix">[out] Карта рек.</param>
+	public /*List<List<Vector2>>*/void CreateRivers(float[,] heightMatrix, bool[,] riverMatrix)
     {
-        ushort height = (ushort)matrix.GetLength(0);
-        ushort width = (ushort)matrix.GetLength(1);
+		ushort height = (ushort)riverMatrix.GetLength(0);
+		ushort width = (ushort)riverMatrix.GetLength(1);
 
         double avg = 0;
         foreach (float h in heightMatrix)
@@ -88,25 +95,29 @@ public class WorldGenerator : MonoBehaviour
         avg /= height * width;
         float minRiverHeight = (float)avg * RiversParam.Height;
 
+		//List<List<Vector2>> rivers=new List<List<Vector2>>();
+
         for (byte i = 0; i < RiversParam.Count; ++i)
         {
             bool riverCreated = false;
             for (ushort y = 1; y < height - 1 && !riverCreated; ++y)
                 for (ushort x = 1; x < width - 1 && !riverCreated; ++x)
-                    if (heightMatrix[y, x] > minRiverHeight && !matrix[y, x] && RiverNeighbours(y, x, matrix) == 0) //Проверяем, можно ли нам начать создание реки с этого хекса
+					if (heightMatrix[y, x] > minRiverHeight && !riverMatrix[y, x] && RiverNeighbours(y, x, riverMatrix) == 0) //Проверяем, можно ли нам начать создание реки с этого хекса
                         for (byte k = 0; k < RiversParam.Attempts && !riverCreated; ++k)
                         {
                             RiverStack.Push(new Vector2(x, y));
-                            DirectRiver(y, x, heightMatrix, matrix); //Запускаем рекурсию
+						DirectRiver(y, x, heightMatrix, riverMatrix); //Запускаем рекурсию
                             if (RiverStack.Count >= RiversParam.MinimumLength)
                             { //Если река получилась больше необходим длины, то помечаем ячейки матрицы, иначе пробуем ещё раз 
                                 foreach (Vector2 hex in RiverStack)
-                                    matrix[(int)hex.y, (int)hex.x] = true;
+								riverMatrix[(int)hex.y, (int)hex.x] = true;
                                 riverCreated = true;
+							//rivers.Add(new List<Vector2>(RiverStack));
                             }
                             RiverStack.Clear();
                         }
         }
+		//return rivers;
     }
 
     enum Direction

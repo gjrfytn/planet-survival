@@ -21,7 +21,7 @@ public sealed class Player : Creature
 
     public float CurrentEnergy = 100; // Энергия (в данный момент)
     public float CurrentStamina = 1000; // Выносливость (сколько в данный момент)
-    public float CurrentHungreed = 500; // Голод (в данный момент)
+    public float CurrentHunger= 500; // Голод (в данный момент)
 
     [Header("Дальность обзора")]
     public byte ViewDistance;
@@ -49,6 +49,9 @@ public sealed class Player : Creature
     {
         base.Update();
 
+		if(Moving)//TODO Возможно, временно
+			EventManager.OnPlayerObjectMoved();
+
         if (Health <= 0)
         {
             //Health=0;
@@ -64,14 +67,14 @@ public sealed class Player : Creature
         }
         if (HungerTime < 0)
         { //Если HungerTime меньше нуля
-            CurrentHungreed -= 1; // Отбавляем еду
+			CurrentHunger -= 1; // Отбавляем еду
             HungerTime = HungerTimeSet; //Повторяем всё выше написанное
         }
-        if (CurrentHungreed == -1)
+		if (CurrentHunger == -1)
         { //Если еда равна -1
-            CurrentHungreed = 0; // Задаём значение 0
+			CurrentHunger = 0; // Задаём значение 0
         }
-        if (CurrentHungreed <= 0)
+		if (CurrentHunger <= 0)
         { //Если еда меньше или равна 0
             CurrentEnergy -= 0.0025f; // Отнимаем здоровье
         }

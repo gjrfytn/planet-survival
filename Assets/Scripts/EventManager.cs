@@ -1,43 +1,50 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class EventManager : MonoBehaviour
+public static class EventManager
 {
-    public delegate void VoidDelegate();
+	public delegate void VoidDelegate();
 
-    public event VoidDelegate UIShowed = delegate { };
-    public event VoidDelegate UIHided = delegate { };
+	public static event VoidDelegate UIShowed = delegate { };
+	public static event VoidDelegate UIHided = delegate { };
 
-    public void OnUIShow()
+	public static void OnUIShow()
     {
         UIShowed();
     }
 
-    public void OnUIHide()
+	public static void OnUIHide()
     {
         UIHided();
     }
 
-    public event VoidDelegate TurnMade = delegate { };
+	public static event VoidDelegate TurnMade = delegate { };
 
-    public void OnTurn()
+	public static void OnTurn()
     {
         TurnMade();
     }
 
-    public event VoidDelegate LocalMapLeft = delegate { };
+	public static event VoidDelegate LocalMapLeft = delegate { };
 
-    public void OnLocalMapLeave()
+	public static void OnLocalMapLeave()
     {
         LocalMapLeft();
     }
 
     public delegate void TwoVectorDelegate(Vector2 from, Vector2 to);
 
-    public event TwoVectorDelegate CreatureMoved = delegate { }; //TODO Возможно, это событие будет ненужно потом.
+	public static event TwoVectorDelegate CreatureMoved = delegate { }; //TODO Возможно, это событие будет ненужно потом.
 
-    public void OnCreatureMove(Vector2 from, Vector2 to)
+	public static void OnCreatureMove(Vector2 from, Vector2 to)
     {
         CreatureMoved(from, to);
     }
+
+	public static event VoidDelegate PlayerObjectMoved=delegate{};
+
+	public static void OnPlayerObjectMoved()
+	{
+		PlayerObjectMoved();
+	}
 }
