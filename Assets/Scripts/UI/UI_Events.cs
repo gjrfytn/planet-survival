@@ -3,13 +3,13 @@ using System.Collections;
 
 public class UI_Events : MonoBehaviour
 {
-	void OnEnable ()
-	{
-		EventManager.OnUIShow ();
-	}
+    void OnEnable()
+    {
+        EventManager.OnUIShow();
+    }
 
-	void OnDisable ()
-	{
-		EventManager.OnUIHide ();
-	}
+    void OnDisable()
+    {
+        EventManager.OnUIHide();
+    }
 }

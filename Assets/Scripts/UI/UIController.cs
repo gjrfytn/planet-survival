@@ -5,6 +5,8 @@ using UnityEngine.UI;
 public class UIController : MonoBehaviour 
 {
 	bool SoundMuted;
+	private AudioClip Clip;
+	
 
 	public void TogglePanel (GameObject panel) 
 	{
@@ -17,9 +19,20 @@ public class UIController : MonoBehaviour
 		AudioListener.volume =  SoundMuted ? 0 : soundScrollbar.GetComponent<Scrollbar>().value;
 	}
 
+	public void OnExitButtonClick (GameObject button)
+	{
+		Application.Quit();
+	}
+
 	public void OnStartGameButtonClick (GameObject button) 
 	{	
-		Application.LoadLevel(1);	
+		Application.LoadLevel("Game");	
+	}
+
+
+	public void BackToMenuButtonClick (GameObject button) 
+	{	
+		Application.LoadLevel("Menu");	
 	}
 
 	public void OnSoundScrollbarScroll (GameObject soundScrollbar)
@@ -27,4 +40,9 @@ public class UIController : MonoBehaviour
 		if(!SoundMuted)
 			AudioListener.volume =  soundScrollbar.GetComponent<Scrollbar>().value;
 	}
+
+
 }
+
+
+

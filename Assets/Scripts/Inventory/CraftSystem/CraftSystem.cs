@@ -42,31 +42,31 @@ public class CraftSystem : MonoBehaviour
     // Use this for initialization
     void Start()
     {
-        blueprintDatabase = (BlueprintDatabase)Resources.Load("BlueprintDatabase");
+		blueprintDatabase = (BlueprintDatabase)Resources.Load("Inventory/BlueprintDatabase");
         //playerStatsScript = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerScript>();
     }
 
 #if UNITY_EDITOR
-    [MenuItem("Inventory System/Create/Craft System")]
+	[MenuItem("Game Modules/Inventory Module/Create/Craft System")]
     public static void menuItemCreateInventory()
     {
 		GameObject Canvas = GameObject.FindGameObjectWithTag("Canvas");
 		if (Canvas == null)
 		{
 			GameObject inventory = new GameObject();
-			inventory.name = "Inventories";
-			Canvas = Instantiate(Resources.Load("Prefabs/Canvas - Inventory"))as GameObject;
+			inventory.name = "Inventory";
+			Canvas = Instantiate(Resources.Load("Prefabs/Inventory/Canvas - Inventory"))as GameObject;
 			Canvas.transform.SetParent(inventory.transform, true);
-			Instantiate(Resources.Load("Prefabs/EventSystem"));
+			Instantiate(Resources.Load("Prefabs/Inventory/EventSystem"));
 		}
 		else
 			DestroyImmediate(GameObject.FindGameObjectWithTag("DraggingItem"));
 
-		GameObject panel = Instantiate(Resources.Load("Prefabs/Panel - CraftSytem")) as GameObject;
+		GameObject panel = Instantiate(Resources.Load("Prefabs/Inventory/Panel - CraftSytem")) as GameObject;
 		panel.transform.SetParent(Canvas.transform, true);
 		panel.GetComponent<RectTransform>().localPosition = new Vector3(0, 0, 0);
 		panel.AddComponent<CraftSystem>();
-		GameObject draggingItem = Instantiate(Resources.Load("Prefabs/DraggingItem")) as GameObject;
+		GameObject draggingItem = Instantiate(Resources.Load("Prefabs/Inventory/DraggingItem")) as GameObject;
 		draggingItem.transform.SetParent(Canvas.transform, true);
 	}
 	#endif

@@ -14,7 +14,7 @@ public class CreateItemDatabase
     {
         asset = ScriptableObject.CreateInstance<ItemDataBaseList>();  
 
-        AssetDatabase.CreateAsset(asset, "Assets/InventoryMaster/Resources/ItemDatabase.asset");   
+        AssetDatabase.CreateAsset(asset, "Assets/Resources/Inventory/ItemDatabase.asset");   
         AssetDatabase.SaveAssets();            
         asset.itemList.Add(new Item());
         return asset;

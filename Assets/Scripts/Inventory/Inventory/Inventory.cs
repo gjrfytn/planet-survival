@@ -96,11 +96,11 @@ public class Inventory : MonoBehaviour
     void Start()
     {
         if (transform.GetComponent<Hotbar>() == null)
-            this.gameObject.SetActive(false);
+            this.gameObject.SetActive(true);
 
         updateItemList();
 
-        inputManagerDatabase = (InputManager)Resources.Load("InputManager");
+		inputManagerDatabase = (InputManager)Resources.Load("Inventory/InputManager");
     }
 
     public void sortItems()
@@ -206,7 +206,7 @@ public class Inventory : MonoBehaviour
     }
 
 #if UNITY_EDITOR
-    [MenuItem("Inventory System/Create/Inventory and Storage")]   
+	[MenuItem("Game Modules/Inventory Module/Create/Inventory and Storage")]   
     public static void menuItemCreateInventory()  
     {
 		GameObject Canvas = GameObject.FindGameObjectWithTag("Canvas");
@@ -214,16 +214,16 @@ public class Inventory : MonoBehaviour
         {
             GameObject inventory = new GameObject();
             inventory.name = "Inventories";
-            Canvas = (GameObject)Instantiate(Resources.Load("Prefabs/Canvas - Inventory") as GameObject);
+			Canvas = (GameObject)Instantiate(Resources.Load("Prefabs/Inventory/Canvas - Inventory") as GameObject);
             Canvas.transform.SetParent(inventory.transform, true);          
-            Instantiate(Resources.Load("Prefabs/EventSystem"));
+			Instantiate(Resources.Load("Prefabs/Inventory/EventSystem"));
         }
         else
             DestroyImmediate(GameObject.FindGameObjectWithTag("DraggingItem"));
 
-		GameObject draggingItem = Instantiate(Resources.Load("Prefabs/DraggingItem"))as GameObject;
+		GameObject draggingItem = Instantiate(Resources.Load("Prefabs/Inventory/DraggingItem"))as GameObject;
 		draggingItem.transform.SetParent(Canvas.transform, true);
-		GameObject panel = Instantiate(Resources.Load("Prefabs/Panel - Inventory")) as GameObject;
+		GameObject panel = Instantiate(Resources.Load("Prefabs/Inventory/Panel - Inventory")) as GameObject;
 		panel.transform.SetParent(Canvas.transform, true);
 		panel.GetComponent<RectTransform>().localPosition = new Vector3(0, 0, 0);
 		panel.AddComponent<InventoryDesign>();
@@ -243,19 +243,19 @@ public class Inventory : MonoBehaviour
     public void getPrefabs()
     {
         if (prefabCanvasWithPanel == null)
-            prefabCanvasWithPanel = Resources.Load("Prefabs/Canvas - Inventory") as GameObject;
+			prefabCanvasWithPanel = Resources.Load("Prefabs/Inventory/Canvas - Inventory") as GameObject;
         if (prefabSlot == null)
-            prefabSlot = Resources.Load("Prefabs/Slot - Inventory") as GameObject;
+			prefabSlot = Resources.Load("Prefabs/Inventory/Slot - Inventory") as GameObject;
         if (prefabSlotContainer == null)
-            prefabSlotContainer = Resources.Load("Prefabs/Slots - Inventory") as GameObject;
+			prefabSlotContainer = Resources.Load("Prefabs/Inventory/Slots - Inventory") as GameObject;
         if (prefabItem == null)
-            prefabItem = Resources.Load("Prefabs/Item") as GameObject;
+			prefabItem = Resources.Load("Prefabs/Inventory/Item") as GameObject;
         if (itemDatabase == null)
-            itemDatabase = (ItemDataBaseList)Resources.Load("ItemDatabase");
+            itemDatabase = (ItemDataBaseList)Resources.Load("Inventory/ItemDatabase");
         if (prefabDraggingItemContainer == null)
-            prefabDraggingItemContainer = Resources.Load("Prefabs/DraggingItem") as GameObject;
+			prefabDraggingItemContainer = Resources.Load("Prefabs/Inventory/DraggingItem") as GameObject;
         if (prefabPanel == null)
-            prefabPanel = Resources.Load("Prefabs/Panel - Inventory") as GameObject;
+			prefabPanel = Resources.Load("Prefabs/Inventory/Panel - Inventory") as GameObject;
 
         setImportantVariables();
         setDefaultSettings();
@@ -360,7 +360,7 @@ public class Inventory : MonoBehaviour
     public void updateSlotAmount(int width, int height)
     {
         if (prefabSlot == null)
-            prefabSlot = Resources.Load("Prefabs/Slot - Inventory") as GameObject;
+			prefabSlot = Resources.Load("Prefabs/Inventory/Slot - Inventory") as GameObject;
 
         if (SlotContainer == null)
         {
@@ -423,7 +423,7 @@ public class Inventory : MonoBehaviour
     {
 
         if (prefabSlot == null)
-            prefabSlot = Resources.Load("Prefabs/Slot - Inventory") as GameObject;
+			prefabSlot = Resources.Load("Prefabs/Inventory/Slot - Inventory") as GameObject;
 
         if (SlotContainer == null)
         {
@@ -609,7 +609,7 @@ public class Inventory : MonoBehaviour
                 item.transform.GetChild(0).GetComponent<Image>().sprite = itemOnObject.item.itemIcon;
                 itemOnObject.item.indexItemInList = ItemsInInventory.Count - 1;
                 if (inputManagerDatabase == null)
-                    inputManagerDatabase = (InputManager)Resources.Load("InputManager");
+					inputManagerDatabase = (InputManager)Resources.Load("Inventory/InputManager");
                 return item;
             }
         }
@@ -638,7 +638,7 @@ public class Inventory : MonoBehaviour
                 item.GetComponent<RectTransform>().localPosition = Vector3.zero;
                 itemOnObject.item.indexItemInList = 999;
                 if (inputManagerDatabase == null)
-                    inputManagerDatabase = (InputManager)Resources.Load("InputManager");
+					inputManagerDatabase = (InputManager)Resources.Load("Inventory/InputManager");
                 updateItemSize();
                 stackableSettings();
                 break;
@@ -798,7 +798,7 @@ public class Inventory : MonoBehaviour
 
     
 
-	public void deleteItemFromInventory(Item item) //Нужна ли вообще эта функция?
+	public void deleteItemFromInventory(Item item)
     {
 		ItemsInInventory.Remove(item);
     }

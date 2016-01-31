@@ -19,7 +19,7 @@ public class ConsumeItem : MonoBehaviour, IPointerDownHandler
         if (GameObject.FindGameObjectWithTag("Tooltip") != null)
             tooltip = GameObject.FindGameObjectWithTag("Tooltip").GetComponent<Tooltip>();
         if (GameObject.FindGameObjectWithTag("EquipmentSystem") != null)
-            eS = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerInventory>().characterSystem.GetComponent<EquipmentSystem>();
+			eS = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerInventory>().characterSystem.GetComponent<EquipmentSystem>();
 
         if (GameObject.FindGameObjectWithTag("MainInventory") != null)
             mainInventory = GameObject.FindGameObjectWithTag("MainInventory");
@@ -183,7 +183,7 @@ public class ConsumeItem : MonoBehaviour, IPointerDownHandler
         bool gearable = false;
 
         if (GameObject.FindGameObjectWithTag("EquipmentSystem") != null)
-            eS = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerInventory>().characterSystem.GetComponent<EquipmentSystem>();
+			eS = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerInventory>().characterSystem.GetComponent<EquipmentSystem>();
 
         if (eS != null)
             itemTypeOfSlot = eS.itemTypeOfSlots;

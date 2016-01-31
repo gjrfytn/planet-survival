@@ -39,7 +39,7 @@ public class StorageInventoryEditor : Editor
     {
         inv.setImportantVariables();
         EditorGUILayout.BeginHorizontal();                                                             
-        ItemDataBaseList inventoryItemList = (ItemDataBaseList)Resources.Load("ItemDatabase");            
+		ItemDataBaseList inventoryItemList = (ItemDataBaseList)Resources.Load("Inventory/ItemDatabase");            
         string[] items = new string[inventoryItemList.itemList.Count];                      
         for (int i = 1; i < items.Length; i++)                         
         {

@@ -78,16 +78,16 @@ public class WorldGenerator : MonoBehaviour
     // <param name="heightMatrix">Карта высот.</param>
     // <param name="matrix">[out] Карта рек.</param>
 
-	/// <summary>
-	/// Создаёт реки.
-	/// </summary>
-	/// <returns>Список рек.</returns>
-	/// <param name="heightMatrix">Карта высот.</param>
-	/// <param name="riverMatrix">[out] Карта рек.</param>
-	public /*List<List<Vector2>>*/void CreateRivers(float[,] heightMatrix, bool[,] riverMatrix)
+    /// <summary>
+    /// Создаёт реки.
+    /// </summary>
+    /// <returns>Список рек.</returns>
+    /// <param name="heightMatrix">Карта высот.</param>
+    /// <param name="riverMatrix">[out] Карта рек.</param>
+    public List<List<Vector2>> CreateRivers(float[,] heightMatrix, bool[,] riverMatrix)
     {
-		ushort height = (ushort)riverMatrix.GetLength(0);
-		ushort width = (ushort)riverMatrix.GetLength(1);
+        ushort height = (ushort)riverMatrix.GetLength(0);
+        ushort width = (ushort)riverMatrix.GetLength(1);
 
         double avg = 0;
         foreach (float h in heightMatrix)
@@ -95,29 +95,29 @@ public class WorldGenerator : MonoBehaviour
         avg /= height * width;
         float minRiverHeight = (float)avg * RiversParam.Height;
 
-		//List<List<Vector2>> rivers=new List<List<Vector2>>();
+        List<List<Vector2>> rivers = new List<List<Vector2>>();
 
         for (byte i = 0; i < RiversParam.Count; ++i)
         {
             bool riverCreated = false;
-            for (ushort y = 1; y < height - 1 && !riverCreated; ++y)
-                for (ushort x = 1; x < width - 1 && !riverCreated; ++x)
-					if (heightMatrix[y, x] > minRiverHeight && !riverMatrix[y, x] && RiverNeighbours(y, x, riverMatrix) == 0) //Проверяем, можно ли нам начать создание реки с этого хекса
+            for (ushort y = 1; y < height - 1 && !riverCreated; ++y) //TODO
+                for (ushort x = 1; x < width - 1 && !riverCreated; ++x) //TODO
+                    if (heightMatrix[y, x] > minRiverHeight && !riverMatrix[y, x] && RiverNeighbours(y, x, riverMatrix) == 0) //Проверяем, можно ли нам начать создание реки с этого хекса
                         for (byte k = 0; k < RiversParam.Attempts && !riverCreated; ++k)
                         {
                             RiverStack.Push(new Vector2(x, y));
-						DirectRiver(y, x, heightMatrix, riverMatrix); //Запускаем рекурсию
+                            DirectRiver(y, x, heightMatrix, riverMatrix); //Запускаем рекурсию
                             if (RiverStack.Count >= RiversParam.MinimumLength)
                             { //Если река получилась больше необходим длины, то помечаем ячейки матрицы, иначе пробуем ещё раз 
                                 foreach (Vector2 hex in RiverStack)
-								riverMatrix[(int)hex.y, (int)hex.x] = true;
+                                    riverMatrix[(int)hex.y, (int)hex.x] = true;
                                 riverCreated = true;
-							//rivers.Add(new List<Vector2>(RiverStack));
+                                rivers.Add(new List<Vector2>(RiverStack));
                             }
                             RiverStack.Clear();
                         }
         }
-		//return rivers;
+        return rivers;
     }
 
     enum Direction
@@ -152,7 +152,7 @@ public class WorldGenerator : MonoBehaviour
             {
                 switch (Random.Range(0, 7))
                 { //Выбираем случайное направление
-                    case (int)Direction.TOP_LEFT:
+                    case (int)Direction.BOTTOM_LEFT:
                         if (heightMatrix[y - 1 + k, x - 1] * RiversParam.FlowHeightKoef <= heightMatrix[y, x] && !matrix[y - 1 + k, x - 1] && RiverNeighbours((ushort)(y - 1 + k), (ushort)(x - 1), matrix) < 2)
                         {
                             RiverStack.Push(new Vector2(x - 1, y - 1 + k));
@@ -161,7 +161,7 @@ public class WorldGenerator : MonoBehaviour
                         }
                         limiter++;
                         break;
-                    case (int)Direction.BOTTOM_LEFT:
+                    case (int)Direction.TOP_LEFT:
                         if (heightMatrix[y + k, x - 1] * RiversParam.FlowHeightKoef <= heightMatrix[y, x] && !matrix[y + k, x - 1] && RiverNeighbours((ushort)(y + k), (ushort)(x - 1), matrix) < 2)
                         {
                             RiverStack.Push(new Vector2(x - 1, y + k));
@@ -170,7 +170,7 @@ public class WorldGenerator : MonoBehaviour
                         }
                         limiter++;
                         break;
-                    case (int)Direction.TOP:
+                    case (int)Direction.BOTTOM:
                         if (heightMatrix[y - 1, x] * RiversParam.FlowHeightKoef <= heightMatrix[y, x] && !matrix[y - 1, x] && RiverNeighbours((ushort)(y - 1), x, matrix) < 2)
                         {
                             RiverStack.Push(new Vector2(x, y - 1));
@@ -179,8 +179,8 @@ public class WorldGenerator : MonoBehaviour
                         }
                         limiter++;
                         break;
-                    case (int)Direction.BOTTOM:
-                        if (heightMatrix[y + 1, x] * RiversParam.FlowHeightKoef <= heightMatrix[y, x] && !matrix[y + 1, x] && RiverNeighbours((ushort)(y - 1), x, matrix) < 2)
+                    case (int)Direction.TOP:
+                        if (heightMatrix[y + 1, x] * RiversParam.FlowHeightKoef <= heightMatrix[y, x] && !matrix[y + 1, x] && RiverNeighbours((ushort)(y + 1), x, matrix) < 2)
                         {
                             RiverStack.Push(new Vector2(x, y + 1));
                             DirectRiver((ushort)(y + 1), x, heightMatrix, matrix);
@@ -188,7 +188,7 @@ public class WorldGenerator : MonoBehaviour
                         }
                         limiter++;
                         break;
-                    case (int)Direction.TOP_RIGHT:
+                    case (int)Direction.BOTTOM_RIGHT:
                         if (heightMatrix[y - 1 + k, x + 1] * RiversParam.FlowHeightKoef <= heightMatrix[y, x] && !matrix[y - 1 + k, x + 1] && RiverNeighbours((ushort)(y - 1 + k), (ushort)(x + 1), matrix) < 2)
                         {
                             RiverStack.Push(new Vector2(x + 1, y - 1 + k));
@@ -197,7 +197,7 @@ public class WorldGenerator : MonoBehaviour
                         }
                         limiter++;
                         break;
-                    case (int)Direction.BOTTOM_RIGHT:
+                    case (int)Direction.TOP_RIGHT:
                         if (heightMatrix[y + k, x + 1] * RiversParam.FlowHeightKoef <= heightMatrix[y, x] && !matrix[y + k, x + 1] && RiverNeighbours((ushort)(y + k), (ushort)(x + 1), matrix) < 2)
                         {
                             RiverStack.Push(new Vector2(x + 1, y + k));

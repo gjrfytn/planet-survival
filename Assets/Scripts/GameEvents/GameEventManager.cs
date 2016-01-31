@@ -87,7 +87,7 @@ public class GameEventManager : MonoBehaviour
                     resultLst.Remove(result);
             }
         }
-		Debug.Log(ParseResultDescription(result.Description));
+        Debug.Log(ParseResultDescription(result.Description));
         EventPanel.SetActive(false);
         CurrentEvent = null;
     }
@@ -151,78 +151,78 @@ public class GameEventManager : MonoBehaviour
             throw new IOException("File with events do not exist.");
     }
 
-	string ParseEventDescription(string description)
-	{
-		string parsedDesc=description;
-		for(ushort i=0;i<parsedDesc.Length;++i)
-			if(parsedDesc[i]=='<')
-			{
-			string tag=string.Empty;
-			byte j;
-			for(j=1;parsedDesc[i+j]!='>';++j)
-				tag+=parsedDesc[i+j];
-			parsedDesc=parsedDesc.Remove(i,j+1);
-			if(tag.EndsWith("!"))
-			{
-				tag=tag.Remove(tag.Length-1);
-				//TODO Поиск по Dictionary.
-				parsedDesc=parsedDesc.Insert(i,"Замена "+tag);
-                i+=(ushort)("Замена "+tag).Length;
-			}
-            else
+    string ParseEventDescription(string description)
+    {
+        string parsedDesc = description;
+        for (ushort i = 0; i < parsedDesc.Length; ++i)
+            if (parsedDesc[i] == '<')
             {
-			parsedDesc=parsedDesc.Insert(i,"Удаление "+tag);
-            i+=(ushort)("Удаление "+tag).Length;
+                string tag = string.Empty;
+                byte j;
+                for (j = 1; parsedDesc[i + j] != '>'; ++j)
+                    tag += parsedDesc[i + j];
+                parsedDesc = parsedDesc.Remove(i, j + 1);
+                if (tag.EndsWith("!"))
+                {
+                    tag = tag.Remove(tag.Length - 1);
+                    //TODO Поиск по Dictionary.
+                    parsedDesc = parsedDesc.Insert(i, "Замена " + tag);
+                    i += (ushort)("Замена " + tag).Length;
+                }
+                else
+                {
+                    parsedDesc = parsedDesc.Insert(i, "Удаление " + tag);
+                    i += (ushort)("Удаление " + tag).Length;
+                }
+                //TODO Применение эффекта.
             }
-			//TODO Применение эффекта.
-			}
-		return parsedDesc;
-	}
+        return parsedDesc;
+    }
 
-	string ParseResultDescription(string description)
-	{
-		string parsedDesc=description;
-		for(ushort i=0;i<parsedDesc.Length;++i)
-			if(parsedDesc[i]=='<')
-			{
-			string tag=string.Empty;
-			//float value;
-			byte j;
-			for(j=1;parsedDesc[i+j]!='>';++j)
-			{
-				/*if(parsedDesc[i+j]=='=')
-				{
-					string strValue=string.Empty;
-					for(++j;parsedDesc[i+j]!='>';++j)
-					{
-						if(parsedDesc[i+j]=='!')
-						{
-							tag+=parsedDesc[i+j];
-							++j;
-							break;
-						}
-						strValue+=parsedDesc[i+j];
-					}
-					value=float.Parse(strValue);
-					break;
-				}*/
-				tag+=parsedDesc[i+j];
-			}
-			parsedDesc=parsedDesc.Remove(i,j+1);
-			if(tag.EndsWith("!"))
-			{
-				tag=tag.Remove(tag.Length-1);
-				//TODO Поиск по Dictionary.
-				parsedDesc=parsedDesc.Insert(i,"Замена "+tag);
-                i+=(ushort)("Замена "+tag).Length;
-			}
-            else
+    string ParseResultDescription(string description)
+    {
+        string parsedDesc = description;
+        for (ushort i = 0; i < parsedDesc.Length; ++i)
+            if (parsedDesc[i] == '<')
             {
-			parsedDesc=parsedDesc.Insert(i,"Удаление "+tag);
-                i+=(ushort)("Удаление "+tag).Length;
+                string tag = string.Empty;
+                //float value;
+                byte j;
+                for (j = 1; parsedDesc[i + j] != '>'; ++j)
+                {
+                    /*if(parsedDesc[i+j]=='=')
+                    {
+                        string strValue=string.Empty;
+                        for(++j;parsedDesc[i+j]!='>';++j)
+                        {
+                            if(parsedDesc[i+j]=='!')
+                            {
+                                tag+=parsedDesc[i+j];
+                                ++j;
+                                break;
+                            }
+                            strValue+=parsedDesc[i+j];
+                        }
+                        value=float.Parse(strValue);
+                        break;
+                    }*/
+                    tag += parsedDesc[i + j];
+                }
+                parsedDesc = parsedDesc.Remove(i, j + 1);
+                if (tag.EndsWith("!"))
+                {
+                    tag = tag.Remove(tag.Length - 1);
+                    //TODO Поиск по Dictionary.
+                    parsedDesc = parsedDesc.Insert(i, "Замена " + tag);
+                    i += (ushort)("Замена " + tag).Length;
+                }
+                else
+                {
+                    parsedDesc = parsedDesc.Insert(i, "Удаление " + tag);
+                    i += (ushort)("Удаление " + tag).Length;
+                }
+                //TODO Применение эффекта.
             }
-			//TODO Применение эффекта.
-			}
-		return parsedDesc;
-	}
+        return parsedDesc;
+    }
 }

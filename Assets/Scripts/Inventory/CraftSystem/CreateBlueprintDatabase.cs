@@ -14,7 +14,7 @@ public class CreateBlueprintDatabase
     {
         asset = ScriptableObject.CreateInstance<BlueprintDatabase>();
 
-        AssetDatabase.CreateAsset(asset, "Assets/InventoryMaster/Resources/BlueprintDatabase.asset");
+        AssetDatabase.CreateAsset(asset, "Assets/Resources/Inventory/BlueprintDatabase.asset");
         AssetDatabase.SaveAssets();                                                       
         asset.blueprints.Add(new Blueprint());
         return asset;

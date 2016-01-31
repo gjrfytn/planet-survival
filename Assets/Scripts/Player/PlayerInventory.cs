@@ -191,10 +191,10 @@ public class PlayerInventory : MonoBehaviour
 				PlayerChars.MaxHealth += item.itemAttributes[i].attributeValue;
 			if (item.itemAttributes[i].attributeName == "Energy")
 				PlayerChars.MaxEnergy += item.itemAttributes[i].attributeValue;
-			//if (item.itemAttributes[i].attributeName == "Armor")
-			//	PlayerChars.maxArmor += item.itemAttributes[i].attributeValue;
-			//if (item.itemAttributes[i].attributeName == "Damage")
-			//	PlayerChars.maxDamage += item.itemAttributes[i].attributeValue;
+			if (item.itemAttributes[i].attributeName == "Armor")
+				PlayerChars.Armor += item.itemAttributes[i].attributeValue;
+			if (item.itemAttributes[i].attributeName == "Damage")
+				PlayerChars.Damage += item.itemAttributes[i].attributeValue;
 		}
 	}
 	
@@ -206,10 +206,10 @@ public class PlayerInventory : MonoBehaviour
 				PlayerChars.MaxHealth -= item.itemAttributes[i].attributeValue;
 			if (item.itemAttributes[i].attributeName == "Energy")
 				PlayerChars.MaxEnergy -= item.itemAttributes[i].attributeValue;
-			//if (item.itemAttributes[i].attributeName == "Armor")
-			//	PlayerChars.maxArmor -= item.itemAttributes[i].attributeValue;
-			//if (item.itemAttributes[i].attributeName == "Damage")
-			//	PlayerChars.maxDamage -= item.itemAttributes[i].attributeValue;
+			if (item.itemAttributes[i].attributeName == "Armor")
+				PlayerChars.Armor -= item.itemAttributes[i].attributeValue;
+			if (item.itemAttributes[i].attributeName == "Damage")
+				PlayerChars.Damage -= item.itemAttributes[i].attributeValue;
 		}
 	}
 	
@@ -229,7 +229,7 @@ public class PlayerInventory : MonoBehaviour
           }
       }*/
 		
-		if (Input.GetKeyDown(inputManagerDatabase.InventoryKeyCode))
+		/*if (Input.GetKeyDown(inputManagerDatabase.InventoryKeyCode))
 		{
 			if (!inventory.activeSelf)
 			{
@@ -257,6 +257,6 @@ public class PlayerInventory : MonoBehaviour
 					toolTip.deactivateTooltip();
 				craftSystemInventory.closeInventory();
 			}
-		}
+		}*/
 	}
 }

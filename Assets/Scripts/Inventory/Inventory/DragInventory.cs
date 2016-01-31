@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+﻿/*using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using System.Collections;
@@ -39,3 +39,4 @@ public class DragInventory : MonoBehaviour, IPointerDownHandler, IDragHandler
         }
     }
 }
+*/

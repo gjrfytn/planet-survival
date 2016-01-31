@@ -86,7 +86,7 @@ public class InventoryDesign : MonoBehaviour
     {
         Image slot = null;
 #if UNITY_EDITOR
-        Object prefab = PrefabUtility.CreateEmptyPrefab("Assets/InventoryMaster/Resources/Prefabs/Slot - Inventory.prefab");
+		Object prefab = PrefabUtility.CreateEmptyPrefab("Assets/Resources/Prefabs/Inventory/Slot - Inventory.prefab");
 #endif
 
         for (int i = 0; i < transform.GetChild(1).childCount; i++)

@@ -70,12 +70,12 @@ public class Tooltip : MonoBehaviour
     }
 
 #if UNITY_EDITOR
-    [MenuItem("Inventory System/Create/Tooltip")] 
+	[MenuItem("Game Modules/Inventory Module/Create/Tooltip")] 
     public static void menuItemCreateInventory()  
     {
         if (GameObject.FindGameObjectWithTag("Tooltip") == null)
         {
-            GameObject toolTip = (GameObject)Instantiate(Resources.Load("Prefabs/Tooltip - Inventory") as GameObject);
+			GameObject toolTip = (GameObject)Instantiate(Resources.Load("Prefabs/Inventory/Tooltip - Inventory") as GameObject);
             toolTip.GetComponent<RectTransform>().localPosition = new Vector3(Screen.width / 2, Screen.height / 2, 0);
             toolTip.transform.SetParent(GameObject.FindGameObjectWithTag("Canvas").transform);
             toolTip.AddComponent<Tooltip>().setImportantVariables();

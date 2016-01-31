@@ -10,7 +10,7 @@ public class PickUpItem : MonoBehaviour
     {
         _player = GameObject.FindGameObjectWithTag("Player");
         if (_player != null)
-            _inventory = _player.GetComponent<PlayerInventory>().inventory.GetComponent<Inventory>();
+			_inventory = _player.GetComponent<PlayerInventory>().inventory.GetComponent<Inventory>();
     }
 
     void Update()

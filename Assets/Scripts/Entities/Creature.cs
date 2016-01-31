@@ -14,7 +14,7 @@ public class Creature : Entity
     public float Health { get; private set; }
 
     World World;
-	protected bool Moving{ get; private set; }
+    protected bool Moving { get; private set; }
     Vector2 TargetCoords;
     float MoveTime;
     Vector2 PreviousCoords;
@@ -43,14 +43,14 @@ public class Creature : Entity
     {
         if (Moving)
         {
-			if (MoveTime > 0)
-			{
-            	float tstep = MoveTime / Time.deltaTime;
-				MoveTime -= Time.deltaTime;
-           		float dstep = Vector2.Distance(transform.position, WorldVisualiser.GetTransformPosFromMapCoords(MapCoords)) / tstep;
-            	transform.position = Vector2.MoveTowards(transform.position, WorldVisualiser.GetTransformPosFromMapCoords(MapCoords), dstep);
-			}
-			else
+            if (MoveTime > 0)
+            {
+                float tstep = MoveTime / Time.deltaTime;
+                MoveTime -= Time.deltaTime;
+                float dstep = Vector2.Distance(transform.position, WorldVisualiser.GetTransformPosFromMapCoords(MapCoords)) / tstep;
+                transform.position = Vector2.MoveTowards(transform.position, WorldVisualiser.GetTransformPosFromMapCoords(MapCoords), dstep);
+            }
+            else
                 Moving = false;
         }
     }

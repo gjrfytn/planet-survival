@@ -27,7 +27,7 @@ public class EquipmentSystem : MonoBehaviour
         slotsInTotal = inv.width * inv.height;
     }
 #if UNITY_EDITOR
-    [MenuItem("Inventory System/Create/Equipment")]  
+	[MenuItem("Game Modules/Inventory Module/Create/Equipment")]  
     public static void menuItemCreateInventory() 
     {
 		GameObject Canvas = GameObject.FindGameObjectWithTag("Canvas");
@@ -35,16 +35,16 @@ public class EquipmentSystem : MonoBehaviour
         {
             GameObject inventory = new GameObject();
             inventory.name = "Inventories";
-			Canvas = Instantiate(Resources.Load("Prefabs/Canvas - Inventory")) as GameObject;
+			Canvas = Instantiate(Resources.Load("Prefabs/Inventory/Canvas - Inventory")) as GameObject;
             Canvas.transform.SetParent(inventory.transform, true);
-            Instantiate(Resources.Load("Prefabs/EventSystem") as GameObject);  
+			Instantiate(Resources.Load("Prefabs/Inventory/EventSystem") as GameObject);  
         }
         else
             DestroyImmediate(GameObject.FindGameObjectWithTag("DraggingItem"));
 
-		GameObject draggingItem = Instantiate(Resources.Load("Prefabs/DraggingItem")) as GameObject;
+		GameObject draggingItem = Instantiate(Resources.Load("Prefabs/Inventory/DraggingItem")) as GameObject;
 		draggingItem.transform.SetParent(Canvas.transform, true);
-		GameObject panel = Instantiate(Resources.Load("Prefabs/Panel - EquipmentSystem")) as GameObject;
+		GameObject panel = Instantiate(Resources.Load("Prefabs/Inventory/Panel - EquipmentSystem")) as GameObject;
 		panel.transform.SetParent(Canvas.transform, true);
 		panel.GetComponent<RectTransform>().localPosition = new Vector3(0, 0, 0);
 		panel.AddComponent<InventoryDesign>();

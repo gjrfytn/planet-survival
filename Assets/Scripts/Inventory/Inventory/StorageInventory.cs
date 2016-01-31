@@ -54,11 +54,11 @@ public class StorageInventory : MonoBehaviour
     void Start()
     {
         if (inputManagerDatabase == null)
-            inputManagerDatabase = (InputManager)Resources.Load("InputManager");
+			inputManagerDatabase = (InputManager)Resources.Load("Inventory/InputManager");
 
         player = GameObject.FindGameObjectWithTag("Player");
         inv = inventory.GetComponent<Inventory>();
-        ItemDataBaseList inventoryItemList = (ItemDataBaseList)Resources.Load("ItemDatabase");
+		ItemDataBaseList inventoryItemList = (ItemDataBaseList)Resources.Load("Inventory/ItemDatabase");
 
         int creatingItemsForChest = 1;
 
@@ -93,7 +93,7 @@ public class StorageInventory : MonoBehaviour
     public void setImportantVariables()
     {
         if (itemDatabase == null)
-            itemDatabase = (ItemDataBaseList)Resources.Load("ItemDatabase");
+			itemDatabase = (ItemDataBaseList)Resources.Load("Inventory/ItemDatabase");
     }
 
     void Update()

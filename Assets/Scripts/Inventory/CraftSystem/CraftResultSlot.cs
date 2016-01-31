@@ -16,7 +16,7 @@ public class CraftResultSlot : MonoBehaviour
         //inventory = GameObject.FindGameObjectWithTag("Inventory").GetComponent<Inventory>();
         craftSystem = transform.parent.GetComponent<CraftSystem>();
 
-        itemGameObject = (GameObject)Instantiate(Resources.Load("Prefabs/Item") as GameObject);
+		itemGameObject = (GameObject)Instantiate(Resources.Load("Prefabs/Inventory/Item") as GameObject);
         itemGameObject.transform.SetParent(this.gameObject.transform);
         itemGameObject.GetComponent<RectTransform>().localPosition = Vector3.zero;
         itemGameObject.GetComponent<DragItem>().enabled = false;

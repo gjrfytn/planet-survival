@@ -21,7 +21,7 @@ public class SplitItem : MonoBehaviour, IPointerDownHandler
 
     void Start()
     {
-        inputManagerDatabase = (InputManager)Resources.Load("InputManager");
+		inputManagerDatabase = (InputManager)Resources.Load("Inventory/InputManager");
     }
 
     public void OnPointerDown(PointerEventData data)     

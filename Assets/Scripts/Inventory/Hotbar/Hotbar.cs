@@ -15,7 +15,7 @@ public class Hotbar : MonoBehaviour
     public int slotsInTotal;
 
 #if UNITY_EDITOR
-    [MenuItem("Inventory System/Create/Hotbar")] 
+	[MenuItem("Game Modules/Inventory Module/Create/Hotbar")] 
     public static void menuItemCreateInventory()  
     {
 		GameObject Canvas = GameObject.FindGameObjectWithTag("Canvas");
@@ -23,19 +23,19 @@ public class Hotbar : MonoBehaviour
         {
             GameObject inventory = new GameObject();
             inventory.name = "Inventories";
-			Canvas = Instantiate(Resources.Load("Prefabs/Canvas - Inventory")) as GameObject;
+			Canvas = Instantiate(Resources.Load("Prefabs/Inventory/Canvas - Inventory")) as GameObject;
             Canvas.transform.SetParent(inventory.transform, true);
-            Instantiate(Resources.Load("Prefabs/EventSystem"));
+			Instantiate(Resources.Load("Prefabs/Inventory/EventSystem"));
         }
         else
             DestroyImmediate(GameObject.FindGameObjectWithTag("DraggingItem"));
 
-		GameObject panel = Instantiate(Resources.Load("Prefabs/Panel - Hotbar")) as GameObject;
+		GameObject panel = Instantiate(Resources.Load("Prefabs/Inventory/Panel - Hotbar")) as GameObject;
 		panel.transform.SetParent(Canvas.transform, true);
 		panel.GetComponent<RectTransform>().localPosition = new Vector3(0, 0, 0);
 		panel.AddComponent<Hotbar>();
 		panel.AddComponent<InventoryDesign>();
-		GameObject draggingItem = Instantiate(Resources.Load("Prefabs/DraggingItem")) as GameObject;
+		GameObject draggingItem = Instantiate(Resources.Load("Prefabs/Inventory/DraggingItem")) as GameObject;
 		draggingItem.transform.SetParent(Canvas.transform, true);
 		Inventory inv = panel.AddComponent<Inventory>();
 		inv.getPrefabs();

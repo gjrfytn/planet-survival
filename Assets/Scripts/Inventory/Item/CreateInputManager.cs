@@ -14,7 +14,7 @@ public class CreateInputManager
     {
         asset = ScriptableObject.CreateInstance<InputManager>();
 
-        AssetDatabase.CreateAsset(asset, "Assets/InventoryMaster/Resources/InputManager.asset");
+        AssetDatabase.CreateAsset(asset, "Assets/Resources/Inventory/InputManager.asset");
         AssetDatabase.SaveAssets();
         return asset;
     }
