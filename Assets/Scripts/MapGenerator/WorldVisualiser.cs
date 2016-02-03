@@ -1,7 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 
 public class WorldVisualiser : MonoBehaviour
 {
@@ -23,6 +22,7 @@ public class WorldVisualiser : MonoBehaviour
     public Sprite[] RiverTurnSprites;
     public Sprite[] RiverEndSprites;
     public Sprite[] TreeSprites;
+    public Sprite[] RuinSprites;
     public byte ForestDensity;
     public byte ForestGenGridSize;
     public float FadeInTime;
@@ -40,6 +40,7 @@ public class WorldVisualiser : MonoBehaviour
         public bool InSign;
         public List<GameObject> Trees = new List<GameObject>();
         public GameObject RiverSprite;
+        public GameObject ClusterSprite;
     }
 
     List<ListType> RenderedHexes = new List<ListType>();
@@ -93,6 +94,7 @@ public class WorldVisualiser : MonoBehaviour
         {
             hex.Trees.ForEach(tree => Destroy(tree));
             Destroy(hex.RiverSprite);
+            Destroy(hex.ClusterSprite);
             Destroy(hex.Hex);
         });
         RenderedHexes.Clear();
@@ -212,9 +214,24 @@ public class WorldVisualiser : MonoBehaviour
             hex.RiverSprite.AddComponent<SpriteRenderer>();
             hex.RiverSprite.GetComponent<SpriteRenderer>().sortingLayerName = "LandscapeObjects";
             if (map.GetRiverSpriteID(mapCoords) != null /*?*/&& map.GetRiverSpriteID(mapCoords) < AllRiverSprites.Count)
+            {
                 hex.RiverSprite.GetComponent<SpriteRenderer>().sprite = AllRiverSprites[(int)map.GetRiverSpriteID(mapCoords)];
+                hex.RiverSprite.transform.Rotate(new Vector3(0, 0, map.GetRiverSpriteRotation(mapCoords)));
+            }
             else
                 hex.RiverSprite.GetComponent<SpriteRenderer>().sprite = ChooseHexRiverSprite(hex.RiverSprite.transform, mapCoords, map);
+        }
+        if (map.HasCluster(mapCoords))
+        {
+            hex.ClusterSprite = new GameObject();
+            hex.ClusterSprite.transform.position = GetTransformPosFromMapCoords(mapCoords);
+            hex.ClusterSprite.AddComponent<SpriteRenderer>();
+            hex.ClusterSprite.GetComponent<SpriteRenderer>().sortingLayerName = "LandscapeObjects";
+            if (map.GetClusterSpriteID(mapCoords) != null /*?*/&& map.GetClusterSpriteID(mapCoords) < RuinSprites.Length)
+                hex.ClusterSprite.GetComponent<SpriteRenderer>().sprite = RuinSprites[(int)map.GetClusterSpriteID(mapCoords)];
+            else
+                map.ClusterSpriteID_Matrix[(int)mapCoords.y, (int)mapCoords.x] = (byte)Random.Range(0, RuinSprites.Length);
+            hex.ClusterSprite.GetComponent<SpriteRenderer>().sprite = RuinSprites[(int)map.GetClusterSpriteID(mapCoords)];
         }
         else
             MakeHexForest(hex, mapCoords, map);
@@ -227,104 +244,76 @@ public class WorldVisualiser : MonoBehaviour
     /// <param name="mapCoords">Координаты в матрице.</param>
     Sprite ChooseHexSprite(Vector2 mapCoords, Map map) //UNDONE
     {
-        byte id;
+        byte id = 0;
         if (map.GetHeight(mapCoords) < Terrains[0].StartingHeight)
-        {
             id = (byte)Random.Range(0, BottommostTerrainSprites.Length);
-            map.HexSpriteID_Matrix[(int)mapCoords.y, (int)mapCoords.x] = id;
-            return BottommostTerrainSprites[id];
-        }
-        for (byte i = 1; i < Terrains.Length; i++)
-            if (map.GetHeight(mapCoords) >= Terrains[i - 1].StartingHeight && map.GetHeight(mapCoords) < Terrains[i].StartingHeight)
-            {
-                id = (byte)Random.Range(0, Terrains[i - 1].Sprites.Length);
-                map.HexSpriteID_Matrix[(int)mapCoords.y, (int)mapCoords.x] = id;
-                return Terrains[i - 1].Sprites[id];
-            }
-        if (map.GetHeight(mapCoords) >= Terrains[Terrains.Length - 1].StartingHeight)
+        else if (map.GetHeight(mapCoords) >= Terrains[Terrains.Length - 1].StartingHeight)
         {
-            id = (byte)Random.Range(0, Terrains[Terrains.Length - 1].Sprites.Length);
-            map.HexSpriteID_Matrix[(int)mapCoords.y, (int)mapCoords.x] = id;
-            return Terrains[Terrains.Length - 1].Sprites[id];
+            for (byte i = 0; i < Terrains.Length - 1; ++i, id += (byte)Terrains[i].Sprites.Length) ;
+            id += (byte)(Random.Range(0, Terrains[Terrains.Length - 1].Sprites.Length) + BottommostTerrainSprites.Length);
         }
-        return null;
+        else
+            for (byte i = 1; i < Terrains.Length; i++)
+                if (map.GetHeight(mapCoords) >= Terrains[i - 1].StartingHeight && map.GetHeight(mapCoords) < Terrains[i].StartingHeight)
+                {
+                    for (byte j = 0; j < i - 1; ++j, id += (byte)Terrains[j].Sprites.Length) ;
+                    id += (byte)(Random.Range(0, Terrains[i - 1].Sprites.Length) + BottommostTerrainSprites.Length);
+                }
+
+        map.HexSpriteID_Matrix[(int)mapCoords.y, (int)mapCoords.x] = id;
+        return AllHexSprites[id];
     }
 
     Sprite ChooseHexRiverSprite(Transform spriteTransform, Vector2 mapCoords, Map map)
     {
-        if (map.Contains(World.GetBottomMapCoords(mapCoords)) && map.HasRiver(World.GetBottomMapCoords(mapCoords)))
+        foreach (List<Vector2> river in map.Rivers)
         {
-            if (map.Contains(World.GetTopMapCoords(mapCoords)) && map.HasRiver(World.GetTopMapCoords(mapCoords)))
-                return RiverStraightSprites[Random.Range(0, RiverStraightSprites.Length)];
-            if (map.Contains(World.GetTopRightMapCoords(mapCoords)) && map.HasRiver(World.GetTopRightMapCoords(mapCoords)))
-                return RiverTurnSprites[Random.Range(0, RiverTurnSprites.Length)];
-            if (map.Contains(World.GetTopLeftMapCoords(mapCoords)) && map.HasRiver(World.GetTopLeftMapCoords(mapCoords)))
+            byte id;
+            short angle;
+            short index = (short)river.IndexOf(mapCoords);
+            if (index != -1)
             {
-                spriteTransform.Rotate(new Vector3(0, 0, -120));
-                return RiverTurnSprites[Random.Range(0, RiverTurnSprites.Length)];
-            }
-        }
-        if (map.Contains(World.GetBottomLeftMapCoords(mapCoords)) && map.HasRiver(World.GetBottomLeftMapCoords(mapCoords)))
-        {
-            if (map.Contains(World.GetTopMapCoords(mapCoords)) && map.HasRiver(World.GetTopMapCoords(mapCoords)))
-            {
-                spriteTransform.Rotate(new Vector3(0, 0, 180));
-                return RiverTurnSprites[Random.Range(0, RiverTurnSprites.Length)];
-            }
-            if (map.Contains(World.GetTopRightMapCoords(mapCoords)) && map.HasRiver(World.GetTopRightMapCoords(mapCoords)))
-            {
-                spriteTransform.Rotate(new Vector3(0, 0, -60));
-                return RiverStraightSprites[Random.Range(0, RiverStraightSprites.Length)];
-            }
-            if (map.Contains(World.GetBottomRightMapCoords(mapCoords)) && map.HasRiver(World.GetBottomRightMapCoords(mapCoords)))
-            {
-                spriteTransform.Rotate(new Vector3(0, 0, -60));
-                return RiverTurnSprites[Random.Range(0, RiverTurnSprites.Length)];
-            }
-        }
-        if (map.Contains(World.GetBottomRightMapCoords(mapCoords)) && map.Contains(World.GetTopMapCoords(mapCoords)) && map.HasRiver(World.GetBottomRightMapCoords(mapCoords)) && map.HasRiver(World.GetTopMapCoords(mapCoords)))
-        {
-            spriteTransform.localScale = new Vector2(1, -1);
-            return RiverTurnSprites[Random.Range(0, RiverTurnSprites.Length)];
-        }
-        if (map.Contains(World.GetBottomRightMapCoords(mapCoords)) && map.Contains(World.GetTopLeftMapCoords(mapCoords)) && map.HasRiver(World.GetBottomRightMapCoords(mapCoords)) && map.HasRiver(World.GetTopLeftMapCoords(mapCoords)))
-        {
-            spriteTransform.Rotate(new Vector3(0, 0, 60));
-            return RiverStraightSprites[Random.Range(0, RiverStraightSprites.Length)];
-        }
-        if (map.Contains(World.GetTopLeftMapCoords(mapCoords)) && map.Contains(World.GetTopRightMapCoords(mapCoords)) && map.HasRiver(World.GetTopLeftMapCoords(mapCoords)) && map.HasRiver(World.GetTopRightMapCoords(mapCoords)))
-        {
-            spriteTransform.Rotate(new Vector3(0, 0, 120));
-            return RiverTurnSprites[Random.Range(0, RiverTurnSprites.Length)];
-        }
+                if (index == 0)
+                {
+                    id = (byte)Random.Range(0, RiverStartSprites.Length);
+                    angle = (short)(Mathf.Sign(river[1].x - mapCoords.x) * Vector2.Angle(Vector2.down, GetTransformPosFromMapCoords(river[1]) - GetTransformPosFromMapCoords(mapCoords)));
+                }
+                else if (index == river.Count - 1)
+                {
+                    id = (byte)(Random.Range(0, RiverEndSprites.Length) + RiverStartSprites.Length + RiverStraightSprites.Length + RiverTurnSprites.Length);
+                    angle = (short)(Mathf.Sign(river[river.Count - 2].x - mapCoords.x) * Vector2.Angle(Vector2.down, GetTransformPosFromMapCoords(river[river.Count - 2]) - GetTransformPosFromMapCoords(mapCoords)));
+                }
+                else
+                {
+                    Vector2 prev = GetTransformPosFromMapCoords(river[index - 1]) - GetTransformPosFromMapCoords(mapCoords);
+                    if ((short)Vector2.Angle(GetTransformPosFromMapCoords(river[index - 1]) - GetTransformPosFromMapCoords(mapCoords), GetTransformPosFromMapCoords(river[index + 1]) - GetTransformPosFromMapCoords(mapCoords)) > 150) //(==180, !=120)
+                    {
+                        id = (byte)(Random.Range(0, RiverStraightSprites.Length) + RiverStartSprites.Length);
+                        angle = (short)(Mathf.Sign(river[index - 1].x - mapCoords.x) * Vector2.Angle(Vector2.down, prev));
+                    }
+                    else
+                    {
+                        id = (byte)(Random.Range(0, RiverTurnSprites.Length) + RiverStartSprites.Length + RiverStraightSprites.Length);
 
-        if (map.Contains(World.GetTopLeftMapCoords(mapCoords)) && map.HasRiver(World.GetTopLeftMapCoords(mapCoords)))
-        {
-            spriteTransform.Rotate(new Vector3(0, 0, -120));
-            return RiverEndSprites[Random.Range(0, RiverEndSprites.Length)];
-        }
-        if (map.Contains(World.GetTopMapCoords(mapCoords)) && map.HasRiver(World.GetTopMapCoords(mapCoords)))
-        {
-            spriteTransform.Rotate(new Vector3(0, 0, -180));
-            return RiverEndSprites[Random.Range(0, RiverEndSprites.Length)];
-        }
-        if (map.Contains(World.GetTopRightMapCoords(mapCoords)) && map.HasRiver(World.GetTopRightMapCoords(mapCoords)))
-        {
-            spriteTransform.Rotate(new Vector3(0, 0, 120));
-            return RiverEndSprites[Random.Range(0, RiverEndSprites.Length)];
+                        Vector2 next = GetTransformPosFromMapCoords(river[index + 1]) - GetTransformPosFromMapCoords(mapCoords);
 
-        }
-        if (map.Contains(World.GetBottomRightMapCoords(mapCoords)) && map.HasRiver(World.GetBottomRightMapCoords(mapCoords)))
-        {
-            spriteTransform.Rotate(new Vector3(0, 0, 60));
-            return RiverEndSprites[Random.Range(0, RiverEndSprites.Length)];
-        }
-        if (map.Contains(World.GetBottomMapCoords(mapCoords)) && map.HasRiver(World.GetBottomMapCoords(mapCoords)))
-            return RiverEndSprites[Random.Range(0, RiverEndSprites.Length)];
-        if (map.Contains(World.GetBottomLeftMapCoords(mapCoords)) && map.HasRiver(World.GetBottomLeftMapCoords(mapCoords)))
-        {
-            spriteTransform.Rotate(new Vector3(0, 0, -60));
-            return RiverEndSprites[Random.Range(0, RiverEndSprites.Length)];
+                        angle = (short)(Mathf.Sign(river[index - 1].x - mapCoords.x) * Vector2.Angle(Vector2.down, prev));
+                        if (Mathf.Approximately(prev.x, 0))
+                            angle += (short)(240 * (Mathf.Sign(prev.y) == Mathf.Sign(next.x) ? 1 : 0));
+                        else
+                            angle += (short)(240 * (Mathf.Sign(prev.x) != Mathf.Sign(next.y) ? 1 : 0));
+                    }
+                }
+            }
+            else
+                continue;
+
+            map.RiverSpriteID_Matrix[(int)mapCoords.y, (int)mapCoords.x] = id;
+            map.RiverSpriteRotationMatrix[(int)mapCoords.y, (int)mapCoords.x] = angle;
+            spriteTransform.Rotate(new Vector3(0, 0, angle));
+            Sprite sprite = AllRiverSprites[id];
+
+            return sprite;
         }
         return null;
     }
@@ -380,65 +369,6 @@ public class WorldVisualiser : MonoBehaviour
             }
         }
     }
-
-    /*void RenderRivers(List<List<Vector2>> rivers)
-    {
-        foreach(List<Vector2> river in rivers)
-        {
-            GameObject riverPart=new GameObject();
-            RiverSprites.Add(riverPart);
-            riverPart.transform.position=GetTransformPosFromMapCoords(river[0]);
-            riverPart.AddComponent<SpriteRenderer>();
-            riverPart.GetComponent<SpriteRenderer>().sortingLayerName = "LandscapeObjects";
-            riverPart.GetComponent<SpriteRenderer>().sprite = RiverStart;
-            if(river[1]==World.GetTopMapCoords(river[0]))
-                riverPart.transform.Rotate(new Vector3(0,0,180));
-            else if(river[1]==World.GetTopRightMapCoords(river[0]))
-                riverPart.transform.Rotate(new Vector3(0,0,120));
-            else if(river[1]==World.GetBottomRightMapCoords(river[0]))
-                riverPart.transform.Rotate(new Vector3(0,0,60));
-            else if(river[1]==World.GetBottomLeftMapCoords(river[0]))
-                riverPart.transform.Rotate(new Vector3(0,0,-60));
-            else if(river[1]==World.GetTopLeftMapCoords(river[0]))
-                riverPart.transform.Rotate(new Vector3(0,0,-120));
-
-            for(ushort i=1;i<river.Count-1;++i)
-            {
-                riverPart=new GameObject();
-                RiverSprites.Add(riverPart);
-                riverPart.transform.position=GetTransformPosFromMapCoords(river[i]);
-                riverPart.AddComponent<SpriteRenderer>();
-                riverPart.GetComponent<SpriteRenderer>().sortingLayerName = "LandscapeObjects";
-                if(river[1]==World.GetTopMapCoords(river[0]))
-                    riverPart.transform.Rotate(new Vector3(0,0,180));
-                else if(river[1]==World.GetTopRightMapCoords(river[0]))
-                    riverPart.transform.Rotate(new Vector3(0,0,120));
-                else if(river[1]==World.GetBottomRightMapCoords(river[0]))
-                    riverPart.transform.Rotate(new Vector3(0,0,60));
-                else if(river[1]==World.GetBottomLeftMapCoords(river[0]))
-                    riverPart.transform.Rotate(new Vector3(0,0,-60));
-                else if(river[1]==World.GetTopLeftMapCoords(river[0]))
-                    riverPart.transform.Rotate(new Vector3(0,0,-120));
-            }
-
-            riverPart=new GameObject();
-            RiverSprites.Add(riverPart);
-            riverPart.transform.position=GetTransformPosFromMapCoords(river[river.Count-1]);
-            riverPart.AddComponent<SpriteRenderer>();
-            riverPart.GetComponent<SpriteRenderer>().sortingLayerName = "LandscapeObjects";
-            riverPart.GetComponent<SpriteRenderer>().sprite = RiverEnd;
-            if(river[river.Count-2]==World.GetTopMapCoords(river[river.Count-1]))
-                riverPart.transform.Rotate(new Vector3(0,0,180));
-            else if(river[river.Count-2]==World.GetTopRightMapCoords(river[river.Count-1]))
-                riverPart.transform.Rotate(new Vector3(0,0,120));
-            else if(river[river.Count-2]==World.GetBottomRightMapCoords(river[river.Count-1]))
-                riverPart.transform.Rotate(new Vector3(0,0,60));
-            else if(river[river.Count-2]==World.GetBottomLeftMapCoords(river[river.Count-1]))
-                riverPart.transform.Rotate(new Vector3(0,0,-60));
-            else if(river[river.Count-2]==World.GetTopLeftMapCoords(river[river.Count-1]))
-                riverPart.transform.Rotate(new Vector3(0,0,-120));
-        }
-    }*/
 
     /// <summary>
     /// Выводит хексы карты на сцену.

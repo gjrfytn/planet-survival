@@ -3,65 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 
-// Это класс карты, хранит в себе слои в виде матриц
-public class Map
-{
-    public float[,] HeightMatrix;
-    public float[,] ForestMatrix;
-    public bool[,] RiverMatrix;
-    public bool[,] BlockMatrix;
-
-    public byte?[,] HexSpriteID_Matrix;
-    public byte?[,] RiverSpriteID_Matrix;
-
-    public List<List<Vector2>> Rivers;
-
-    public bool Contains(Vector2 coords)
-    {
-        return coords.y >= 0 && coords.y < HeightMatrix.GetLength(0) && coords.x >= 0 && coords.x < HeightMatrix.GetLength(1);
-    }
-
-    public float GetHeight(Vector2 coords)
-    {
-        return HeightMatrix[(int)coords.y, (int)coords.x];
-    }
-
-    public float GetForest(Vector2 coords)
-    {
-        return ForestMatrix[(int)coords.y, (int)coords.x];
-    }
-
-    public bool HasRiver(Vector2 coords)
-    {
-        return RiverMatrix[(int)coords.y, (int)coords.x];
-    }
-
-    public bool IsBlocked(Vector2 coords)
-    {
-        return BlockMatrix[(int)coords.y, (int)coords.x];
-    }
-
-    public byte? GetHexSpriteID(Vector2 coords)
-    {
-        return HexSpriteID_Matrix[(int)coords.y, (int)coords.x];
-    }
-
-    public byte? GetRiverSpriteID(Vector2 coords)
-    {
-        return RiverSpriteID_Matrix[(int)coords.y, (int)coords.x];
-    }
-
-    public Map(ushort width, ushort height)
-    {
-        HeightMatrix = new float[height, width];
-        ForestMatrix = new float[height, width];
-        RiverMatrix = new bool[height, width];
-        BlockMatrix = new bool[height, width];
-        HexSpriteID_Matrix = new byte?[height, width];
-        RiverSpriteID_Matrix = new byte?[height, width];
-    }
-}
-
 public class World : MonoBehaviour
 {
     public ushort GlobalMapChunkSize; //Должен быть 2 в n-ой степени
@@ -120,59 +61,24 @@ public class World : MonoBehaviour
         //--
         ChunkX = ChunkY = 0;
 
-        CashedGlobalMapChunks[1, 1] = new Map(GlobalMapChunkSize, GlobalMapChunkSize);
-        Generator.CreateHeightmap(CashedGlobalMapChunks[1, 1].HeightMatrix, Generator.LandscapeRoughness, Random.value, Random.value, Random.value, Random.value);
-        Generator.CreateHeightmap(CashedGlobalMapChunks[1, 1].ForestMatrix, Generator.ForestRoughness, Random.value, Random.value, Random.value, Random.value);
-        CashedGlobalMapChunks[1, 1].Rivers = Generator.CreateRivers(CashedGlobalMapChunks[1, 1].HeightMatrix, CashedGlobalMapChunks[1, 1].RiverMatrix);
-
-        CashedGlobalMapChunks[0, 0] = new Map(GlobalMapChunkSize, GlobalMapChunkSize);
-        Generator.CreateHeightmap(CashedGlobalMapChunks[0, 0].HeightMatrix, Generator.LandscapeRoughness, Random.value, CashedGlobalMapChunks[1, 1].HeightMatrix[0, 0], Random.value, Random.value);
-        Generator.CreateHeightmap(CashedGlobalMapChunks[0, 0].ForestMatrix, Generator.ForestRoughness, Random.value, CashedGlobalMapChunks[1, 1].ForestMatrix[0, 0], Random.value, Random.value);
-        CashedGlobalMapChunks[0, 0].Rivers = Generator.CreateRivers(CashedGlobalMapChunks[0, 0].HeightMatrix, CashedGlobalMapChunks[0, 0].RiverMatrix);
-
-        CashedGlobalMapChunks[0, 1] = new Map(GlobalMapChunkSize, GlobalMapChunkSize);
-        Generator.CreateHeightmap(CashedGlobalMapChunks[0, 1].HeightMatrix, Generator.LandscapeRoughness, CashedGlobalMapChunks[1, 1].HeightMatrix[0, 0], CashedGlobalMapChunks[1, 1].HeightMatrix[0, GlobalMapChunkSize - 1], CashedGlobalMapChunks[0, 0].HeightMatrix[0, GlobalMapChunkSize - 1], Random.value);
-        Generator.CreateHeightmap(CashedGlobalMapChunks[0, 1].ForestMatrix, Generator.ForestRoughness, CashedGlobalMapChunks[1, 1].ForestMatrix[0, 0], CashedGlobalMapChunks[1, 1].ForestMatrix[0, GlobalMapChunkSize - 1], CashedGlobalMapChunks[0, 0].ForestMatrix[0, GlobalMapChunkSize - 1], Random.value);
-        CashedGlobalMapChunks[0, 1].Rivers = Generator.CreateRivers(CashedGlobalMapChunks[0, 1].HeightMatrix, CashedGlobalMapChunks[0, 1].RiverMatrix);
-
-        CashedGlobalMapChunks[0, 2] = new Map(GlobalMapChunkSize, GlobalMapChunkSize);
-        Generator.CreateHeightmap(CashedGlobalMapChunks[0, 2].HeightMatrix, Generator.LandscapeRoughness, CashedGlobalMapChunks[1, 1].HeightMatrix[0, GlobalMapChunkSize - 1], Random.value, CashedGlobalMapChunks[0, 1].HeightMatrix[0, GlobalMapChunkSize - 1], Random.value);
-        Generator.CreateHeightmap(CashedGlobalMapChunks[0, 2].ForestMatrix, Generator.ForestRoughness, CashedGlobalMapChunks[1, 1].ForestMatrix[0, GlobalMapChunkSize - 1], Random.value, CashedGlobalMapChunks[0, 1].ForestMatrix[0, GlobalMapChunkSize - 1], Random.value);
-        CashedGlobalMapChunks[0, 2].Rivers = Generator.CreateRivers(CashedGlobalMapChunks[0, 2].HeightMatrix, CashedGlobalMapChunks[0, 2].RiverMatrix);
-
-        CashedGlobalMapChunks[1, 0] = new Map(GlobalMapChunkSize, GlobalMapChunkSize);
-        Generator.CreateHeightmap(CashedGlobalMapChunks[1, 0].HeightMatrix, Generator.LandscapeRoughness, Random.value, CashedGlobalMapChunks[1, 1].HeightMatrix[GlobalMapChunkSize - 1, 0], CashedGlobalMapChunks[0, 0].HeightMatrix[GlobalMapChunkSize - 1, 0], CashedGlobalMapChunks[1, 1].HeightMatrix[0, 0]);
-        Generator.CreateHeightmap(CashedGlobalMapChunks[1, 0].ForestMatrix, Generator.ForestRoughness, Random.value, CashedGlobalMapChunks[1, 1].ForestMatrix[GlobalMapChunkSize - 1, 0], CashedGlobalMapChunks[0, 0].ForestMatrix[GlobalMapChunkSize - 1, 0], CashedGlobalMapChunks[1, 1].ForestMatrix[0, 0]);
-        CashedGlobalMapChunks[1, 0].Rivers = Generator.CreateRivers(CashedGlobalMapChunks[1, 0].HeightMatrix, CashedGlobalMapChunks[1, 0].RiverMatrix);
-
-        CashedGlobalMapChunks[1, 2] = new Map(GlobalMapChunkSize, GlobalMapChunkSize);
-        Generator.CreateHeightmap(CashedGlobalMapChunks[1, 2].HeightMatrix, Generator.LandscapeRoughness, CashedGlobalMapChunks[1, 1].HeightMatrix[GlobalMapChunkSize - 1, GlobalMapChunkSize - 1], Random.value, CashedGlobalMapChunks[1, 1].HeightMatrix[0, GlobalMapChunkSize - 1], CashedGlobalMapChunks[0, 2].HeightMatrix[GlobalMapChunkSize - 1, GlobalMapChunkSize - 1]);
-        Generator.CreateHeightmap(CashedGlobalMapChunks[1, 2].ForestMatrix, Generator.ForestRoughness, CashedGlobalMapChunks[1, 1].ForestMatrix[GlobalMapChunkSize - 1, GlobalMapChunkSize - 1], Random.value, CashedGlobalMapChunks[1, 1].ForestMatrix[0, GlobalMapChunkSize - 1], CashedGlobalMapChunks[0, 2].ForestMatrix[GlobalMapChunkSize - 1, GlobalMapChunkSize - 1]);
-        CashedGlobalMapChunks[1, 2].Rivers = Generator.CreateRivers(CashedGlobalMapChunks[1, 2].HeightMatrix, CashedGlobalMapChunks[1, 2].RiverMatrix);
-
-        CashedGlobalMapChunks[2, 0] = new Map(GlobalMapChunkSize, GlobalMapChunkSize);
-        Generator.CreateHeightmap(CashedGlobalMapChunks[2, 0].HeightMatrix, Generator.LandscapeRoughness, Random.value, Random.value, CashedGlobalMapChunks[1, 0].HeightMatrix[GlobalMapChunkSize - 1, 0], CashedGlobalMapChunks[1, 0].HeightMatrix[GlobalMapChunkSize - 1, GlobalMapChunkSize - 1]);
-        Generator.CreateHeightmap(CashedGlobalMapChunks[2, 0].ForestMatrix, Generator.ForestRoughness, Random.value, Random.value, CashedGlobalMapChunks[1, 0].ForestMatrix[GlobalMapChunkSize - 1, 0], CashedGlobalMapChunks[1, 0].ForestMatrix[GlobalMapChunkSize - 1, GlobalMapChunkSize - 1]);
-        CashedGlobalMapChunks[2, 0].Rivers = Generator.CreateRivers(CashedGlobalMapChunks[2, 0].HeightMatrix, CashedGlobalMapChunks[2, 0].RiverMatrix);
-
-        CashedGlobalMapChunks[2, 1] = new Map(GlobalMapChunkSize, GlobalMapChunkSize);
-        Generator.CreateHeightmap(CashedGlobalMapChunks[2, 1].HeightMatrix, Generator.LandscapeRoughness, CashedGlobalMapChunks[2, 0].HeightMatrix[GlobalMapChunkSize - 1, GlobalMapChunkSize - 1], Random.value, CashedGlobalMapChunks[1, 1].HeightMatrix[GlobalMapChunkSize - 1, 0], CashedGlobalMapChunks[1, 1].HeightMatrix[GlobalMapChunkSize - 1, GlobalMapChunkSize - 1]);
-        Generator.CreateHeightmap(CashedGlobalMapChunks[2, 1].ForestMatrix, Generator.ForestRoughness, CashedGlobalMapChunks[2, 0].ForestMatrix[GlobalMapChunkSize - 1, GlobalMapChunkSize - 1], Random.value, CashedGlobalMapChunks[1, 1].ForestMatrix[GlobalMapChunkSize - 1, 0], CashedGlobalMapChunks[1, 1].ForestMatrix[GlobalMapChunkSize - 1, GlobalMapChunkSize - 1]);
-        CashedGlobalMapChunks[2, 1].Rivers = Generator.CreateRivers(CashedGlobalMapChunks[2, 1].HeightMatrix, CashedGlobalMapChunks[2, 1].RiverMatrix);
-
-        CashedGlobalMapChunks[2, 2] = new Map(GlobalMapChunkSize, GlobalMapChunkSize);
-        Generator.CreateHeightmap(CashedGlobalMapChunks[2, 2].HeightMatrix, Generator.LandscapeRoughness, CashedGlobalMapChunks[2, 1].HeightMatrix[GlobalMapChunkSize - 1, GlobalMapChunkSize - 1], Random.value, CashedGlobalMapChunks[2, 1].HeightMatrix[0, GlobalMapChunkSize - 1], CashedGlobalMapChunks[1, 2].HeightMatrix[GlobalMapChunkSize - 1, GlobalMapChunkSize - 1]);
-        Generator.CreateHeightmap(CashedGlobalMapChunks[2, 2].ForestMatrix, Generator.ForestRoughness, Random.value, Random.value, Random.value, Random.value);
-        CashedGlobalMapChunks[2, 2].Rivers = Generator.CreateRivers(CashedGlobalMapChunks[2, 2].HeightMatrix, CashedGlobalMapChunks[2, 2].RiverMatrix);
+        CashedGlobalMapChunks[1, 1] = AllocAndGenerateChunk(CashedGlobalMapChunks[2, 1], CashedGlobalMapChunks[1, 2], CashedGlobalMapChunks[0, 1], CashedGlobalMapChunks[1, 0]);
+        CashedGlobalMapChunks[0, 0] = AllocAndGenerateChunk(CashedGlobalMapChunks[1, 0], CashedGlobalMapChunks[0, 1], null, null);
+        CashedGlobalMapChunks[0, 1] = AllocAndGenerateChunk(CashedGlobalMapChunks[1, 1], CashedGlobalMapChunks[0, 2], null, CashedGlobalMapChunks[0, 0]);
+        CashedGlobalMapChunks[0, 2] = AllocAndGenerateChunk(CashedGlobalMapChunks[1, 2], null, null, CashedGlobalMapChunks[0, 1]);
+        CashedGlobalMapChunks[1, 0] = AllocAndGenerateChunk(CashedGlobalMapChunks[2, 0], CashedGlobalMapChunks[0, 0], CashedGlobalMapChunks[0, 1], null);
+        CashedGlobalMapChunks[1, 2] = AllocAndGenerateChunk(CashedGlobalMapChunks[2, 2], null, CashedGlobalMapChunks[0, 2], CashedGlobalMapChunks[1, 1]);
+        CashedGlobalMapChunks[2, 0] = AllocAndGenerateChunk(null, CashedGlobalMapChunks[2, 1], CashedGlobalMapChunks[1, 0], null);
+        CashedGlobalMapChunks[2, 1] = AllocAndGenerateChunk(null, CashedGlobalMapChunks[2, 2], CashedGlobalMapChunks[1, 1], CashedGlobalMapChunks[2, 0]);
+        CashedGlobalMapChunks[2, 2] = AllocAndGenerateChunk(null, null, CashedGlobalMapChunks[1, 2], CashedGlobalMapChunks[2, 1]);
 
         LocalMaps = new Map[GlobalMapChunkSize, GlobalMapChunkSize];
 
         CurrentMap = CashedGlobalMapChunks[1, 1];
 
         Player = GameObject.FindWithTag("Player");
-		Player.GetComponent<Player>().MapCoords=new Vector2(5,5);
-		Player.transform.position=WorldVisualiser.GetTransformPosFromMapCoords(Player.GetComponent<Player>().MapCoords);
-		Camera.main.transform.position=transform.position = new Vector3(Player.transform.position.x, Player.transform.position.y + Camera.main.transform.position.z * (Mathf.Tan((360 - Camera.main.transform.rotation.eulerAngles.x) / 57.3f)), Camera.main.transform.position.z);
+        Player.GetComponent<Player>().MapCoords = new Vector2(5, 5);
+        Player.transform.position = WorldVisualiser.GetTransformPosFromMapCoords(Player.GetComponent<Player>().MapCoords);
+        Camera.main.transform.position = transform.position = new Vector3(Player.transform.position.x, Player.transform.position.y + Camera.main.transform.position.z * (Mathf.Tan((360 - Camera.main.transform.rotation.eulerAngles.x) / 57.3f)), Camera.main.transform.position.z);
         Visualiser.RenderVisibleHexes(Player.GetComponent<Player>().MapCoords, Player.GetComponent<Player>().ViewDistance, CashedGlobalMapChunks, ChunkY, ChunkX);
         Visualiser.HighlightHex(GetTopLeftMapCoords(Player.GetComponent<Player>().MapCoords), Visualiser.BlueHexSprite);
         Visualiser.HighlightHex(GetTopMapCoords(Player.GetComponent<Player>().MapCoords), Visualiser.BlueHexSprite);
@@ -266,14 +172,11 @@ public class World : MonoBehaviour
         {
             GotoLocalMap();
             SpawnRandomEnemy();
-            //GameObject.FindWithTag("AI_Controller").GetComponent<AI_Controller>().AddEnemy(new Vector2(1,1));
         }
         else
         {
             GotoGlobalMap();
             EventManager.OnLocalMapLeave();
-            //GameObject.FindWithTag("AI_Controller").GetComponent<AI_Controller>().DeleteAll();
-
         }
     }
 
@@ -347,194 +250,13 @@ public class World : MonoBehaviour
             return chunk;
         else
         {
-            Vector2 topLeft, topRight, bottomLeft, bottomRight; // x - Height, y - Forest, River - ? TODO?
-            Map neighbChunk = new Map(GlobalMapChunkSize, GlobalMapChunkSize);
-            if (TryGetChunk(chunkY, chunkX - 1, neighbChunk))
-            {
-                topLeft.x = neighbChunk.HeightMatrix[0, GlobalMapChunkSize - 1];
-                topLeft.y = neighbChunk.ForestMatrix[0, GlobalMapChunkSize - 1];
-                bottomLeft.x = neighbChunk.HeightMatrix[GlobalMapChunkSize - 1, GlobalMapChunkSize - 1];
-                bottomLeft.y = neighbChunk.ForestMatrix[GlobalMapChunkSize - 1, GlobalMapChunkSize - 1];
-                if (TryGetChunk(chunkY, chunkX + 1, neighbChunk))
-                {
-                    topRight.x = neighbChunk.HeightMatrix[0, 0];
-                    topRight.y = neighbChunk.ForestMatrix[0, 0];
-                    bottomRight.x = neighbChunk.HeightMatrix[GlobalMapChunkSize - 1, 0];
-                    bottomRight.y = neighbChunk.ForestMatrix[GlobalMapChunkSize - 1, 0];
-                    Generator.CreateHeightmap(chunk.HeightMatrix, Generator.LandscapeRoughness, topLeft.x, topRight.x, bottomLeft.x, bottomRight.x);
-                    Generator.CreateHeightmap(chunk.ForestMatrix, Generator.ForestRoughness, topLeft.y, topRight.y, bottomLeft.y, bottomRight.y);
-                    chunk.Rivers = Generator.CreateRivers(chunk.HeightMatrix, chunk.RiverMatrix);
-                    return chunk;
-                }
-                else
-                {
-                    if (TryGetChunk(chunkY + 1, chunkX, neighbChunk))
-                    {
-                        topRight.x = neighbChunk.HeightMatrix[GlobalMapChunkSize - 1, GlobalMapChunkSize - 1];
-                        topRight.y = neighbChunk.ForestMatrix[GlobalMapChunkSize - 1, GlobalMapChunkSize - 1];
-                        if (TryGetChunk(chunkY - 1, chunkX, neighbChunk))
-                        {
-                            bottomRight.x = neighbChunk.HeightMatrix[0, GlobalMapChunkSize - 1];
-                            bottomRight.y = neighbChunk.ForestMatrix[0, GlobalMapChunkSize - 1];
-                            Generator.CreateHeightmap(chunk.HeightMatrix, Generator.LandscapeRoughness, topLeft.x, topRight.x, bottomLeft.x, bottomRight.x);
-                            Generator.CreateHeightmap(chunk.ForestMatrix, Generator.ForestRoughness, topLeft.y, topRight.y, bottomLeft.y, bottomRight.y);
-                            chunk.Rivers = Generator.CreateRivers(chunk.HeightMatrix, chunk.RiverMatrix);
-                            return chunk;
-                        }
-                        else
-                        {
-                            bottomRight.x = Random.value;
-                            bottomRight.y = Random.value;
-                            Generator.CreateHeightmap(chunk.HeightMatrix, Generator.LandscapeRoughness, topLeft.x, topRight.x, bottomLeft.x, bottomRight.x);
-                            Generator.CreateHeightmap(chunk.ForestMatrix, Generator.ForestRoughness, topLeft.y, topRight.y, bottomLeft.y, bottomRight.y);
-                            chunk.Rivers = Generator.CreateRivers(chunk.HeightMatrix, chunk.RiverMatrix);
-                            return chunk;
-                        }
-                    }
-                    else
-                    {
-                        topRight.x = Random.value;
-                        topRight.y = Random.value;
-                        if (TryGetChunk(chunkY - 1, chunkX, neighbChunk))
-                        {
-                            bottomRight.x = neighbChunk.HeightMatrix[0, GlobalMapChunkSize - 1];
-                            bottomRight.y = neighbChunk.ForestMatrix[0, GlobalMapChunkSize - 1];
-                            Generator.CreateHeightmap(chunk.HeightMatrix, Generator.LandscapeRoughness, topLeft.x, topRight.x, bottomLeft.x, bottomRight.x);
-                            Generator.CreateHeightmap(chunk.ForestMatrix, Generator.ForestRoughness, topLeft.y, topRight.y, bottomLeft.y, bottomRight.y);
-                            chunk.Rivers = Generator.CreateRivers(chunk.HeightMatrix, chunk.RiverMatrix);
-                            return chunk;
-                        }
-                        else
-                        {
-                            bottomRight.x = Random.value;
-                            bottomRight.y = Random.value;
-                            Generator.CreateHeightmap(chunk.HeightMatrix, Generator.LandscapeRoughness, topLeft.x, topRight.x, bottomLeft.x, bottomRight.x);
-                            Generator.CreateHeightmap(chunk.ForestMatrix, Generator.ForestRoughness, topLeft.y, topRight.y, bottomLeft.y, bottomRight.y);
-                            chunk.Rivers = Generator.CreateRivers(chunk.HeightMatrix, chunk.RiverMatrix);
-                            return chunk;
-                        }
-                    }
-                }
-            }
-            else
-            {
-                if (TryGetChunk(chunkY, chunkX + 1, neighbChunk))
-                {
-                    topRight.x = neighbChunk.HeightMatrix[0, 0];
-                    topRight.y = neighbChunk.ForestMatrix[0, 0];
-                    bottomRight.x = neighbChunk.HeightMatrix[GlobalMapChunkSize - 1, 0];
-                    bottomRight.y = neighbChunk.ForestMatrix[GlobalMapChunkSize - 1, 0];
-                    if (TryGetChunk(chunkY + 1, chunkX, neighbChunk))
-                    {
-                        topLeft.x = neighbChunk.HeightMatrix[GlobalMapChunkSize - 1, 0];
-                        topLeft.y = neighbChunk.ForestMatrix[GlobalMapChunkSize - 1, 0];
-                        if (TryGetChunk(chunkY - 1, chunkX, neighbChunk))
-                        {
-                            bottomLeft.x = neighbChunk.HeightMatrix[0, 0];
-                            bottomLeft.y = neighbChunk.ForestMatrix[0, 0];
-                            Generator.CreateHeightmap(chunk.HeightMatrix, Generator.LandscapeRoughness, topLeft.x, topRight.x, bottomLeft.x, bottomRight.x);
-                            Generator.CreateHeightmap(chunk.ForestMatrix, Generator.ForestRoughness, topLeft.y, topRight.y, bottomLeft.y, bottomRight.y);
-                            chunk.Rivers = Generator.CreateRivers(chunk.HeightMatrix, chunk.RiverMatrix);
-                            return chunk;
-                        }
-                        else
-                        {
-                            bottomLeft.x = Random.value;
-                            bottomLeft.y = Random.value;
-                            Generator.CreateHeightmap(chunk.HeightMatrix, Generator.LandscapeRoughness, topLeft.x, topRight.x, bottomLeft.x, bottomRight.x);
-                            Generator.CreateHeightmap(chunk.ForestMatrix, Generator.ForestRoughness, topLeft.y, topRight.y, bottomLeft.y, bottomRight.y);
-                            chunk.Rivers = Generator.CreateRivers(chunk.HeightMatrix, chunk.RiverMatrix);
-                            return chunk;
-                        }
-                    }
-                    else
-                    {
-                        topLeft.x = Random.value;
-                        topLeft.y = Random.value;
-                        if (TryGetChunk(chunkY - 1, chunkX, neighbChunk))
-                        {
-                            bottomLeft.x = neighbChunk.HeightMatrix[0, 0];
-                            bottomLeft.y = neighbChunk.ForestMatrix[0, 0];
-                            Generator.CreateHeightmap(chunk.HeightMatrix, Generator.LandscapeRoughness, topLeft.x, topRight.x, bottomLeft.x, bottomRight.x);
-                            Generator.CreateHeightmap(chunk.ForestMatrix, Generator.ForestRoughness, topLeft.y, topRight.y, bottomLeft.y, bottomRight.y);
-                            chunk.Rivers = Generator.CreateRivers(chunk.HeightMatrix, chunk.RiverMatrix);
-                            return chunk;
-                        }
-                        else
-                        {
-                            bottomLeft.x = Random.value;
-                            bottomLeft.y = Random.value;
-                            Generator.CreateHeightmap(chunk.HeightMatrix, Generator.LandscapeRoughness, topLeft.x, topRight.x, bottomLeft.x, bottomRight.x);
-                            Generator.CreateHeightmap(chunk.ForestMatrix, Generator.ForestRoughness, topLeft.y, topRight.y, bottomLeft.y, bottomRight.y);
-                            chunk.Rivers = Generator.CreateRivers(chunk.HeightMatrix, chunk.RiverMatrix);
-                            return chunk;
-                        }
-                    }
-                }
-                else
-                {
-                    if (TryGetChunk(chunkY + 1, chunkX, neighbChunk))
-                    {
-                        topLeft.x = neighbChunk.HeightMatrix[GlobalMapChunkSize - 1, 0];
-                        topLeft.y = neighbChunk.ForestMatrix[GlobalMapChunkSize - 1, 0];
-                        topRight.x = neighbChunk.HeightMatrix[GlobalMapChunkSize - 1, GlobalMapChunkSize - 1];
-                        topRight.y = neighbChunk.ForestMatrix[GlobalMapChunkSize - 1, GlobalMapChunkSize - 1];
-                        if (TryGetChunk(chunkY - 1, chunkX, neighbChunk))
-                        {
-                            bottomLeft.x = neighbChunk.HeightMatrix[0, 0];
-                            bottomLeft.y = neighbChunk.ForestMatrix[0, 0];
-                            bottomRight.x = neighbChunk.HeightMatrix[0, GlobalMapChunkSize - 1];
-                            bottomRight.y = neighbChunk.ForestMatrix[0, GlobalMapChunkSize - 1];
-                            Generator.CreateHeightmap(chunk.HeightMatrix, Generator.LandscapeRoughness, topLeft.x, topRight.x, bottomLeft.x, bottomRight.x);
-                            Generator.CreateHeightmap(chunk.ForestMatrix, Generator.ForestRoughness, topLeft.y, topRight.y, bottomLeft.y, bottomRight.y);
-                            chunk.Rivers = Generator.CreateRivers(chunk.HeightMatrix, chunk.RiverMatrix);
-                            return chunk;
-                        }
-                        else
-                        {
-                            bottomLeft.x = Random.value;
-                            bottomLeft.y = Random.value;
-                            bottomRight.x = Random.value;
-                            bottomRight.y = Random.value;
-                            Generator.CreateHeightmap(chunk.HeightMatrix, Generator.LandscapeRoughness, topLeft.x, topRight.x, bottomLeft.x, bottomRight.x);
-                            Generator.CreateHeightmap(chunk.ForestMatrix, Generator.ForestRoughness, topLeft.y, topRight.y, bottomLeft.y, bottomRight.y);
-                            chunk.Rivers = Generator.CreateRivers(chunk.HeightMatrix, chunk.RiverMatrix);
-                            return chunk;
-                        }
-                    }
-                    else
-                    {
-                        topLeft.x = Random.value;
-                        topLeft.y = Random.value;
-                        topRight.x = Random.value;
-                        topRight.y = Random.value;
-                        if (TryGetChunk(chunkY - 1, chunkX, neighbChunk))
-                        {
-                            bottomLeft.x = neighbChunk.HeightMatrix[0, 0];
-                            bottomLeft.y = neighbChunk.ForestMatrix[0, 0];
-                            bottomRight.x = neighbChunk.HeightMatrix[0, GlobalMapChunkSize - 1];
-                            bottomRight.y = neighbChunk.ForestMatrix[0, GlobalMapChunkSize - 1];
-                            Generator.CreateHeightmap(chunk.HeightMatrix, Generator.LandscapeRoughness, topLeft.x, topRight.x, bottomLeft.x, bottomRight.x);
-                            Generator.CreateHeightmap(chunk.ForestMatrix, Generator.ForestRoughness, topLeft.y, topRight.y, bottomLeft.y, bottomRight.y);
-                            chunk.Rivers = Generator.CreateRivers(chunk.HeightMatrix, chunk.RiverMatrix);
-                            return chunk;
-                        }
-                        else
-                        {
-                            bottomLeft.x = Random.value;
-                            bottomLeft.y = Random.value;
-                            bottomRight.x = Random.value;
-                            bottomRight.y = Random.value;
-                            Generator.CreateHeightmap(chunk.HeightMatrix, Generator.LandscapeRoughness, topLeft.x, topRight.x, bottomLeft.x, bottomRight.x);
-                            Generator.CreateHeightmap(chunk.ForestMatrix, Generator.ForestRoughness, topLeft.y, topRight.y, bottomLeft.y, bottomRight.y);
-                            chunk.Rivers = Generator.CreateRivers(chunk.HeightMatrix, chunk.RiverMatrix);
-                            return chunk;
-                        }
-                    }
-                }
-            }
+            Map top = new Map(GlobalMapChunkSize, GlobalMapChunkSize), right = new Map(GlobalMapChunkSize, GlobalMapChunkSize), bottom = new Map(GlobalMapChunkSize, GlobalMapChunkSize), left = new Map(GlobalMapChunkSize, GlobalMapChunkSize);
+            TryGetChunk(chunkY + 1, chunkX, top);
+            TryGetChunk(chunkY, chunkX + 1, right);
+            TryGetChunk(chunkY - 1, chunkX, bottom);
+            TryGetChunk(chunkY, chunkX - 1, left);
+            return AllocAndGenerateChunk(top, right, bottom, left);
         }
-
     }
 
     bool TryGetChunk(int chunkY, int chunkX, Map chunk)
@@ -569,6 +291,12 @@ public class World : MonoBehaviour
                 for (ushort y = 0; y < GlobalMapChunkSize; ++y)
                     for (ushort x = 0; x < GlobalMapChunkSize; ++x)
                         chunk.HeightMatrix[y, x] = reader.ReadSingle();
+                for (ushort y = 0; y < GlobalMapChunkSize; ++y)
+                    for (ushort x = 0; x < GlobalMapChunkSize; ++x)
+                    {
+                        short buf = reader.ReadInt16();
+                        chunk.HexSpriteID_Matrix[y, x] = buf == -1 ? null : (byte?)buf;
+                    }
 
                 for (ushort y = 0; y < GlobalMapChunkSize; ++y)
                     for (ushort x = 0; x < GlobalMapChunkSize; ++x)
@@ -577,23 +305,40 @@ public class World : MonoBehaviour
                 for (ushort y = 0; y < GlobalMapChunkSize; ++y)
                     for (ushort x = 0; x < GlobalMapChunkSize; ++x)
                         chunk.RiverMatrix[y, x] = reader.ReadBoolean();
+                for (ushort y = 0; y < GlobalMapChunkSize; ++y)
+                    for (ushort x = 0; x < GlobalMapChunkSize; ++x)
+                    {
+                        short buf = reader.ReadInt16();
+                        chunk.RiverSpriteID_Matrix[y, x] = buf == -1 ? null : (byte?)buf;
+                    }
+                for (ushort y = 0; y < GlobalMapChunkSize; ++y)
+                    for (ushort x = 0; x < GlobalMapChunkSize; ++x)
+                        chunk.RiverSpriteRotationMatrix[y, x] = reader.ReadInt16();
 
-                {
-                    short buf;
-                    for (ushort y = 0; y < GlobalMapChunkSize; ++y)
-                        for (ushort x = 0; x < GlobalMapChunkSize; ++x)
-                        {
-                            buf = reader.ReadInt16();
-                            chunk.HexSpriteID_Matrix[y, x] = buf == -1 ? null : (byte?)buf;
-                        }
+                for (ushort y = 0; y < GlobalMapChunkSize; ++y)
+                    for (ushort x = 0; x < GlobalMapChunkSize; ++x)
+                        chunk.ClusterMatrix[y, x] = reader.ReadBoolean();
+                for (ushort y = 0; y < GlobalMapChunkSize; ++y)
+                    for (ushort x = 0; x < GlobalMapChunkSize; ++x)
+                    {
+                        short buf = reader.ReadInt16();
+                        chunk.ClusterSpriteID_Matrix[y, x] = buf == -1 ? null : (byte?)buf;
+                    }
 
-                    for (ushort y = 0; y < GlobalMapChunkSize; ++y)
-                        for (ushort x = 0; x < GlobalMapChunkSize; ++x)
-                        {
-                            buf = reader.ReadInt16();
-                            chunk.RiverSpriteID_Matrix[y, x] = buf == -1 ? null : (byte?)buf;
-                        }
-                }
+                for (ushort y = 0; y < GlobalMapChunkSize; ++y)
+                    for (ushort x = 0; x < GlobalMapChunkSize; ++x)
+                        chunk.RoadMatrix[y, x] = reader.ReadBoolean();
+                for (ushort y = 0; y < GlobalMapChunkSize; ++y)
+                    for (ushort x = 0; x < GlobalMapChunkSize; ++x)
+                    {
+                        short buf = reader.ReadInt16();
+                        chunk.RoadSpriteID_Matrix[y, x] = buf == -1 ? null : (byte?)buf;
+                    }
+                for (ushort y = 0; y < GlobalMapChunkSize; ++y)
+                    for (ushort x = 0; x < GlobalMapChunkSize; ++x)
+                        chunk.RoadSpriteRotationMatrix[y, x] = reader.ReadInt16();
+
+
 
                 byte riversCount = reader.ReadByte();
                 chunk.Rivers = new List<List<Vector2>>(riversCount);
@@ -604,6 +349,35 @@ public class World : MonoBehaviour
                     for (byte j = 0; j < riverLength; ++j)
                     {
                         chunk.Rivers[i].Add(new Vector2(
+                            reader.ReadSingle(),
+                            reader.ReadSingle()
+                            ));
+                    }
+                }
+
+                byte clusterCount = reader.ReadByte();
+                chunk.Clusters = new List<List<Vector2>>(clusterCount);
+                for (byte i = 0; i < clusterCount; ++i)
+                {
+                    ushort clusterSize = reader.ReadUInt16();
+                    chunk.Clusters[i] = new List<Vector2>(clusterSize);
+                    for (byte j = 0; j < clusterSize; ++j)
+                    {
+                        chunk.Clusters[i].Add(new Vector2(
+                            reader.ReadSingle(),
+                            reader.ReadSingle()
+                            ));
+                    }
+                }
+                byte roadCount = reader.ReadByte();
+                chunk.Roads = new List<List<Vector2>>(roadCount);
+                for (byte i = 0; i < roadCount; ++i)
+                {
+                    ushort roadLength = reader.ReadUInt16();
+                    chunk.Roads[i] = new List<Vector2>(roadLength);
+                    for (byte j = 0; j < roadLength; ++j)
+                    {
+                        chunk.Roads[i].Add(new Vector2(
                             reader.ReadSingle(),
                             reader.ReadSingle()
                             ));
@@ -623,6 +397,9 @@ public class World : MonoBehaviour
             for (ushort y = 0; y < GlobalMapChunkSize; ++y)
                 for (ushort x = 0; x < GlobalMapChunkSize; ++x)
                     writer.Write(chunk.HeightMatrix[y, x]);
+            for (ushort y = 0; y < GlobalMapChunkSize; ++y)
+                for (ushort x = 0; x < GlobalMapChunkSize; ++x)
+                    writer.Write((short)(chunk.HexSpriteID_Matrix[y, x] ?? -1));
 
             for (ushort y = 0; y < GlobalMapChunkSize; ++y)
                 for (ushort x = 0; x < GlobalMapChunkSize; ++x)
@@ -631,14 +408,29 @@ public class World : MonoBehaviour
             for (ushort y = 0; y < GlobalMapChunkSize; ++y)
                 for (ushort x = 0; x < GlobalMapChunkSize; ++x)
                     writer.Write(chunk.RiverMatrix[y, x]);
-
-            for (ushort y = 0; y < GlobalMapChunkSize; ++y)
-                for (ushort x = 0; x < GlobalMapChunkSize; ++x)
-                    writer.Write((short)(chunk.HexSpriteID_Matrix[y, x] ?? -1));
-
             for (ushort y = 0; y < GlobalMapChunkSize; ++y)
                 for (ushort x = 0; x < GlobalMapChunkSize; ++x)
                     writer.Write((short)(chunk.RiverSpriteID_Matrix[y, x] ?? -1));
+            for (ushort y = 0; y < GlobalMapChunkSize; ++y)
+                for (ushort x = 0; x < GlobalMapChunkSize; ++x)
+                    writer.Write(chunk.RiverSpriteRotationMatrix[y, x]);
+
+            for (ushort y = 0; y < GlobalMapChunkSize; ++y)
+                for (ushort x = 0; x < GlobalMapChunkSize; ++x)
+                    writer.Write(chunk.ClusterMatrix[y, x]);
+            for (ushort y = 0; y < GlobalMapChunkSize; ++y)
+                for (ushort x = 0; x < GlobalMapChunkSize; ++x)
+                    writer.Write((short)(chunk.ClusterSpriteID_Matrix[y, x] ?? -1));
+
+            for (ushort y = 0; y < GlobalMapChunkSize; ++y)
+                for (ushort x = 0; x < GlobalMapChunkSize; ++x)
+                    writer.Write(chunk.RoadMatrix[y, x]);
+            for (ushort y = 0; y < GlobalMapChunkSize; ++y)
+                for (ushort x = 0; x < GlobalMapChunkSize; ++x)
+                    writer.Write((short)(chunk.RoadSpriteID_Matrix[y, x] ?? -1));
+            for (ushort y = 0; y < GlobalMapChunkSize; ++y)
+                for (ushort x = 0; x < GlobalMapChunkSize; ++x)
+                    writer.Write(chunk.RoadSpriteRotationMatrix[y, x]);
 
             writer.Write(chunk.Rivers.Count);
             for (byte i = 0; i < chunk.Rivers.Count; ++i)
@@ -648,6 +440,26 @@ public class World : MonoBehaviour
                 {
                     writer.Write(chunk.Rivers[i][j].x);
                     writer.Write(chunk.Rivers[i][j].y);
+                }
+            }
+            writer.Write(chunk.Clusters.Count);
+            for (byte i = 0; i < chunk.Clusters.Count; ++i)
+            {
+                writer.Write((ushort)chunk.Clusters[i].Count);
+                for (byte j = 0; j < chunk.Clusters[i].Count; ++j)
+                {
+                    writer.Write(chunk.Clusters[i][j].x);
+                    writer.Write(chunk.Clusters[i][j].y);
+                }
+            }
+            writer.Write(chunk.Roads.Count);
+            for (byte i = 0; i < chunk.Roads.Count; ++i)
+            {
+                writer.Write((ushort)chunk.Roads[i].Count);
+                for (byte j = 0; j < chunk.Roads[i].Count; ++j)
+                {
+                    writer.Write(chunk.Roads[i][j].x);
+                    writer.Write(chunk.Roads[i][j].y);
                 }
             }
         }
@@ -788,5 +600,17 @@ public class World : MonoBehaviour
             CurrentMap.BlockMatrix[(int)free.y, (int)free.x] = false;
             CurrentMap.BlockMatrix[(int)blocked.y, (int)blocked.x] = true;
         }
+    }
+
+    Map AllocAndGenerateChunk(Map topChunk, Map rightChunk, Map bottomChunk, Map leftChunk)
+    {
+        // TODO Ждём MonoDevelop 6.0 ( ?., ?[ ):
+        Map chunk = new Map(GlobalMapChunkSize, GlobalMapChunkSize);
+        Generator.CreateHeightmap(chunk.HeightMatrix, Generator.LandscapeRoughness, ((leftChunk != null ? leftChunk.HeightMatrix[GlobalMapChunkSize - 1, GlobalMapChunkSize - 1] : Random.value) + (topChunk != null ? topChunk.HeightMatrix[0, 0] : Random.value)) / 2f, ((topChunk != null ? topChunk.HeightMatrix[0, GlobalMapChunkSize - 1] : Random.value) + (rightChunk != null ? rightChunk.HeightMatrix[GlobalMapChunkSize - 1, 0] : Random.value)) / 2f, ((leftChunk != null ? leftChunk.HeightMatrix[0, GlobalMapChunkSize - 1] : Random.value) + (bottomChunk != null ? bottomChunk.HeightMatrix[GlobalMapChunkSize - 1, 0] : Random.value)) / 2f, ((bottomChunk != null ? bottomChunk.HeightMatrix[GlobalMapChunkSize - 1, GlobalMapChunkSize - 1] : Random.value) + (rightChunk != null ? rightChunk.HeightMatrix[0, 0] : Random.value)) / 2f);
+        Generator.CreateHeightmap(chunk.ForestMatrix, Generator.ForestRoughness, ((leftChunk != null ? leftChunk.ForestMatrix[GlobalMapChunkSize - 1, GlobalMapChunkSize - 1] : Random.value) + (topChunk != null ? topChunk.ForestMatrix[0, 0] : Random.value)) / 2f, ((topChunk != null ? topChunk.ForestMatrix[0, GlobalMapChunkSize - 1] : Random.value) + (rightChunk != null ? rightChunk.ForestMatrix[GlobalMapChunkSize - 1, 0] : Random.value)) / 2f, ((leftChunk != null ? leftChunk.ForestMatrix[0, GlobalMapChunkSize - 1] : Random.value) + (bottomChunk != null ? bottomChunk.ForestMatrix[GlobalMapChunkSize - 1, 0] : Random.value)) / 2f, ((bottomChunk != null ? bottomChunk.ForestMatrix[GlobalMapChunkSize - 1, GlobalMapChunkSize - 1] : Random.value) + (rightChunk != null ? rightChunk.ForestMatrix[0, 0] : Random.value)) / 2f);
+        chunk.Rivers = Generator.CreateRivers(chunk.HeightMatrix, chunk.RiverMatrix);
+        chunk.Clusters = Generator.CreateClusters(chunk);
+        chunk.Roads = new List<List<Vector2>>(); //UNDONE
+        return chunk;
     }
 }
