@@ -36,9 +36,10 @@ public class WorldGenerator : MonoBehaviour
     /// Использует фрактальный алгоритм Diamond Square
     public void CreateHeightmap(float[,] matrix, float r, float topLeft, float topRight, float bottomLeft, float bottomRight)
     {
+        Debug.Assert(topLeft >= 0 && topRight >= 0 && bottomLeft >= 0 && bottomRight >= 0);
+
         ushort height = (ushort)matrix.GetLength(0);
         ushort width = (ushort)matrix.GetLength(1);
-
 
         //Задаём начальные значения по углам
         matrix[0, 0] = topLeft;
@@ -48,31 +49,31 @@ public class WorldGenerator : MonoBehaviour
 
         for (ushort stepY = (ushort)(height - 1), stepX = (ushort)(width - 1), halfY = (ushort)(stepY / 2), halfX = (ushort)(stepX / 2); halfY != 0; stepY /= 2, halfY /= 2, stepX /= 2, halfX /= 2)
         {
-            float randRange = ((halfY + halfX) / 2f) / ((height + width) / 2f);
+            float randRange = (((halfY + halfX) / 2f) / ((height + width) / 2f)) * r;
 
             for (ushort y = halfY; y < height; y += stepY)
                 for (ushort x = halfX; x < width; x += stepX)
-                    matrix[y, x] = (matrix[y - halfY, x - halfX] + matrix[y + halfY, x - halfX] + matrix[y - halfY, x + halfX] + matrix[y + halfY, x + halfX]) / 4 + (Random.Range(-randRange * r, randRange * r));
+                    matrix[y, x] = (matrix[y - halfY, x - halfX] + matrix[y + halfY, x - halfX] + matrix[y - halfY, x + halfX] + matrix[y + halfY, x + halfX]) / 4 + Random.Range(-randRange, randRange);
 
             for (ushort y = halfY; y < height; y += stepY)
             {
-                matrix[y, 0] = (matrix[y - halfY, 0] + 0 + matrix[y + halfY, 0] + matrix[y, 0 + halfX]) / 4 + (Random.Range(-randRange * r, randRange * r));
-                matrix[y, width - 1] = (matrix[y - halfY, width - 1] + matrix[y, width - 1 - halfX] + matrix[y + halfY, width - 1] + 0) / 4 + (Random.Range(-randRange * r, randRange * r));
+                matrix[y, 0] = (matrix[y - halfY, 0] /*+ 0*/ + matrix[y + halfY, 0] + matrix[y, 0 + halfX]) / 3/*4*/ + Random.Range(-randRange, randRange);
+                matrix[y, width - 1] = (matrix[y - halfY, width - 1] + matrix[y, width - 1 - halfX] + matrix[y + halfY, width - 1] /*+ 0*/) / 3/*4*/ + Random.Range(-randRange, randRange);
             }
 
             for (ushort x = halfX; x < width; x += stepX)
             {
-                matrix[0, x] = (0 + matrix[0, x - halfX] + matrix[0 + halfY, x] + matrix[0, x + halfX]) / 4 + (Random.Range(-randRange * r, randRange * r));
-                matrix[height - 1, x] = (matrix[height - 1 - halfY, x] + matrix[height - 1, x - halfX] + 0 + matrix[height - 1, x + halfX]) / 4 + (Random.Range(-randRange * r, randRange * r));
+                matrix[0, x] = (/*0 +*/ matrix[0, x - halfX] + matrix[0 + halfY, x] + matrix[0, x + halfX]) / 3/*4*/ + Random.Range(-randRange, randRange);
+                matrix[height - 1, x] = (matrix[height - 1 - halfY, x] + matrix[height - 1, x - halfX] /*+ 0*/ + matrix[height - 1, x + halfX]) / 3/*4*/ + Random.Range(-randRange, randRange);
             }
 
             for (ushort y = halfY; y < height - 1; y += stepY)
                 for (ushort x = stepX; x < width - 1; x += stepX)
-                    matrix[y, x] = (matrix[y, x - halfX] + matrix[y - halfY, x] + matrix[y, x + halfX] + matrix[y + halfY, x]) / 4 + (Random.Range(-randRange * r, randRange * r));
+                    matrix[y, x] = (matrix[y, x - halfX] + matrix[y - halfY, x] + matrix[y, x + halfX] + matrix[y + halfY, x]) / 4 + Random.Range(-randRange, randRange);
 
             for (ushort x = halfX; x < width - 1; x += stepX)
                 for (ushort y = stepY; y < height - 1; y += stepY)
-                    matrix[y, x] = (matrix[y, x - halfX] + matrix[y - halfY, x] + matrix[y, x + halfX] + matrix[y + halfY, x]) / 4 + (Random.Range(-randRange * r, randRange * r));
+                    matrix[y, x] = (matrix[y, x - halfX] + matrix[y - halfY, x] + matrix[y, x + halfX] + matrix[y + halfY, x]) / 4 + Random.Range(-randRange, randRange);
         }
     }
 
@@ -215,25 +216,25 @@ public class WorldGenerator : MonoBehaviour
     /// <param name="matrix">Карта рек.</param>
     /// Функция подсчитывает количство соседних клеток, помеченных как "Река" или находящихся в "стеке реки"
     /// TODO Проверить работу стека реки
-    byte RiverNeighbours(ushort y, ushort x, bool[,] matrix)
+    byte RiverNeighbours(ushort y, ushort x, bool[,] riverMatrix)
     {
-        ushort height = (ushort)matrix.GetLength(0);
-        ushort width = (ushort)matrix.GetLength(1);
+        ushort height = (ushort)riverMatrix.GetLength(0);
+        ushort width = (ushort)riverMatrix.GetLength(1);
 
         byte k = (byte)((x % 2) != 0 ? 1 : 0);
 
         byte riversCount = 0;
-        if (y > 0 && x > 0 && (matrix[y - 1 + k, x - 1] || RiverStack.Contains(new Vector2(x - 1, y - 1 + k))))
+        if (y > 0 && x > 0 && (riverMatrix[y - 1 + k, x - 1] || RiverStack.Contains(new Vector2(x - 1, y - 1 + k))))
             riversCount++;
-        if (x > 0 && y < height - 1 && (matrix[y + k, x - 1] || RiverStack.Contains(new Vector2(x - 1, y + k))))
+        if (x > 0 && y < height - 1 && (riverMatrix[y + k, x - 1] || RiverStack.Contains(new Vector2(x - 1, y + k))))
             riversCount++;
-        if (y > 0 && (matrix[y - 1, x] || RiverStack.Contains(new Vector2(x, y - 1))))
+        if (y > 0 && (riverMatrix[y - 1, x] || RiverStack.Contains(new Vector2(x, y - 1))))
             riversCount++;
-        if (y < height - 1 && (matrix[y + 1, x] || RiverStack.Contains(new Vector2(x, y + 1))))
+        if (y < height - 1 && (riverMatrix[y + 1, x] || RiverStack.Contains(new Vector2(x, y + 1))))
             riversCount++;
-        if (y > 0 && x < width - 1 && (matrix[y - 1 + k, x + 1] || RiverStack.Contains(new Vector2(x + 1, y - 1 + k))))
+        if (y > 0 && x < width - 1 && (riverMatrix[y - 1 + k, x + 1] || RiverStack.Contains(new Vector2(x + 1, y - 1 + k))))
             riversCount++;
-        if (x < width - 1 && y < height - 1 && (matrix[y + k, x + 1] || RiverStack.Contains(new Vector2(x + 1, y + k))))
+        if (x < width - 1 && y < height - 1 && (riverMatrix[y + k, x + 1] || RiverStack.Contains(new Vector2(x + 1, y + k))))
             riversCount++;
 
         return riversCount;
@@ -286,6 +287,108 @@ public class WorldGenerator : MonoBehaviour
                 SpreadCluster(map, (ushort)(y - 1 + k), (ushort)(x + 1), (byte)(remainingSize - 1), cluster);
             if (!map.RiverMatrix[y + k, x + 1] && !map.ClusterMatrix[y + k, x + 1])
                 SpreadCluster(map, (ushort)(y + k), (ushort)(x + 1), (byte)(remainingSize - 1), cluster);
+        }
+    }
+
+    public List<List<Vector2>> CreateRoads(float[,] heightMap, bool[,] roadMap, List<List<Vector2>> clusters)
+    {
+        List<List<Vector2>> roads = new List<List<Vector2>>();
+
+        for (byte i = 0; i < clusters.Count / 2; ++i)
+        {
+            roads.Add(new List<Vector2>());
+            DirectRoad(heightMap, roadMap, (ushort)clusters[i][0].y, (ushort)clusters[i][0].x, clusters[clusters.Count / 2 + i][0], roads[i]);
+        }
+        return roads;
+    }
+
+    void DirectRoad(float[,] heightMatrix, bool[,] roadMatrix, ushort y, ushort x, Vector2 destination, List<Vector2> road)
+    {
+        ushort height = (ushort)roadMatrix.GetLength(0);
+        ushort width = (ushort)roadMatrix.GetLength(1);
+
+        road.Add(new Vector2(x, y));
+        roadMatrix[y, x] = true;
+
+        if (y > 0 && y < height - 1 && x > 0 && x < width - 1 && !(destination.x == x && destination.y == y))
+        {
+            byte k = (byte)((x % 2) != 0 ? 1 : 0);
+
+            float max = heightMatrix[y + k, x - 1], avg = 0;
+            float cur = heightMatrix[y + k, x - 1];
+            avg += cur;
+
+            cur = heightMatrix[y + 1, x];
+            if (max < cur)
+                max = cur;
+            avg += cur;
+
+            cur = heightMatrix[y + k, x + 1];
+            if (max < cur)
+                max = cur;
+            avg += cur;
+
+            cur = heightMatrix[y - 1 + k, x + 1];
+            if (max < cur)
+                max = cur;
+            avg += cur;
+
+            cur = heightMatrix[y - 1, x];
+            if (max < cur)
+                max = cur;
+            avg += cur;
+
+            cur = heightMatrix[y - 1 + k, x - 1];
+            if (max < cur)
+                max = cur;
+            avg += cur;
+
+            avg /= 6;
+            max += 0.0001f; //!
+
+            float weight = 0, buf;
+            sbyte dx = 0, dy = 0;
+            if (!road.Contains(new Vector2(x - 1, y + k)) && ((buf = (Mathf.Abs(destination.x - x) - Mathf.Abs(destination.x - (x - 1)) + Mathf.Abs(destination.y - y) - Mathf.Abs(destination.y - (y + k)) + 3) * (max - Mathf.Abs(heightMatrix[y + k, x - 1] - avg))) > weight))
+            {
+                weight = buf;
+                dx = -1;
+                dy = (sbyte)k;
+            }
+            if (!road.Contains(new Vector2(x + 1, y + k)) && ((buf = (Mathf.Abs(destination.x - x) - Mathf.Abs(destination.x - (x + 1)) + Mathf.Abs(destination.y - y) - Mathf.Abs(destination.y - (y + k)) + 3) * (max - Mathf.Abs(heightMatrix[y + k, x + 1] - avg))) > weight))
+            {
+                weight = buf;
+                dx = 1;
+                dy = (sbyte)k;
+            }
+            if (!road.Contains(new Vector2(x, y + 1)) && ((buf = (Mathf.Abs(destination.y - y) - Mathf.Abs(destination.y - (y + 1)) + 3) * (max - Mathf.Abs(heightMatrix[y + 1, x] - avg))) > weight))//!После диагонали
+            {
+                weight = buf;
+                dx = 0;
+                dy = 1;
+            }
+            if (!road.Contains(new Vector2(x + 1, y - 1 + k)) && ((buf = (Mathf.Abs(destination.x - x) - Mathf.Abs(destination.x - (x + 1)) + Mathf.Abs(destination.y - y) - Mathf.Abs(destination.y - (y - 1 + k)) + 3) * (max - Mathf.Abs(heightMatrix[y - 1 + k, x + 1] - avg))) > weight))
+            {
+                weight = buf;
+                dx = 1;
+                dy = (sbyte)(-1 + k);
+            }
+            if (!road.Contains(new Vector2(x - 1, y - 1 + k)) && ((buf = (Mathf.Abs(destination.x - x) - Mathf.Abs(destination.x - (x - 1)) + Mathf.Abs(destination.y - y) - Mathf.Abs(destination.y - (y - 1 + k)) + 3) * (max - Mathf.Abs(heightMatrix[y - 1 + k, x - 1] - avg))) > weight))
+            {
+                weight = buf;
+                dx = -1;
+                dy = (sbyte)(-1 + k);
+            }
+            if (!road.Contains(new Vector2(x, y - 1)) && ((buf = (Mathf.Abs(destination.y - y) - Mathf.Abs(destination.y - (y - 1)) + 3) * (max - Mathf.Abs(heightMatrix[y - 1, x] - avg))) > weight))//!После диагонали
+            {
+                weight = buf;
+                dx = 0;
+                dy = -1;
+            }
+
+            if (dx == 0 && dy == 0)
+                throw new System.Exception("Infinite loop detected. Check heightmap values for negativity.");
+
+            DirectRoad(heightMatrix, roadMatrix, (ushort)(y + dy), (ushort)(x + dx), destination, road);
         }
     }
 }

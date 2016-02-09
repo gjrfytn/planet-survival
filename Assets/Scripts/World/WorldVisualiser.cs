@@ -23,6 +23,11 @@ public class WorldVisualiser : MonoBehaviour
     public Sprite[] RiverEndSprites;
     public Sprite[] TreeSprites;
     public Sprite[] RuinSprites;
+    public Sprite[] RoadStraightSprites;
+    public Sprite[] RoadTurnSprites;
+    public Sprite[] RoadStraightBridgeSprites;
+    public Sprite[] RoadTurnBridgeSprites;
+    public Material DiffuseMaterial;
     public byte ForestDensity;
     public byte ForestGenGridSize;
     public float FadeInTime;
@@ -33,14 +38,16 @@ public class WorldVisualiser : MonoBehaviour
 
     List<Sprite> AllHexSprites = new List<Sprite>();
     List<Sprite> AllRiverSprites = new List<Sprite>();
+    List<Sprite> AllRoadSprites = new List<Sprite>();
 
     class ListType
     {
         public GameObject Hex;
         public bool InSign;
         public List<GameObject> Trees = new List<GameObject>();
-        public GameObject RiverSprite;
-        public GameObject ClusterSprite;
+        //public GameObject RiverSprite;
+        //public GameObject ClusterSprite;
+        public List<GameObject> LandscapeObj = new List<GameObject>();
     }
 
     List<ListType> RenderedHexes = new List<ListType>();
@@ -83,6 +90,11 @@ public class WorldVisualiser : MonoBehaviour
         AllRiverSprites.AddRange(RiverStraightSprites);
         AllRiverSprites.AddRange(RiverTurnSprites);
         AllRiverSprites.AddRange(RiverEndSprites);
+
+        AllRoadSprites.AddRange(RoadStraightSprites);
+        AllRoadSprites.AddRange(RoadTurnSprites);
+        AllRoadSprites.AddRange(RoadStraightBridgeSprites);
+        AllRoadSprites.AddRange(RoadTurnBridgeSprites);
     }
 
     /// <summary>
@@ -93,8 +105,9 @@ public class WorldVisualiser : MonoBehaviour
         RenderedHexes.ForEach(hex =>
         {
             hex.Trees.ForEach(tree => Destroy(tree));
-            Destroy(hex.RiverSprite);
-            Destroy(hex.ClusterSprite);
+            //Destroy(hex.RiverSprite);
+            //Destroy(hex.ClusterSprite);
+            hex.LandscapeObj.ForEach(obj => Destroy(obj));
             Destroy(hex.Hex);
         });
         RenderedHexes.Clear();
@@ -130,9 +143,11 @@ public class WorldVisualiser : MonoBehaviour
         for (ushort i = 0; i < RenderedHexes.Count; ++i)
             if (!RenderedHexes[i].InSign)
             {
-                if (RenderedHexes[i].RiverSprite != null)
-                    StartCoroutine(RenderHelper.FadeAndDestroyObject(RenderedHexes[i].RiverSprite.GetComponent<Renderer>(), FadeTime));
+                // if (RenderedHexes[i].RiverSprite != null)
+                //    StartCoroutine(RenderHelper.FadeAndDestroyObject(RenderedHexes[i].RiverSprite.GetComponent<Renderer>(), FadeTime));
+
                 RenderedHexes[i].Trees.ForEach(tree => StartCoroutine(RenderHelper.FadeAndDestroyObject(tree.GetComponent<Renderer>(), FadeTime)));
+                RenderedHexes[i].LandscapeObj.ForEach(obj => StartCoroutine(RenderHelper.FadeAndDestroyObject(obj.GetComponent<Renderer>(), FadeTime)));
                 StartCoroutine(RenderHelper.FadeAndDestroyObject(RenderedHexes[i].Hex.GetComponent<Renderer>(), FadeTime));
                 RenderedHexes.RemoveAt(i);
                 --i;
@@ -207,33 +222,69 @@ public class WorldVisualiser : MonoBehaviour
             hex.Hex.GetComponent<SpriteRenderer>().sprite = ChooseHexSprite(mapCoords, map);
         hex.Hex.GetComponent<SpriteRenderer>().sortingLayerName = "Landscape";//
         StartCoroutine(RenderHelper.FadeIn(hex.Hex.GetComponent<Renderer>(), FadeInTime));
+        bool forestBlocked = false;
         if (map.HasRiver(mapCoords))
         {
-            hex.RiverSprite = new GameObject();
+            /*hex.RiverSprite = new GameObject();
             hex.RiverSprite.transform.position = GetTransformPosFromMapCoords(mapCoords);
             hex.RiverSprite.AddComponent<SpriteRenderer>();
             hex.RiverSprite.GetComponent<SpriteRenderer>().sortingLayerName = "LandscapeObjects";
-            if (map.GetRiverSpriteID(mapCoords) != null /*?*/&& map.GetRiverSpriteID(mapCoords) < AllRiverSprites.Count)
+            if (map.GetRiverSpriteID(mapCoords) != null && map.GetRiverSpriteID(mapCoords) < AllRiverSprites.Count)
             {
                 hex.RiverSprite.GetComponent<SpriteRenderer>().sprite = AllRiverSprites[(int)map.GetRiverSpriteID(mapCoords)];
                 hex.RiverSprite.transform.Rotate(new Vector3(0, 0, map.GetRiverSpriteRotation(mapCoords)));
             }
             else
-                hex.RiverSprite.GetComponent<SpriteRenderer>().sprite = ChooseHexRiverSprite(hex.RiverSprite.transform, mapCoords, map);
+                hex.RiverSprite.GetComponent<SpriteRenderer>().sprite = ChooseHexRiverSprite(hex.RiverSprite.transform, mapCoords, map);*/
+
+            GameObject riverSprite = new GameObject();
+            hex.LandscapeObj.Add(riverSprite);
+            riverSprite.transform.position = GetTransformPosFromMapCoords(mapCoords);
+            riverSprite.AddComponent<SpriteRenderer>();
+            riverSprite.GetComponent<SpriteRenderer>().sortingLayerName = "LandscapeObjects";
+            riverSprite.GetComponent<SpriteRenderer>().material = DiffuseMaterial;
+            if (map.GetRiverSpriteID(mapCoords) != null /*?*/ && map.GetRiverSpriteID(mapCoords) < AllRiverSprites.Count)
+            {
+                riverSprite.GetComponent<SpriteRenderer>().sprite = AllRiverSprites[(int)map.GetRiverSpriteID(mapCoords)];
+                riverSprite.transform.Rotate(new Vector3(0, 0, map.GetRiverSpriteRotation(mapCoords)));
+            }
+            else
+                riverSprite.GetComponent<SpriteRenderer>().sprite = ChooseHexRiverSprite(riverSprite.transform, mapCoords, map);
+            forestBlocked = true;
         }
         if (map.HasCluster(mapCoords))
         {
-            hex.ClusterSprite = new GameObject();
-            hex.ClusterSprite.transform.position = GetTransformPosFromMapCoords(mapCoords);
-            hex.ClusterSprite.AddComponent<SpriteRenderer>();
-            hex.ClusterSprite.GetComponent<SpriteRenderer>().sortingLayerName = "LandscapeObjects";
+            GameObject clusterSprite = new GameObject();
+            hex.LandscapeObj.Add(clusterSprite);
+            clusterSprite.transform.position = GetTransformPosFromMapCoords(mapCoords);
+            clusterSprite.AddComponent<SpriteRenderer>();
+            clusterSprite.GetComponent<SpriteRenderer>().sortingLayerName = "Infrastructure";
+            clusterSprite.GetComponent<SpriteRenderer>().material = DiffuseMaterial;
             if (map.GetClusterSpriteID(mapCoords) != null /*?*/&& map.GetClusterSpriteID(mapCoords) < RuinSprites.Length)
-                hex.ClusterSprite.GetComponent<SpriteRenderer>().sprite = RuinSprites[(int)map.GetClusterSpriteID(mapCoords)];
+                clusterSprite.GetComponent<SpriteRenderer>().sprite = RuinSprites[(int)map.GetClusterSpriteID(mapCoords)];
             else
                 map.ClusterSpriteID_Matrix[(int)mapCoords.y, (int)mapCoords.x] = (byte)Random.Range(0, RuinSprites.Length);
-            hex.ClusterSprite.GetComponent<SpriteRenderer>().sprite = RuinSprites[(int)map.GetClusterSpriteID(mapCoords)];
+            clusterSprite.GetComponent<SpriteRenderer>().sprite = RuinSprites[(int)map.GetClusterSpriteID(mapCoords)];
+            forestBlocked = true;
         }
-        else
+        if (map.HasRoad(mapCoords))
+        {
+            GameObject roadSprite = new GameObject();
+            hex.LandscapeObj.Add(roadSprite);
+            roadSprite.transform.position = GetTransformPosFromMapCoords(mapCoords);
+            roadSprite.AddComponent<SpriteRenderer>();
+            roadSprite.GetComponent<SpriteRenderer>().sortingLayerName = "Infrastructure";
+            roadSprite.GetComponent<SpriteRenderer>().material = DiffuseMaterial;
+            if (map.GetRoadSpriteID(mapCoords) != null /*?*/ && map.GetRoadSpriteID(mapCoords) < AllRiverSprites.Count)
+            {
+                roadSprite.GetComponent<SpriteRenderer>().sprite = AllRoadSprites[(int)map.GetRoadSpriteID(mapCoords)];
+                roadSprite.transform.Rotate(new Vector3(0, 0, map.GetRoadSpriteRotation(mapCoords)));
+            }
+            else
+                roadSprite.GetComponent<SpriteRenderer>().sprite = ChooseHexRoadSprite(roadSprite.transform, mapCoords, map);
+            forestBlocked = true;
+        }
+        if (!forestBlocked)
             MakeHexForest(hex, mapCoords, map);
     }
 
@@ -311,9 +362,61 @@ public class WorldVisualiser : MonoBehaviour
             map.RiverSpriteID_Matrix[(int)mapCoords.y, (int)mapCoords.x] = id;
             map.RiverSpriteRotationMatrix[(int)mapCoords.y, (int)mapCoords.x] = angle;
             spriteTransform.Rotate(new Vector3(0, 0, angle));
-            Sprite sprite = AllRiverSprites[id];
 
-            return sprite;
+            return AllRiverSprites[id]; ;
+        }
+        return null;
+    }
+
+    Sprite ChooseHexRoadSprite(Transform spriteTransform, Vector2 mapCoords, Map map)
+    {
+        foreach (List<Vector2> road in map.Roads)
+        {
+            byte id;
+            short angle;
+            short index = (short)road.IndexOf(mapCoords);
+            if (index != -1)
+            {
+                if (index == 0)
+                {
+                    id = (byte)(map.HasRiver(mapCoords) ? Random.Range(0, RoadStraightBridgeSprites.Length) + RoadStraightSprites.Length + RoadTurnSprites.Length : Random.Range(0, RoadStraightSprites.Length));
+                    angle = (short)(Mathf.Sign(road[1].x - mapCoords.x) * Vector2.Angle(Vector2.down, GetTransformPosFromMapCoords(road[1]) - GetTransformPosFromMapCoords(mapCoords)));
+                }
+                else if (index == road.Count - 1)
+                {
+                    id = (byte)(map.HasRiver(mapCoords) ? Random.Range(0, RoadStraightBridgeSprites.Length) + RoadStraightSprites.Length + RoadTurnSprites.Length : Random.Range(0, RoadStraightSprites.Length));
+                    angle = (short)(Mathf.Sign(road[road.Count - 2].x - mapCoords.x) * Vector2.Angle(Vector2.down, GetTransformPosFromMapCoords(road[road.Count - 2]) - GetTransformPosFromMapCoords(mapCoords)));
+                }
+                else
+                {
+                    Vector2 prev = GetTransformPosFromMapCoords(road[index - 1]) - GetTransformPosFromMapCoords(mapCoords);
+                    if ((short)Vector2.Angle(GetTransformPosFromMapCoords(road[index - 1]) - GetTransformPosFromMapCoords(mapCoords), GetTransformPosFromMapCoords(road[index + 1]) - GetTransformPosFromMapCoords(mapCoords)) > 150) //(==180, !=120)
+                    {
+                        id = (byte)(map.HasRiver(mapCoords) ? Random.Range(0, RoadStraightBridgeSprites.Length) + RoadStraightSprites.Length + RoadTurnSprites.Length : Random.Range(0, RoadStraightSprites.Length));
+                        angle = (short)(Mathf.Sign(road[index - 1].x - mapCoords.x) * Vector2.Angle(Vector2.down, prev));
+                    }
+                    else
+                    {
+                        id = (byte)(map.HasRiver(mapCoords) ? Random.Range(0, RoadTurnBridgeSprites.Length) + RoadStraightSprites.Length + RoadTurnSprites.Length + RoadStraightBridgeSprites.Length : Random.Range(0, RoadTurnSprites.Length) + RoadStraightSprites.Length);
+
+                        Vector2 next = GetTransformPosFromMapCoords(road[index + 1]) - GetTransformPosFromMapCoords(mapCoords);
+
+                        angle = (short)(Mathf.Sign(road[index - 1].x - mapCoords.x) * Vector2.Angle(Vector2.down, prev));
+                        if (Mathf.Approximately(prev.x, 0))
+                            angle += (short)(240 * (Mathf.Sign(prev.y) == Mathf.Sign(next.x) ? 1 : 0));
+                        else
+                            angle += (short)(240 * (Mathf.Sign(prev.x) != Mathf.Sign(next.y) ? 1 : 0));
+                    }
+                }
+            }
+            else
+                continue;
+
+            map.RoadSpriteID_Matrix[(int)mapCoords.y, (int)mapCoords.x] = id;
+            map.RoadSpriteRotationMatrix[(int)mapCoords.y, (int)mapCoords.x] = angle;
+            spriteTransform.Rotate(new Vector3(0, 0, angle));
+
+            return AllRoadSprites[id]; ;
         }
         return null;
     }
@@ -346,6 +449,7 @@ public class WorldVisualiser : MonoBehaviour
                             tree.AddComponent<SpriteRenderer>();
                             tree.GetComponent<SpriteRenderer>().sortingLayerName = "LandscapeObjects";//
                             tree.GetComponent<SpriteRenderer>().sprite = TreeSprites[Random.Range(0, TreeSprites.Length)];
+                            tree.GetComponent<SpriteRenderer>().material = DiffuseMaterial;
                             StartCoroutine(RenderHelper.FadeIn(tree.GetComponent<Renderer>(), FadeInTime));
                             --treesCount;
                         }
@@ -361,6 +465,7 @@ public class WorldVisualiser : MonoBehaviour
                     tree.AddComponent<SpriteRenderer>();
                     tree.GetComponent<SpriteRenderer>().sortingLayerName = "LandscapeObjects";//
                     tree.GetComponent<SpriteRenderer>().sprite = TreeSprites[Random.Range(0, TreeSprites.Length)];
+                    tree.GetComponent<SpriteRenderer>().material = DiffuseMaterial;
                     StartCoroutine(RenderHelper.FadeIn(tree.GetComponent<Renderer>(), FadeInTime));
                     --treesCount;
                     if (treesCount == 0)

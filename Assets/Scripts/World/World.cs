@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 public class World : MonoBehaviour
 {
@@ -607,10 +608,16 @@ public class World : MonoBehaviour
         // TODO Ждём MonoDevelop 6.0 ( ?., ?[ ):
         Map chunk = new Map(GlobalMapChunkSize, GlobalMapChunkSize);
         Generator.CreateHeightmap(chunk.HeightMatrix, Generator.LandscapeRoughness, ((leftChunk != null ? leftChunk.HeightMatrix[GlobalMapChunkSize - 1, GlobalMapChunkSize - 1] : Random.value) + (topChunk != null ? topChunk.HeightMatrix[0, 0] : Random.value)) / 2f, ((topChunk != null ? topChunk.HeightMatrix[0, GlobalMapChunkSize - 1] : Random.value) + (rightChunk != null ? rightChunk.HeightMatrix[GlobalMapChunkSize - 1, 0] : Random.value)) / 2f, ((leftChunk != null ? leftChunk.HeightMatrix[0, GlobalMapChunkSize - 1] : Random.value) + (bottomChunk != null ? bottomChunk.HeightMatrix[GlobalMapChunkSize - 1, 0] : Random.value)) / 2f, ((bottomChunk != null ? bottomChunk.HeightMatrix[GlobalMapChunkSize - 1, GlobalMapChunkSize - 1] : Random.value) + (rightChunk != null ? rightChunk.HeightMatrix[0, 0] : Random.value)) / 2f);
+        for (ushort y = 0; y < GlobalMapChunkSize; ++y)
+            for (ushort x = 0; x < GlobalMapChunkSize; ++x)
+                chunk.HeightMatrix[y, x] = Mathf.Clamp(chunk.HeightMatrix[y, x], 0, Mathf.Abs(chunk.HeightMatrix[y, x]));
         Generator.CreateHeightmap(chunk.ForestMatrix, Generator.ForestRoughness, ((leftChunk != null ? leftChunk.ForestMatrix[GlobalMapChunkSize - 1, GlobalMapChunkSize - 1] : Random.value) + (topChunk != null ? topChunk.ForestMatrix[0, 0] : Random.value)) / 2f, ((topChunk != null ? topChunk.ForestMatrix[0, GlobalMapChunkSize - 1] : Random.value) + (rightChunk != null ? rightChunk.ForestMatrix[GlobalMapChunkSize - 1, 0] : Random.value)) / 2f, ((leftChunk != null ? leftChunk.ForestMatrix[0, GlobalMapChunkSize - 1] : Random.value) + (bottomChunk != null ? bottomChunk.ForestMatrix[GlobalMapChunkSize - 1, 0] : Random.value)) / 2f, ((bottomChunk != null ? bottomChunk.ForestMatrix[GlobalMapChunkSize - 1, GlobalMapChunkSize - 1] : Random.value) + (rightChunk != null ? rightChunk.ForestMatrix[0, 0] : Random.value)) / 2f);
+        for (ushort y = 0; y < GlobalMapChunkSize; ++y)
+            for (ushort x = 0; x < GlobalMapChunkSize; ++x)
+                chunk.ForestMatrix[y, x] = Mathf.Clamp(chunk.ForestMatrix[y, x], 0, Mathf.Abs(chunk.ForestMatrix[y, x]));
         chunk.Rivers = Generator.CreateRivers(chunk.HeightMatrix, chunk.RiverMatrix);
         chunk.Clusters = Generator.CreateClusters(chunk);
-        chunk.Roads = new List<List<Vector2>>(); //UNDONE
+        chunk.Roads = Generator.CreateRoads(chunk.HeightMatrix, chunk.RoadMatrix, chunk.Clusters);
         return chunk;
     }
 }
