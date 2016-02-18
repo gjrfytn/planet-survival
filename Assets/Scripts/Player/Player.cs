@@ -35,7 +35,6 @@ public sealed class Player : Creature
     new void OnDisable()
     {
         base.OnDisable();
-        //EventManager.LocalMapLeft-=Destroy;
     }
 
     new void Start()
@@ -101,5 +100,12 @@ public sealed class Player : Creature
         //CurrentEnergyText.text = "Energy: " + CurrentEnergy + " / " + MaxEnergy;
         //CurrentStaminaText.text = "Stamina: " + CurrentStamina + " / " + MaxStamina;
         //CurrentHungreedText.text = "Hungreed: " + CurrentHungreed + " / " + MaxHungreed;
+    }
+
+    public new void MoveToMapCoords(Vector2 mapCoords)
+    {
+        base.MoveToMapCoords(mapCoords);
+        EventManager.OnTurn();
+        EventManager.OnPlayerMove(mapCoords); //TODO Временно
     }
 }

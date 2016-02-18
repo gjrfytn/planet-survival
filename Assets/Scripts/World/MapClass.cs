@@ -2,28 +2,12 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public class Map
+public abstract class Map
 {
     public float[,] HeightMatrix;
     public byte?[,] HexSpriteID_Matrix;
 
     public float[,] ForestMatrix;
-    public bool[,] BlockMatrix;
-
-    public bool[,] RiverMatrix;
-    public byte?[,] RiverSpriteID_Matrix;
-    public short[,] RiverSpriteRotationMatrix;
-
-    public bool[,] ClusterMatrix;
-    public byte?[,] ClusterSpriteID_Matrix;
-
-    public bool[,] RoadMatrix;
-    public byte?[,] RoadSpriteID_Matrix;
-    public short[,] RoadSpriteRotationMatrix;
-
-    public List<List<Vector2>> Rivers;
-    public List<List<Vector2>> Clusters;
-    public List<List<Vector2>> Roads;
 
     public bool Contains(Vector2 coords)
     {
@@ -45,10 +29,46 @@ public class Map
         return ForestMatrix[(int)coords.y, (int)coords.x];
     }
 
+    public Map(ushort width, ushort height)
+    {
+        HeightMatrix = new float[height, width];
+        HexSpriteID_Matrix = new byte?[height, width];
+        ForestMatrix = new float[height, width];
+    }
+}
+
+public sealed class LocalMap : Map
+{
+    public bool[,] BlockMatrix;
+
     public bool IsBlocked(Vector2 coords)
     {
         return BlockMatrix[(int)coords.y, (int)coords.x];
     }
+
+    public LocalMap(ushort width, ushort height)
+        : base(width, height)
+    {
+        BlockMatrix = new bool[height, width];
+    }
+}
+
+public sealed class GlobalMap : Map
+{
+    public bool[,] RiverMatrix;
+    public byte?[,] RiverSpriteID_Matrix;
+    public short[,] RiverSpriteRotationMatrix;
+
+    public bool[,] ClusterMatrix;
+    public byte?[,] ClusterSpriteID_Matrix;
+
+    public bool[,] RoadMatrix;
+    public byte?[,] RoadSpriteID_Matrix;
+    public short[,] RoadSpriteRotationMatrix;
+
+    public List<List<Vector2>> Rivers;
+    public List<List<Vector2>> Clusters;
+    public List<List<Vector2>> Roads;
 
     public bool HasRiver(Vector2 coords)
     {
@@ -90,12 +110,9 @@ public class Map
         return RoadSpriteRotationMatrix[(int)coords.y, (int)coords.x];
     }
 
-    public Map(ushort width, ushort height)
+    public GlobalMap(ushort width, ushort height)
+        : base(width, height)
     {
-        HeightMatrix = new float[height, width];
-        HexSpriteID_Matrix = new byte?[height, width];
-        ForestMatrix = new float[height, width];
-        BlockMatrix = new bool[height, width];
         RiverMatrix = new bool[height, width];
         RiverSpriteID_Matrix = new byte?[height, width];
         RiverSpriteRotationMatrix = new short[height, width];

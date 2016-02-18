@@ -116,6 +116,7 @@ public class Creature : Entity
     public void TakeDamage(float damage)
     {
         Debug.Assert(damage >= 0);
+        //EventManager.OnCreatureHit(transform.position,damage);
         Health -= Mathf.Clamp(damage - Armor, 0, damage);
         if (Health <= 0)
             Destroy(gameObject);

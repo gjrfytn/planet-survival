@@ -19,14 +19,9 @@ public class ClustersParameters
     public byte Size;
 }
 
-public class WorldGenerator : MonoBehaviour
+public static class WorldGenerator
 {
-    public float LandscapeRoughness;
-    public float ForestRoughness;
-    public RiversParameters RiversParam;
-    public ClustersParameters ClustersParam;
-
-    Stack<Vector2> RiverStack = new Stack<Vector2>(); //Стек для постройки реки
+    static Stack<Vector2> RiverStack = new Stack<Vector2>(); //Стек для постройки реки
 
     /// <summary>
     /// Создаёт карту высот. 
@@ -34,9 +29,9 @@ public class WorldGenerator : MonoBehaviour
     /// <param name="matrix">[out] Карта высот.</param>
     /// <param name="r">Шероховатость.</param>
     /// Использует фрактальный алгоритм Diamond Square
-    public void CreateHeightmap(float[,] matrix, float r, float topLeft, float topRight, float bottomLeft, float bottomRight)
+    public static void CreateHeightmap(float[,] matrix, float roughness, float topLeft, float topRight, float bottomLeft, float bottomRight)
     {
-        Debug.Assert(topLeft >= 0 && topRight >= 0 && bottomLeft >= 0 && bottomRight >= 0);
+        //Debug.Assert(topLeft >= 0 && topRight >= 0 && bottomLeft >= 0 && bottomRight >= 0);
 
         ushort height = (ushort)matrix.GetLength(0);
         ushort width = (ushort)matrix.GetLength(1);
@@ -46,10 +41,10 @@ public class WorldGenerator : MonoBehaviour
         matrix[0, width - 1] = topRight;
         matrix[height - 1, 0] = bottomLeft;
         matrix[height - 1, width - 1] = bottomRight;
-
-        for (ushort stepY = (ushort)(height - 1), stepX = (ushort)(width - 1), halfY = (ushort)(stepY / 2), halfX = (ushort)(stepX / 2); halfY != 0; stepY /= 2, halfY /= 2, stepX /= 2, halfX /= 2)
+        bool end = false;
+        for (ushort stepY = (ushort)(height - 1), stepX = (ushort)(width - 1), halfY = (ushort)(stepY / 2), halfX = (ushort)(stepX / 2); !end; end = (halfY == 1 && halfX == 1), halfY -= (ushort)(halfY / 2), stepY = (ushort)(halfY * 2), halfX -= (ushort)(halfX / 2), stepX = (ushort)(halfX * 2))
         {
-            float randRange = (((halfY + halfX) / 2f) / ((height + width) / 2f)) * r;
+            float randRange = (((halfY + halfX) / 2f) / ((height + width) / 2f)) * roughness;
 
             for (ushort y = halfY; y < height; y += stepY)
                 for (ushort x = halfX; x < width; x += stepX)
@@ -57,14 +52,14 @@ public class WorldGenerator : MonoBehaviour
 
             for (ushort y = halfY; y < height; y += stepY)
             {
-                matrix[y, 0] = (matrix[y - halfY, 0] /*+ 0*/ + matrix[y + halfY, 0] + matrix[y, 0 + halfX]) / 3/*4*/ + Random.Range(-randRange, randRange);
-                matrix[y, width - 1] = (matrix[y - halfY, width - 1] + matrix[y, width - 1 - halfX] + matrix[y + halfY, width - 1] /*+ 0*/) / 3/*4*/ + Random.Range(-randRange, randRange);
+                matrix[y, 0] = (matrix[y - halfY, 0] + matrix[y + halfY, 0] + matrix[y, 0 + halfX]) / 3 + Random.Range(-randRange, randRange);
+                matrix[y, width - 1] = (matrix[y - halfY, width - 1] + matrix[y, width - 1 - halfX] + matrix[y + halfY, width - 1]) / 3 + Random.Range(-randRange, randRange);
             }
 
             for (ushort x = halfX; x < width; x += stepX)
             {
-                matrix[0, x] = (/*0 +*/ matrix[0, x - halfX] + matrix[0 + halfY, x] + matrix[0, x + halfX]) / 3/*4*/ + Random.Range(-randRange, randRange);
-                matrix[height - 1, x] = (matrix[height - 1 - halfY, x] + matrix[height - 1, x - halfX] /*+ 0*/ + matrix[height - 1, x + halfX]) / 3/*4*/ + Random.Range(-randRange, randRange);
+                matrix[0, x] = (matrix[0, x - halfX] + matrix[0 + halfY, x] + matrix[0, x + halfX]) / 3 + Random.Range(-randRange, randRange);
+                matrix[height - 1, x] = (matrix[height - 1 - halfY, x] + matrix[height - 1, x - halfX] + matrix[height - 1, x + halfX]) / 3 + Random.Range(-randRange, randRange);
             }
 
             for (ushort y = halfY; y < height - 1; y += stepY)
@@ -77,13 +72,83 @@ public class WorldGenerator : MonoBehaviour
         }
     }
 
+    public static void CreateHeightmap(float?[,] matrix, float roughness, float topLeft, float topRight, float bottomLeft, float bottomRight)
+    {
+        //Debug.Assert(topLeft >= 0 && topRight >= 0 && bottomLeft >= 0 && bottomRight >= 0);
+
+        ushort height = (ushort)matrix.GetLength(0);
+        ushort width = (ushort)matrix.GetLength(1);
+
+        //Задаём начальные значения по углам
+        matrix[0, 0] = topLeft;
+        matrix[0, width - 1] = topRight;
+        matrix[height - 1, 0] = bottomLeft;
+        matrix[height - 1, width - 1] = bottomRight;
+
+        bool end = false;
+        for (ushort stepY = (ushort)(height - 1), stepX = (ushort)(width - 1), halfY = (ushort)(stepY / 2), halfX = (ushort)(stepX / 2); !end; end = (halfY == 1 && halfX == 1), halfY -= (ushort)(halfY / 2), stepY = (ushort)(halfY * 2), halfX -= (ushort)(halfX / 2), stepX = (ushort)(halfX * 2))
+        {
+            float randRange = (((halfY + halfX) / 2f) / ((height + width) / 2f)) * roughness;
+
+            for (ushort y = halfY; y < height; y += stepY)
+                for (ushort x = halfX; x < width; x += stepX)
+                    if (matrix[y, x] == null)
+                        matrix[y, x] = (matrix[y - halfY, x - halfX] + matrix[y + halfY, x - halfX] + matrix[y - halfY, x + halfX] + matrix[y + halfY, x + halfX]) / 4 + Random.Range(-randRange, randRange);
+
+            for (ushort y = halfY; y < height; y += stepY)
+            {
+                if (matrix[y, 0] == null)
+                    matrix[y, 0] = (matrix[y - halfY, 0] + matrix[y + halfY, 0] + matrix[y, 0 + halfX]) / 3 + Random.Range(-randRange, randRange);
+                if (matrix[y, width - 1] == null)
+                    matrix[y, width - 1] = (matrix[y - halfY, width - 1] + matrix[y, width - 1 - halfX] + matrix[y + halfY, width - 1]) / 3 + Random.Range(-randRange, randRange);
+            }
+
+            for (ushort x = halfX; x < width; x += stepX)
+            {
+                if (matrix[0, x] == null)
+                    matrix[0, x] = (matrix[0, x - halfX] + matrix[0 + halfY, x] + matrix[0, x + halfX]) / 3 + Random.Range(-randRange, randRange);
+                if (matrix[height - 1, x] == null)
+                    matrix[height - 1, x] = (matrix[height - 1 - halfY, x] + matrix[height - 1, x - halfX] + matrix[height - 1, x + halfX]) / 3 + Random.Range(-randRange, randRange);
+            }
+
+            for (ushort y = halfY; y < height - 1; y += stepY)
+                for (ushort x = stepX; x < width - 1; x += stepX)
+                    if (matrix[y, x] == null)
+                        matrix[y, x] = (matrix[y, x - halfX] + matrix[y - halfY, x] + matrix[y, x + halfX] + matrix[y + halfY, x]) / 4 + Random.Range(-randRange, randRange);
+
+            for (ushort x = halfX; x < width - 1; x += stepX)
+                for (ushort y = stepY; y < height - 1; y += stepY)
+                    if (matrix[y, x] == null)
+                        matrix[y, x] = (matrix[y, x - halfX] + matrix[y - halfY, x] + matrix[y, x + halfX] + matrix[y + halfY, x]) / 4 + Random.Range(-randRange, randRange);
+        }
+    }
+
+    public static void MakeEqualHeightLine(float[,] matrix, Vector2[] vertices, float height)
+    {
+        foreach (Vector2 v in vertices)
+            if (v.x < 0 || v.x >= matrix.GetLength(1) || v.y < 0 || v.y >= matrix.GetLength(0))
+                throw new System.ArgumentOutOfRangeException("vertices", v.ToString(), "Vector is out of matrix length.");
+
+        for (byte i = 0; i < vertices.Length - 1; ++i)
+        {
+            Vector2 v = vertices[i];
+            while (v != vertices[i + 1])
+            {
+                matrix[(int)v.y, (int)v.x] = height;
+                v.y += Mathf.Clamp(vertices[i + 1].y - v.y, -1, 1);
+                v.x += Mathf.Clamp(vertices[i + 1].x - v.x, -1, 1);
+            }
+        }
+        matrix[(int)vertices[vertices.Length - 1].y, (int)vertices[vertices.Length - 1].x] = height;
+    }
+
     /// <summary>
     /// Создаёт реки.
     /// </summary>
     /// <returns>Список рек.</returns>
     /// <param name="heightMatrix">Карта высот.</param>
     /// <param name="riverMatrix">[out] Карта рек.</param>
-    public List<List<Vector2>> CreateRivers(float[,] heightMap, bool[,] riverMap)
+    public static List<List<Vector2>> CreateRivers(float[,] heightMap, bool[,] riverMap, RiversParameters riversParam)
     {
         ushort height = (ushort)riverMap.GetLength(0);
         ushort width = (ushort)riverMap.GetLength(1);
@@ -92,20 +157,20 @@ public class WorldGenerator : MonoBehaviour
         foreach (float h in heightMap)
             avg += h;
         avg /= height * width;
-        float minRiverHeight = (float)avg * RiversParam.Height;
+        float minRiverHeight = (float)avg * riversParam.Height;
 
         List<List<Vector2>> rivers = new List<List<Vector2>>();
 
-        for (byte i = 0; i < RiversParam.Count; ++i)
+        for (byte i = 0; i < riversParam.Count; ++i)
         {
             bool riverCreated = false;
             for (ushort y = 1; y < height - 1 && !riverCreated; ++y) //TODO
                 for (ushort x = 1; x < width - 1 && !riverCreated; ++x) //TODO
                     if (heightMap[y, x] > minRiverHeight && !riverMap[y, x] && RiverNeighbours(y, x, riverMap) == 0) //Проверяем, можно ли нам начать создание реки с этого хекса
-                        for (byte k = 0; k < RiversParam.Attempts && !riverCreated; ++k)
+                        for (byte k = 0; k < riversParam.Attempts && !riverCreated; ++k)
                         {
-                            DirectRiver(y, x, heightMap, riverMap); //Запускаем рекурсию
-                            if (RiverStack.Count >= RiversParam.MinimumLength)
+                            DirectRiver(y, x, heightMap, riverMap, riversParam.FlowHeightKoef); //Запускаем рекурсию
+                            if (RiverStack.Count >= riversParam.MinimumLength)
                             { //Если река получилась больше необходим длины, то помечаем ячейки матрицы, иначе пробуем ещё раз 
                                 foreach (Vector2 hex in RiverStack)
                                     riverMap[(int)hex.y, (int)hex.x] = true;
@@ -136,7 +201,7 @@ public class WorldGenerator : MonoBehaviour
     /// <param name="x">x координата.</param>
     /// <param name="heightMatrix">Карта высот.</param>
     /// <param name="matrix">Карта рек.</param>
-    void DirectRiver(ushort y, ushort x, float[,] heightMatrix, bool[,] riverMatrix)
+    static void DirectRiver(ushort y, ushort x, float[,] heightMatrix, bool[,] riverMatrix, float flowHeightKoef)
     {
         ushort height = (ushort)riverMatrix.GetLength(0);
         ushort width = (ushort)riverMatrix.GetLength(1);
@@ -154,49 +219,49 @@ public class WorldGenerator : MonoBehaviour
                 switch (Random.Range(0, 7))
                 { //Выбираем случайное направление
                     case (int)Direction.BOTTOM_LEFT:
-                        if (heightMatrix[y - 1 + k, x - 1] * RiversParam.FlowHeightKoef <= heightMatrix[y, x] && !riverMatrix[y - 1 + k, x - 1] && RiverNeighbours((ushort)(y - 1 + k), (ushort)(x - 1), riverMatrix) < 2)
+                        if (heightMatrix[y - 1 + k, x - 1] * flowHeightKoef <= heightMatrix[y, x] && !riverMatrix[y - 1 + k, x - 1] && RiverNeighbours((ushort)(y - 1 + k), (ushort)(x - 1), riverMatrix) < 2)
                         {
-                            DirectRiver((ushort)(y - 1 + k), (ushort)(x - 1), heightMatrix, riverMatrix);
+                            DirectRiver((ushort)(y - 1 + k), (ushort)(x - 1), heightMatrix, riverMatrix, flowHeightKoef);
                             dirFound = true;
                         }
                         limiter++;
                         break;
                     case (int)Direction.TOP_LEFT:
-                        if (heightMatrix[y + k, x - 1] * RiversParam.FlowHeightKoef <= heightMatrix[y, x] && !riverMatrix[y + k, x - 1] && RiverNeighbours((ushort)(y + k), (ushort)(x - 1), riverMatrix) < 2)
+                        if (heightMatrix[y + k, x - 1] * flowHeightKoef <= heightMatrix[y, x] && !riverMatrix[y + k, x - 1] && RiverNeighbours((ushort)(y + k), (ushort)(x - 1), riverMatrix) < 2)
                         {
-                            DirectRiver((ushort)(y + k), (ushort)(x - 1), heightMatrix, riverMatrix);
+                            DirectRiver((ushort)(y + k), (ushort)(x - 1), heightMatrix, riverMatrix, flowHeightKoef);
                             dirFound = true;
                         }
                         limiter++;
                         break;
                     case (int)Direction.BOTTOM:
-                        if (heightMatrix[y - 1, x] * RiversParam.FlowHeightKoef <= heightMatrix[y, x] && !riverMatrix[y - 1, x] && RiverNeighbours((ushort)(y - 1), x, riverMatrix) < 2)
+                        if (heightMatrix[y - 1, x] * flowHeightKoef <= heightMatrix[y, x] && !riverMatrix[y - 1, x] && RiverNeighbours((ushort)(y - 1), x, riverMatrix) < 2)
                         {
-                            DirectRiver((ushort)(y - 1), x, heightMatrix, riverMatrix);
+                            DirectRiver((ushort)(y - 1), x, heightMatrix, riverMatrix, flowHeightKoef);
                             dirFound = true;
                         }
                         limiter++;
                         break;
                     case (int)Direction.TOP:
-                        if (heightMatrix[y + 1, x] * RiversParam.FlowHeightKoef <= heightMatrix[y, x] && !riverMatrix[y + 1, x] && RiverNeighbours((ushort)(y + 1), x, riverMatrix) < 2)
+                        if (heightMatrix[y + 1, x] * flowHeightKoef <= heightMatrix[y, x] && !riverMatrix[y + 1, x] && RiverNeighbours((ushort)(y + 1), x, riverMatrix) < 2)
                         {
-                            DirectRiver((ushort)(y + 1), x, heightMatrix, riverMatrix);
+                            DirectRiver((ushort)(y + 1), x, heightMatrix, riverMatrix, flowHeightKoef);
                             dirFound = true;
                         }
                         limiter++;
                         break;
                     case (int)Direction.BOTTOM_RIGHT:
-                        if (heightMatrix[y - 1 + k, x + 1] * RiversParam.FlowHeightKoef <= heightMatrix[y, x] && !riverMatrix[y - 1 + k, x + 1] && RiverNeighbours((ushort)(y - 1 + k), (ushort)(x + 1), riverMatrix) < 2)
+                        if (heightMatrix[y - 1 + k, x + 1] * flowHeightKoef <= heightMatrix[y, x] && !riverMatrix[y - 1 + k, x + 1] && RiverNeighbours((ushort)(y - 1 + k), (ushort)(x + 1), riverMatrix) < 2)
                         {
-                            DirectRiver((ushort)(y - 1 + k), (ushort)(x + 1), heightMatrix, riverMatrix);
+                            DirectRiver((ushort)(y - 1 + k), (ushort)(x + 1), heightMatrix, riverMatrix, flowHeightKoef);
                             dirFound = true;
                         }
                         limiter++;
                         break;
                     case (int)Direction.TOP_RIGHT:
-                        if (heightMatrix[y + k, x + 1] * RiversParam.FlowHeightKoef <= heightMatrix[y, x] && !riverMatrix[y + k, x + 1] && RiverNeighbours((ushort)(y + k), (ushort)(x + 1), riverMatrix) < 2)
+                        if (heightMatrix[y + k, x + 1] * flowHeightKoef <= heightMatrix[y, x] && !riverMatrix[y + k, x + 1] && RiverNeighbours((ushort)(y + k), (ushort)(x + 1), riverMatrix) < 2)
                         {
-                            DirectRiver((ushort)(y + k), (ushort)(x + 1), heightMatrix, riverMatrix);
+                            DirectRiver((ushort)(y + k), (ushort)(x + 1), heightMatrix, riverMatrix, flowHeightKoef);
                             dirFound = true;
                         }
                         limiter++;
@@ -216,7 +281,7 @@ public class WorldGenerator : MonoBehaviour
     /// <param name="matrix">Карта рек.</param>
     /// Функция подсчитывает количство соседних клеток, помеченных как "Река" или находящихся в "стеке реки"
     /// TODO Проверить работу стека реки
-    byte RiverNeighbours(ushort y, ushort x, bool[,] riverMatrix)
+    static byte RiverNeighbours(ushort y, ushort x, bool[,] riverMatrix)
     {
         ushort height = (ushort)riverMatrix.GetLength(0);
         ushort width = (ushort)riverMatrix.GetLength(1);
@@ -241,21 +306,21 @@ public class WorldGenerator : MonoBehaviour
     }
 
     //UNDONE
-    public List<List<Vector2>> CreateClusters(Map map)
+    public static List<List<Vector2>> CreateClusters(GlobalMap map, ClustersParameters clustersParam)
     {
         ushort height = (ushort)map.HeightMatrix.GetLength(0);
         ushort width = (ushort)map.HeightMatrix.GetLength(1);
 
-        List<List<Vector2>> clusters = new List<List<Vector2>>(ClustersParam.Count);
+        List<List<Vector2>> clusters = new List<List<Vector2>>(clustersParam.Count);
 
-        for (byte i = 0; i < ClustersParam.Count; ++i)
+        for (byte i = 0; i < clustersParam.Count; ++i)
         {
             ushort x = (ushort)Random.Range(1, width - 1);
             ushort y = (ushort)Random.Range(1, height - 1);
             if (!map.RiverMatrix[y, x])
             {
                 clusters.Add(new List<Vector2>());
-                SpreadCluster(map, y, x, ClustersParam.Size, clusters[i]);
+                SpreadCluster(map, y, x, clustersParam.Size, clusters[i]);
             }
             else
                 --i;
@@ -263,7 +328,7 @@ public class WorldGenerator : MonoBehaviour
         return clusters;
     }
 
-    void SpreadCluster(Map map, ushort y, ushort x, byte remainingSize, List<Vector2> cluster)
+    static void SpreadCluster(GlobalMap map, ushort y, ushort x, byte remainingSize, List<Vector2> cluster)
     {
         ushort height = (ushort)map.ClusterMatrix.GetLength(0);
         ushort width = (ushort)map.ClusterMatrix.GetLength(1);
@@ -290,7 +355,7 @@ public class WorldGenerator : MonoBehaviour
         }
     }
 
-    public List<List<Vector2>> CreateRoads(float[,] heightMap, bool[,] roadMap, List<List<Vector2>> clusters)
+    public static List<List<Vector2>> CreateRoads(float[,] heightMap, bool[,] roadMap, List<List<Vector2>> clusters)
     {
         List<List<Vector2>> roads = new List<List<Vector2>>();
 
@@ -302,7 +367,7 @@ public class WorldGenerator : MonoBehaviour
         return roads;
     }
 
-    void DirectRoad(float[,] heightMatrix, bool[,] roadMatrix, ushort y, ushort x, Vector2 destination, List<Vector2> road)
+    static void DirectRoad(float[,] heightMatrix, bool[,] roadMatrix, ushort y, ushort x, Vector2 destination, List<Vector2> road)
     {
         ushort height = (ushort)roadMatrix.GetLength(0);
         ushort width = (ushort)roadMatrix.GetLength(1);
@@ -386,7 +451,7 @@ public class WorldGenerator : MonoBehaviour
             }
 
             if (dx == 0 && dy == 0)
-                throw new System.Exception("Infinite loop detected. Check heightmap values for negativity.");
+                throw new System.Exception("Infinite recursion detected. Check heightmap values.");
 
             DirectRoad(heightMatrix, roadMatrix, (ushort)(y + dy), (ushort)(x + dx), destination, road);
         }
