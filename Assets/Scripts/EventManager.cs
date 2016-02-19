@@ -61,10 +61,10 @@ public static class EventManager
         PlayerObjectMoved();
     }
 
-    //public static event VectorAndFloatDelegate CreatureHit = delegate { };
+    public static event VectorAndFloatDelegate CreatureHit = delegate { };
 
-    //public static void OnCreatureHit(Vector2 position, float damage)
-    //{
-    //	CreatureHit(position,damage);
-    //}
+    public static void OnCreatureHit(Vector2 position, float damage)
+    {
+    	CreatureHit(position,damage);
+    }
 }
