@@ -3,8 +3,9 @@ using System.Collections.Generic;
 
 public static class EventDictionary
 {
-    static Dictionary<string, string> TagDictionary = new Dictionary<string, string>{
+   	public static readonly Dictionary<string, string> TagDictionary = new Dictionary<string, string>{
 		{"damage","Урона получено: "},
-		{"heal","Здоровья получено: "}
+		{"heal","Здоровья получено: "},
+		{"enemy","На вас напал "}
 	};
 }

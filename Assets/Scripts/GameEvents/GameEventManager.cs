@@ -10,20 +10,20 @@ public class GameEventManager : MonoBehaviour
     public GameObject GameEventTimer;
     public GameObject EventPanel;
     public GameObject ReactionButtonPanel;
-    public string EventsFilename;
     public GameObject Btn;
+	const string EventsFilename="events.edb";
     List<GameEvent> Events = new List<GameEvent>();
     List<GameObject> ReactionButtons = new List<GameObject>();
     GameEvent CurrentEvent;
 
     void Start()
     {
-        LoadEventsFromFile();
+		LoadEventsFromFile(Path.Combine(Application.streamingAssetsPath,EventsFilename)); //UNDONE Не будет работать на Android?
     }
 
     public void MakeActionEvent()
     {
-        //TODO Событие при переходе игрока на тайл.
+        //Событие при переходе игрока на тайл.
         List<GameEvent> possibleEvents = Events.Where(evnt => evnt.ByAction).ToList();// UNDONE Не учитываются коэффициенты.
 
         List<GameEvent> eventLst = possibleEvents.GetRange(0, possibleEvents.Count);
@@ -34,7 +34,7 @@ public class GameEventManager : MonoBehaviour
             {
                 CurrentEvent = evnt;
                 EventPanel.SetActive(true);
-                EventPanel.transform.GetChild(0).GetComponent<Text>().text = ParseEventDescription(evnt.Description);
+				EventPanel.transform.GetChild(0).GetComponent<Text>().text = evnt.Description;//ParseEventDescription(evnt.Description); TODO
                 sbyte d = (sbyte)(evnt.Reactions.Count - ReactionButtons.Count - 1);
                 if (d > 0)
                     for (byte i = 0; i < d; ++i)
@@ -87,16 +87,24 @@ public class GameEventManager : MonoBehaviour
                     resultLst.Remove(result);
             }
         }
-        Debug.Log(ParseResultDescription(result.Description));
+		Dictionary<string,float?> effects;
+		Debug.Log(ParseResultDescription(result.Description,out effects));
+		foreach(KeyValuePair<string,float?> effect in effects)
+		{
+			if(effect.Value.HasValue)
+				EventEffects.ApplyEffect(effect.Key,effect.Value.Value);
+			else
+				EventEffects.ApplyEffect(effect.Key);
+		}
         EventPanel.SetActive(false);
         CurrentEvent = null;
     }
 
-    void LoadEventsFromFile()
+    void LoadEventsFromFile(string filename)
     {
-        if (File.Exists(EventsFilename))
+		if (File.Exists(filename))
         {
-            using (BinaryReader reader = new BinaryReader(File.Open(EventsFilename, FileMode.Open)))
+			using (BinaryReader reader = new BinaryReader(File.Open(filename, FileMode.Open)))
             {
                 while (reader.PeekChar() != -1)
                 {
@@ -165,32 +173,32 @@ public class GameEventManager : MonoBehaviour
                 if (tag.EndsWith("!"))
                 {
                     tag = tag.Remove(tag.Length - 1);
-                    //TODO Поиск по Dictionary.
-                    parsedDesc = parsedDesc.Insert(i, "Замена " + tag);
-                    i += (ushort)("Замена " + tag).Length;
+				string replacement= EventDictionary.TagDictionary[tag]+' ';
+				parsedDesc = parsedDesc.Insert(i, replacement);
+				i += (ushort)replacement.Length;
                 }
                 else
                 {
-                    parsedDesc = parsedDesc.Insert(i, "Удаление " + tag);
-                    i += (ushort)("Удаление " + tag).Length;
+                   
                 }
                 //TODO Применение эффекта.
             }
         return parsedDesc;
     }
 
-    string ParseResultDescription(string description)
+    string ParseResultDescription(string description, out Dictionary<string,float?> effects)
     {
         string parsedDesc = description;
+		effects=new Dictionary<string, float?>();
         for (ushort i = 0; i < parsedDesc.Length; ++i)
             if (parsedDesc[i] == '<')
             {
                 string tag = string.Empty;
-                //float value;
+                float? value=null;
                 byte j;
                 for (j = 1; parsedDesc[i + j] != '>'; ++j)
                 {
-                    /*if(parsedDesc[i+j]=='=')
+                    if(parsedDesc[i+j]=='=')
                     {
                         string strValue=string.Empty;
                         for(++j;parsedDesc[i+j]!='>';++j)
@@ -205,23 +213,22 @@ public class GameEventManager : MonoBehaviour
                         }
                         value=float.Parse(strValue);
                         break;
-                    }*/
+                    }
                     tag += parsedDesc[i + j];
                 }
                 parsedDesc = parsedDesc.Remove(i, j + 1);
                 if (tag.EndsWith("!"))
                 {
                     tag = tag.Remove(tag.Length - 1);
-                    //TODO Поиск по Dictionary.
-                    parsedDesc = parsedDesc.Insert(i, "Замена " + tag);
-                    i += (ushort)("Замена " + tag).Length;
+				string replacement= EventDictionary.TagDictionary[tag]+value+' ';
+				parsedDesc = parsedDesc.Insert(i, replacement);
+				i += (ushort)replacement.Length;
                 }
                 else
                 {
-                    parsedDesc = parsedDesc.Insert(i, "Удаление " + tag);
-                    i += (ushort)("Удаление " + tag).Length;
+                    
                 }
-                //TODO Применение эффекта.
+				effects.Add(tag,value);
             }
         return parsedDesc;
     }

@@ -231,8 +231,8 @@ public class WorldVisualiser : MonoBehaviour
     /// <param name="mapCoords">Координаты в матрице.</param>
     void MakeHexGraphics(ListType hex, Vector2 mapCoords, GlobalMap map)
     {
-        if (map.GetHexSpriteID(mapCoords) != null /*?*/&& map.GetHexSpriteID(mapCoords) < AllGlobalHexSprites.Count)
-            hex.Hex.GetComponent<SpriteRenderer>().sprite = AllGlobalHexSprites[(int)map.GetHexSpriteID(mapCoords)];
+        if (map.GetHexSpriteID(mapCoords).HasValue /*?*/&& map.GetHexSpriteID(mapCoords) < AllGlobalHexSprites.Count)
+            hex.Hex.GetComponent<SpriteRenderer>().sprite = AllGlobalHexSprites[map.GetHexSpriteID(mapCoords).Value];
         else
             hex.Hex.GetComponent<SpriteRenderer>().sprite = ChooseHexSprite(mapCoords, map);
         hex.Hex.GetComponent<SpriteRenderer>().sortingLayerName = "Landscape";//
@@ -246,9 +246,9 @@ public class WorldVisualiser : MonoBehaviour
             riverSprite.AddComponent<SpriteRenderer>();
             riverSprite.GetComponent<SpriteRenderer>().sortingLayerName = "LandscapeObjects";
             riverSprite.GetComponent<SpriteRenderer>().material = DiffuseMaterial;
-            if (map.GetRiverSpriteID(mapCoords) != null /*?*/ && map.GetRiverSpriteID(mapCoords) < AllRiverSprites.Count)
+            if (map.GetRiverSpriteID(mapCoords).HasValue /*?*/ && map.GetRiverSpriteID(mapCoords) < AllRiverSprites.Count)
             {
-                riverSprite.GetComponent<SpriteRenderer>().sprite = AllRiverSprites[(int)map.GetRiverSpriteID(mapCoords)];
+                riverSprite.GetComponent<SpriteRenderer>().sprite = AllRiverSprites[map.GetRiverSpriteID(mapCoords).Value];
                 riverSprite.transform.Rotate(new Vector3(0, 0, map.GetRiverSpriteRotation(mapCoords)));
             }
             else
@@ -263,11 +263,9 @@ public class WorldVisualiser : MonoBehaviour
             clusterSprite.AddComponent<SpriteRenderer>();
             clusterSprite.GetComponent<SpriteRenderer>().sortingLayerName = "Infrastructure";
             clusterSprite.GetComponent<SpriteRenderer>().material = DiffuseMaterial;
-            if (map.GetClusterSpriteID(mapCoords) != null /*?*/&& map.GetClusterSpriteID(mapCoords) < GlobalMapParam.RuinSprites.Length)
-                clusterSprite.GetComponent<SpriteRenderer>().sprite = GlobalMapParam.RuinSprites[(int)map.GetClusterSpriteID(mapCoords)];
-            else
+            if (!map.GetClusterSpriteID(mapCoords).HasValue /*?*/|| map.GetClusterSpriteID(mapCoords) >= GlobalMapParam.RuinSprites.Length)
                 map.ClusterSpriteID_Matrix[(int)mapCoords.y, (int)mapCoords.x] = (byte)Random.Range(0, GlobalMapParam.RuinSprites.Length);
-            clusterSprite.GetComponent<SpriteRenderer>().sprite = GlobalMapParam.RuinSprites[(int)map.GetClusterSpriteID(mapCoords)];
+            clusterSprite.GetComponent<SpriteRenderer>().sprite = GlobalMapParam.RuinSprites[map.GetClusterSpriteID(mapCoords).Value];
             forestBlocked = true;
         }
         if (map.HasRoad(mapCoords))
@@ -278,9 +276,9 @@ public class WorldVisualiser : MonoBehaviour
             roadSprite.AddComponent<SpriteRenderer>();
             roadSprite.GetComponent<SpriteRenderer>().sortingLayerName = "Infrastructure";
             roadSprite.GetComponent<SpriteRenderer>().material = DiffuseMaterial;
-            if (map.GetRoadSpriteID(mapCoords) != null /*?*/ && map.GetRoadSpriteID(mapCoords) < AllRiverSprites.Count)
+            if (map.GetRoadSpriteID(mapCoords).HasValue /*?*/ && map.GetRoadSpriteID(mapCoords) < AllRiverSprites.Count)
             {
-                roadSprite.GetComponent<SpriteRenderer>().sprite = AllRoadSprites[(int)map.GetRoadSpriteID(mapCoords)];
+                roadSprite.GetComponent<SpriteRenderer>().sprite = AllRoadSprites[map.GetRoadSpriteID(mapCoords).Value];
                 roadSprite.transform.Rotate(new Vector3(0, 0, map.GetRoadSpriteRotation(mapCoords)));
             }
             else
@@ -293,8 +291,8 @@ public class WorldVisualiser : MonoBehaviour
 
     void MakeHexGraphics(ListType hex, Vector2 mapCoords, LocalMap map)
     {
-        if (map.GetHexSpriteID(mapCoords) != null /*?*/&& map.GetHexSpriteID(mapCoords) < AllLocalHexSprites.Count)
-            hex.Hex.GetComponent<SpriteRenderer>().sprite = AllLocalHexSprites[(int)map.GetHexSpriteID(mapCoords)];
+        if (map.GetHexSpriteID(mapCoords).HasValue /*?*/&& map.GetHexSpriteID(mapCoords) < AllLocalHexSprites.Count)
+            hex.Hex.GetComponent<SpriteRenderer>().sprite = AllLocalHexSprites[map.GetHexSpriteID(mapCoords).Value];
         else
             hex.Hex.GetComponent<SpriteRenderer>().sprite = ChooseHexSprite(mapCoords, map);
         hex.Hex.GetComponent<SpriteRenderer>().sortingLayerName = "Landscape";//

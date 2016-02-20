@@ -57,7 +57,7 @@ public class World : MonoBehaviour
 
     void Start()
     {
-        ChunksDirectoryPath = Path.Combine(Application.dataPath, ChunksDirectoryName);
+        ChunksDirectoryPath = Path.Combine(Application.streamingAssetsPath, ChunksDirectoryName); //UNDONE Не будет работать на Android?
 
         if (Directory.Exists(ChunksDirectoryPath))
             Directory.Delete(ChunksDirectoryPath, true);
@@ -169,16 +169,19 @@ public class World : MonoBehaviour
     /// </summary>
     public void SwitchMap()
     {
+		Visualiser.DestroyAllHexes(); //TODO Это лучше делать до генерации карты, чтобы не было видно подвисания (или нужно отображение загрузки).
         if (!IsCurrentMapLocal())
         {
-            GotoLocalMap();
-            SpawnRandomEnemy();
+			GotoLocalMap();
+			SpawnRandomEnemy();
         }
         else
         {
             GotoGlobalMap();
             EventManager.OnLocalMapLeave();
         }
+		Player.transform.position = new Vector3(WorldVisualiser.GetTransformPosFromMapCoords(Player.GetComponent<Player>().MapCoords).x, WorldVisualiser.GetTransformPosFromMapCoords(Player.GetComponent<Player>().MapCoords).y, 0f);
+		EventManager.OnPlayerObjectMoved();
     }
 
     /// <summary>
@@ -245,7 +248,7 @@ public class World : MonoBehaviour
         WorldGenerator.CreateHeightmap(buf, LandscapeRoughness, height, height, height, height);
         for (ushort y = 0; y < LocalMapSize.y; ++y)
             for (ushort x = 0; x < LocalMapSize.x; ++x)
-                map.HeightMatrix[y, x] = (float)buf[y, x];
+                map.HeightMatrix[y, x] = buf[y, x].Value;
         WorldGenerator.CreateHeightmap(map.ForestMatrix, ForestRoughness, forest, forest, forest, forest);
 
         LocalMaps[(int)mapCoords.y, (int)mapCoords.x] = map;
@@ -664,4 +667,10 @@ public class World : MonoBehaviour
         chunk.Roads = WorldGenerator.CreateRoads(chunk.HeightMatrix, chunk.RoadMatrix, chunk.Clusters);
         return chunk;
     }
+
+	//TEST
+	public void EnemyAttack()
+	{
+		SwitchMap();
+	}
 }
