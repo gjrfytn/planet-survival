@@ -11,55 +11,60 @@ public class GameEventManager : MonoBehaviour
     public GameObject EventPanel;
     public GameObject ReactionButtonPanel;
     public GameObject Btn;
-	const string EventsFilename="events.edb";
+    const string EventsFilename = "events.edb";
     List<GameEvent> Events = new List<GameEvent>();
     List<GameObject> ReactionButtons = new List<GameObject>();
     GameEvent CurrentEvent;
 
     void Start()
     {
-		LoadEventsFromFile(Path.Combine(Application.streamingAssetsPath,EventsFilename)); //UNDONE Не будет работать на Android?
+        LoadEventsFromFile(Path.Combine(Application.streamingAssetsPath, EventsFilename)); //UNDONE Не будет работать на Android?
     }
 
-    public void MakeActionEvent()
+    public void MakeActionEvent(TerrainType terrain)
     {
         //Событие при переходе игрока на тайл.
-        List<GameEvent> possibleEvents = Events.Where(evnt => evnt.ByAction).ToList();// UNDONE Не учитываются коэффициенты.
-
-        List<GameEvent> eventLst = possibleEvents.GetRange(0, possibleEvents.Count);
-        while (eventLst.Count != 0)
+        List<GameEvent> possibleEvents = Events.Where(e => e.ByAction).ToList(); // UNDONE Не учитываются веса.
+        short weight = possibleEvents[0].TerrainWeights[terrain];
+        GameEvent evnt = possibleEvents[0];
+        foreach (GameEvent e in possibleEvents)
         {
-            GameEvent evnt = eventLst[Random.Range(0, eventLst.Count)];
-            if (Random.value < evnt.Probability) // UNDONE Не учитываются коэффициенты.
+            short buf = evnt.TerrainWeights[terrain]/*+...*/;
+            if (buf > weight)
             {
-                CurrentEvent = evnt;
-                EventPanel.SetActive(true);
-				EventPanel.transform.GetChild(0).GetComponent<Text>().text = evnt.Description;//ParseEventDescription(evnt.Description); TODO
-                sbyte d = (sbyte)(evnt.Reactions.Count - ReactionButtons.Count - 1);
-                if (d > 0)
-                    for (byte i = 0; i < d; ++i)
-                    {
-                        GameObject newBtn = Instantiate(Btn);
-                        newBtn.GetComponent<EventButtonTest>().Index = (byte)(ReactionButtons.Count != 0 ? ReactionButtons[ReactionButtons.Count - 1].GetComponent<EventButtonTest>().Index + 1 : 1);
-                        newBtn.transform.SetParent(ReactionButtonPanel.transform);
-                        ReactionButtons.Add(newBtn);
-                    }
-                else if (d < 0)
-                    for (sbyte i = -1; i >= d; --i)
-                    {
-                        Destroy(ReactionButtons[ReactionButtons.Count + i]);
-                        ReactionButtons.RemoveAt(ReactionButtons.Count + i);
-                    }
-                //ReactionButtons.RemoveRange(ReactionButtons.Count-Mathf.Abs(d),Mathf.Abs(d));
-
-                Btn.transform.GetChild(0).GetComponent<Text>().text = evnt.Reactions[0].Description;
-                for (byte i = 0; i < ReactionButtons.Count; ++i)
-                    ReactionButtons[i].transform.GetChild(0).GetComponent<Text>().text = evnt.Reactions[i + 1].Description;
-                return;
+                weight = buf;
+                evnt = e;
             }
-            else
-                eventLst.Remove(evnt);
         }
+        if (Random.value < evnt.Probability)
+        {
+            CurrentEvent = evnt;
+            EventPanel.SetActive(true);
+            EventPanel.transform.GetChild(0).GetComponent<Text>().text = evnt.Description;//ParseEventDescription(evnt.Description); TODO
+            sbyte d = (sbyte)(evnt.Reactions.Count - ReactionButtons.Count - 1);
+            if (d > 0)
+                for (byte i = 0; i < d; ++i)
+                {
+                    GameObject newBtn = Instantiate(Btn);
+                    newBtn.GetComponent<EventButtonTest>().Index = (byte)(ReactionButtons.Count != 0 ? ReactionButtons[ReactionButtons.Count - 1].GetComponent<EventButtonTest>().Index + 1 : 1);
+                    newBtn.transform.SetParent(ReactionButtonPanel.transform);
+                    ReactionButtons.Add(newBtn);
+                }
+            else if (d < 0)
+                for (sbyte i = -1; i >= d; --i)
+                {
+                    Destroy(ReactionButtons[ReactionButtons.Count + i]);
+                    ReactionButtons.RemoveAt(ReactionButtons.Count + i);
+                }
+            //ReactionButtons.RemoveRange(ReactionButtons.Count-Mathf.Abs(d),Mathf.Abs(d));
+
+            Btn.transform.GetChild(0).GetComponent<Text>().text = evnt.Reactions[0].Description;
+            for (byte i = 0; i < ReactionButtons.Count; ++i)
+                ReactionButtons[i].transform.GetChild(0).GetComponent<Text>().text = evnt.Reactions[i + 1].Description;
+            return;
+        }
+        else
+            evnt.Probability += 0.01f;
     }
 
     public void MakeTimeEvent()
@@ -87,45 +92,49 @@ public class GameEventManager : MonoBehaviour
                     resultLst.Remove(result);
             }
         }
-		Dictionary<string,float?> effects;
-		Debug.Log(ParseResultDescription(result.Description,out effects));
-		foreach(KeyValuePair<string,float?> effect in effects)
-		{
-			if(effect.Value.HasValue)
-				EventEffects.ApplyEffect(effect.Key,effect.Value.Value);
-			else
-				EventEffects.ApplyEffect(effect.Key);
-		}
+        Dictionary<string, float?> effects;
+        Debug.Log(ParseResultDescription(result.Description, out effects));
+        foreach (KeyValuePair<string, float?> effect in effects)
+        {
+            if (effect.Value.HasValue)
+                EventEffects.ApplyEffect(effect.Key, effect.Value.Value);
+            else
+                EventEffects.ApplyEffect(effect.Key);
+        }
         EventPanel.SetActive(false);
         CurrentEvent = null;
     }
 
     void LoadEventsFromFile(string filename)
     {
-		if (File.Exists(filename))
+        if (File.Exists(filename))
         {
-			using (BinaryReader reader = new BinaryReader(File.Open(filename, FileMode.Open)))
+            using (BinaryReader reader = new BinaryReader(File.Open(filename, FileMode.Open)))
             {
                 while (reader.PeekChar() != -1)
                 {
                     string name = reader.ReadString();
-                    bool good = reader.ReadBoolean();
+                    bool storyEvent = reader.ReadBoolean();
                     bool byAction = reader.ReadBoolean();
                     bool byTime = reader.ReadBoolean();
                     string description = reader.ReadString();
                     float probability = reader.ReadSingle();
 
-                    GameEvent.TerrainCoefficients terrCoef = new GameEvent.TerrainCoefficients()
+                    byte terrainsCount = (byte)System.Enum.GetNames(typeof(TerrainType)).Length;
+                    Dictionary<TerrainType, sbyte> terrainWeights = new Dictionary<TerrainType, sbyte>(terrainsCount);
+                    byte weightsCount = reader.ReadByte();
+                    for (byte i = 0; i < weightsCount; ++i)
+                        terrainWeights.Add((TerrainType)i, reader.ReadSByte());
+                    for (byte i = weightsCount; i < terrainsCount; ++i)
+                        terrainWeights.Add((TerrainType)i, 0);
+
+                    //weightsCount = reader.ReadByte();
+                    GameEvent.TimeWeights timeWeights = new GameEvent.TimeWeights()
                     {
-                        ForestСoef = reader.ReadSingle(),
-                        RiverСoef = reader.ReadSingle()
+                        Day = reader.ReadSByte(),
+                        Night = reader.ReadSByte()
                     };
-                    GameEvent.TimeCoefficients timeCoef = new GameEvent.TimeCoefficients()
-                    {
-                        DayСoef = reader.ReadSingle(),
-                        NightСoef = reader.ReadSingle()
-                    };
-                    GameEvent.StateCoefficients stateCoef = new GameEvent.StateCoefficients();
+                    GameEvent.StateWeights stateWeights = new GameEvent.StateWeights();
                     //
 
                     byte reactionCount = reader.ReadByte();
@@ -151,7 +160,7 @@ public class GameEventManager : MonoBehaviour
                                           Results = results
                                       });
                     }
-                    Events.Add(new GameEvent(name, good, byAction, byTime, description, probability, terrCoef, timeCoef, stateCoef, reactions));
+                    Events.Add(new GameEvent(name, storyEvent, byAction, byTime, description, probability, terrainWeights, timeWeights, stateWeights, reactions));
                 }
             }
         }
@@ -173,45 +182,45 @@ public class GameEventManager : MonoBehaviour
                 if (tag.EndsWith("!"))
                 {
                     tag = tag.Remove(tag.Length - 1);
-				string replacement= EventDictionary.TagDictionary[tag]+' ';
-				parsedDesc = parsedDesc.Insert(i, replacement);
-				i += (ushort)replacement.Length;
+                    string replacement = EventDictionary.TagDictionary[tag] + ' ';
+                    parsedDesc = parsedDesc.Insert(i, replacement);
+                    i += (ushort)replacement.Length;
                 }
                 else
                 {
-                   
+
                 }
                 //TODO Применение эффекта.
             }
         return parsedDesc;
     }
 
-    string ParseResultDescription(string description, out Dictionary<string,float?> effects)
+    string ParseResultDescription(string description, out Dictionary<string, float?> effects)
     {
         string parsedDesc = description;
-		effects=new Dictionary<string, float?>();
+        effects = new Dictionary<string, float?>();
         for (ushort i = 0; i < parsedDesc.Length; ++i)
             if (parsedDesc[i] == '<')
             {
                 string tag = string.Empty;
-                float? value=null;
+                float? value = null;
                 byte j;
                 for (j = 1; parsedDesc[i + j] != '>'; ++j)
                 {
-                    if(parsedDesc[i+j]=='=')
+                    if (parsedDesc[i + j] == '=')
                     {
-                        string strValue=string.Empty;
-                        for(++j;parsedDesc[i+j]!='>';++j)
+                        string strValue = string.Empty;
+                        for (++j; parsedDesc[i + j] != '>'; ++j)
                         {
-                            if(parsedDesc[i+j]=='!')
+                            if (parsedDesc[i + j] == '!')
                             {
-                                tag+=parsedDesc[i+j];
+                                tag += parsedDesc[i + j];
                                 ++j;
                                 break;
                             }
-                            strValue+=parsedDesc[i+j];
+                            strValue += parsedDesc[i + j];
                         }
-                        value=float.Parse(strValue);
+                        value = float.Parse(strValue);
                         break;
                     }
                     tag += parsedDesc[i + j];
@@ -220,15 +229,15 @@ public class GameEventManager : MonoBehaviour
                 if (tag.EndsWith("!"))
                 {
                     tag = tag.Remove(tag.Length - 1);
-				string replacement= EventDictionary.TagDictionary[tag]+value+' ';
-				parsedDesc = parsedDesc.Insert(i, replacement);
-				i += (ushort)replacement.Length;
+                    string replacement = EventDictionary.TagDictionary[tag] + value + ' ';
+                    parsedDesc = parsedDesc.Insert(i, replacement);
+                    i += (ushort)replacement.Length;
                 }
                 else
                 {
-                    
+
                 }
-				effects.Add(tag,value);
+                effects.Add(tag, value);
             }
         return parsedDesc;
     }

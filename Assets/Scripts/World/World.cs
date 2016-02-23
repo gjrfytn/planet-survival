@@ -17,7 +17,7 @@ public class World : MonoBehaviour
 
     public GameObject[] Enemies;
 
-    Map CurrentMap; //TODO Возможно, можно будет убрать. Карта, на которой находится игрок.
+    public Map CurrentMap { get; private set; } //TODO Возможно, можно будет убрать. Карта, на которой находится игрок.
 
     //const byte CashedChunksSize=3;
 
@@ -105,7 +105,7 @@ public class World : MonoBehaviour
     }
 
     /// <summary>
-    /// Raises the goto hex event.
+    /// Необходимо вызывать, когда игрок переходит на другой хекс.
     /// </summary>
     void OnPlayerGotoHex(Vector2 mapCoords)
     {
@@ -169,19 +169,19 @@ public class World : MonoBehaviour
     /// </summary>
     public void SwitchMap()
     {
-		Visualiser.DestroyAllHexes(); //TODO Это лучше делать до генерации карты, чтобы не было видно подвисания (или нужно отображение загрузки).
+        Visualiser.DestroyAllHexes(); //TODO Это лучше делать до генерации карты, чтобы не было видно подвисания (или нужно отображение загрузки).
         if (!IsCurrentMapLocal())
         {
-			GotoLocalMap();
-			SpawnRandomEnemy();
+            GotoLocalMap();
+            SpawnRandomEnemy();
         }
         else
         {
             GotoGlobalMap();
             EventManager.OnLocalMapLeave();
         }
-		Player.transform.position = new Vector3(WorldVisualiser.GetTransformPosFromMapCoords(Player.GetComponent<Player>().MapCoords).x, WorldVisualiser.GetTransformPosFromMapCoords(Player.GetComponent<Player>().MapCoords).y, 0f);
-		EventManager.OnPlayerObjectMoved();
+        Player.transform.position = new Vector3(WorldVisualiser.GetTransformPosFromMapCoords(Player.GetComponent<Player>().MapCoords).x, WorldVisualiser.GetTransformPosFromMapCoords(Player.GetComponent<Player>().MapCoords).y, 0f);
+        EventManager.OnPlayerObjectMoved();
     }
 
     /// <summary>
@@ -238,8 +238,8 @@ public class World : MonoBehaviour
         LocalMap map = new LocalMap((ushort)LocalMapSize.x, (ushort)LocalMapSize.y);
 
         Vector2[] riverPath = new Vector2[] { new Vector2(0, (ushort)LocalMapSize.y / 2), new Vector2(LocalMapSize.x - 1, (ushort)LocalMapSize.y / 2) }; //UNDONE
-        if(river)
-			WorldGenerator.MakeEqualHeightLine(map.HeightMatrix, riverPath, Visualiser.LocalMapParam.Terrains[0].StartingHeight - 0.0001f);
+        if (river)
+            WorldGenerator.MakeEqualHeightLine(map.HeightMatrix, riverPath, Visualiser.LocalMapParam.Terrains[0].StartingHeight - 0.0001f);
         float?[,] buf = new float?[(ushort)LocalMapSize.y, (ushort)LocalMapSize.x];
         for (ushort y = 0; y < LocalMapSize.y; ++y)
             for (ushort x = 0; x < LocalMapSize.x; ++x)
@@ -254,12 +254,12 @@ public class World : MonoBehaviour
         LocalMaps[(int)mapCoords.y, (int)mapCoords.x] = map;
     }
 
-	/// <summary>
-	/// Возвращает чанк по координатам.
-	/// </summary>
-	/// <returns>Чанк.</returns>
-	/// <param name="chunkY">Координата по y.</param>
-	/// <param name="chunkX">Координата по x.</param>
+    /// <summary>
+    /// Возвращает чанк по координатам.
+    /// </summary>
+    /// <returns>Чанк.</returns>
+    /// <param name="chunkY">Координата по y.</param>
+    /// <param name="chunkX">Координата по x.</param>
     GlobalMap GetChunk(int chunkY, int chunkX)
     {
         GlobalMap chunk;
@@ -276,13 +276,13 @@ public class World : MonoBehaviour
         }
     }
 
-	/// <summary>
-	/// Пытается загрузить чанк по координатам.
-	/// </summary>
-	/// <returns><c>true</c>, если чанк загружен, иначе <c>false</c>.</returns>
-	/// <param name="chunkY">Координата по y.</param>
-	/// <param name="chunkX">Координата по x.</param>
-	/// <param name="chunk">[out] Чанк.</param>
+    /// <summary>
+    /// Пытается загрузить чанк по координатам.
+    /// </summary>
+    /// <returns><c>true</c>, если чанк загружен, иначе <c>false</c>.</returns>
+    /// <param name="chunkY">Координата по y.</param>
+    /// <param name="chunkX">Координата по x.</param>
+    /// <param name="chunk">[out] Чанк.</param>
     bool TryGetChunk(int chunkY, int chunkX, out GlobalMap chunk)
     {
         if (Mathf.Abs(chunkY - ChunkY) <= 1 && Mathf.Abs(chunkX - ChunkX) <= 1)
@@ -305,13 +305,13 @@ public class World : MonoBehaviour
         }
     }
 
-	/// <summary>
-	/// Пытается загрузить из файла чанк по координатам.
-	/// </summary>
-	/// <returns><c>true</c>, если чанк загружен, иначе <c>false</c>.</returns>
-	/// <param name="chunkY">Координата по y.</param>
-	/// <param name="chunkX">Координата по x.</param>
-	/// <param name="chunk">[out] Чанк.</param>
+    /// <summary>
+    /// Пытается загрузить из файла чанк по координатам.
+    /// </summary>
+    /// <returns><c>true</c>, если чанк загружен, иначе <c>false</c>.</returns>
+    /// <param name="chunkY">Координата по y.</param>
+    /// <param name="chunkX">Координата по x.</param>
+    /// <param name="chunk">[out] Чанк.</param>
     bool TryLoadFiledChunk(int chunkY, int chunkX, out GlobalMap chunk)
     {
         string filePath = Path.Combine(ChunksDirectoryPath, chunkY + "_" + chunkX);
@@ -422,12 +422,12 @@ public class World : MonoBehaviour
         return false;
     }
 
-	/// <summary>
-	/// Сохраняет чанк в файл.
-	/// </summary>
-	/// <param name="chunkY">Координата по y.</param>
-	/// <param name="chunkX">Координата по x.</param>
-	/// <param name="chunk">Чанк.</param>
+    /// <summary>
+    /// Сохраняет чанк в файл.
+    /// </summary>
+    /// <param name="chunkY">Координата по y.</param>
+    /// <param name="chunkX">Координата по x.</param>
+    /// <param name="chunk">Чанк.</param>
     void SaveChunk(int chunkY, int chunkX, GlobalMap chunk)
     {
         Directory.CreateDirectory(ChunksDirectoryPath);
@@ -504,12 +504,12 @@ public class World : MonoBehaviour
         }
     }
 
-	/// <summary>
-	/// Пытается загрузить локальные карты чанка из файла.
-	/// </summary>
-	/// <returns><c>true</c>, если карты загружены, иначе <c>false</c>.</returns>
-	/// <param name="chunkY">Координата по y.</param>
-	/// <param name="chunkX">Координата по x.</param>
+    /// <summary>
+    /// Пытается загрузить локальные карты чанка из файла.
+    /// </summary>
+    /// <returns><c>true</c>, если карты загружены, иначе <c>false</c>.</returns>
+    /// <param name="chunkY">Координата по y.</param>
+    /// <param name="chunkX">Координата по x.</param>
     bool TryLoadFiledChunkLocalMaps(int chunkY, int chunkX)
     {
         string filePath = Path.Combine(ChunksDirectoryPath, chunkY + "_" + chunkX + "lm");
@@ -537,9 +537,9 @@ public class World : MonoBehaviour
         return false;
     }
 
-	/// <summary>
-	/// Сохраняет локальные карты текущего чанка в файл.
-	/// </summary>
+    /// <summary>
+    /// Сохраняет локальные карты текущего чанка в файл.
+    /// </summary>
     void SaveCurrentChunkLocalMaps()
     {
         Directory.CreateDirectory(ChunksDirectoryPath);
@@ -668,9 +668,9 @@ public class World : MonoBehaviour
         return chunk;
     }
 
-	//TEST
-	public void EnemyAttack()
-	{
-		SwitchMap();
-	}
+    //TEST
+    public void EnemyAttack()
+    {
+        SwitchMap();
+    }
 }

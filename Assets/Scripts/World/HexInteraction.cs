@@ -9,8 +9,8 @@ public class HexInteraction : MonoBehaviour
         //if (World.IsMapCoordsAdjacent(Player.GetComponent<Player>().MapCoords, GetComponent<HexData>().MapCoords))
         // {
         GameObject.FindWithTag("Player").GetComponent<Player>().MoveToMapCoords(GetComponent<HexData>().MapCoords);
-		if (!GameObject.FindWithTag("World").GetComponent<World>().IsCurrentMapLocal())
-            GameObject.FindWithTag("GameEventManager").GetComponent<GameEventManager>().MakeActionEvent();
+        if (!GameObject.FindWithTag("World").GetComponent<World>().IsCurrentMapLocal())
+            GameObject.FindWithTag("GameEventManager").GetComponent<GameEventManager>().MakeActionEvent(GameObject.FindWithTag("World").GetComponent<World>().CurrentMap.GetTerrainType(GetComponent<HexData>().MapCoords));
         // }
     }
 

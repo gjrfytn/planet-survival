@@ -97,28 +97,28 @@ public static class WorldGenerator
 
             for (ushort y = halfY; y < height; y += stepY)
             {
-				if (!matrix[y, 0].HasValue)
+                if (!matrix[y, 0].HasValue)
                     matrix[y, 0] = (matrix[y - halfY, 0] + matrix[y + halfY, 0] + matrix[y, 0 + halfX]) / 3 + Random.Range(-randRange, randRange);
-				if (!matrix[y, width - 1].HasValue)
+                if (!matrix[y, width - 1].HasValue)
                     matrix[y, width - 1] = (matrix[y - halfY, width - 1] + matrix[y, width - 1 - halfX] + matrix[y + halfY, width - 1]) / 3 + Random.Range(-randRange, randRange);
             }
 
             for (ushort x = halfX; x < width; x += stepX)
             {
-				if (!matrix[0, x].HasValue)
+                if (!matrix[0, x].HasValue)
                     matrix[0, x] = (matrix[0, x - halfX] + matrix[0 + halfY, x] + matrix[0, x + halfX]) / 3 + Random.Range(-randRange, randRange);
-				if (!matrix[height - 1, x].HasValue)
+                if (!matrix[height - 1, x].HasValue)
                     matrix[height - 1, x] = (matrix[height - 1 - halfY, x] + matrix[height - 1, x - halfX] + matrix[height - 1, x + halfX]) / 3 + Random.Range(-randRange, randRange);
             }
 
             for (ushort y = halfY; y < height - 1; y += stepY)
                 for (ushort x = stepX; x < width - 1; x += stepX)
-					if (!matrix[y, x].HasValue)
+                    if (!matrix[y, x].HasValue)
                         matrix[y, x] = (matrix[y, x - halfX] + matrix[y - halfY, x] + matrix[y, x + halfX] + matrix[y + halfY, x]) / 4 + Random.Range(-randRange, randRange);
 
             for (ushort x = halfX; x < width - 1; x += stepX)
                 for (ushort y = stepY; y < height - 1; y += stepY)
-					if (!matrix[y, x].HasValue)
+                    if (!matrix[y, x].HasValue)
                         matrix[y, x] = (matrix[y, x - halfX] + matrix[y - halfY, x] + matrix[y, x + halfX] + matrix[y + halfY, x]) / 4 + Random.Range(-randRange, randRange);
         }
     }
@@ -184,7 +184,7 @@ public static class WorldGenerator
         return rivers;
     }
 
-    enum Direction
+    enum Direction : byte
     {
         TOP_LEFT,
         BOTTOM_LEFT,

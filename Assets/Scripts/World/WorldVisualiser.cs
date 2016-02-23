@@ -43,7 +43,7 @@ public class WorldVisualiser : MonoBehaviour
     public float FadeInTime;
     public float FadeTime;
     public Sprite BlueHexSprite;
-    static Vector2 HexSpriteSize;
+    public static Vector2 HexSpriteSize; //TODO static?
 
     List<Sprite> AllGlobalHexSprites = new List<Sprite>();
     List<Sprite> AllRiverSprites = new List<Sprite>();

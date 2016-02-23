@@ -9,6 +9,8 @@ public abstract class Map
 
     public float[,] ForestMatrix;
 
+    public TerrainType[,] TerrainMatrix;
+
     public bool Contains(Vector2 coords)
     {
         return coords.y >= 0 && coords.y < HeightMatrix.GetLength(0) && coords.x >= 0 && coords.x < HeightMatrix.GetLength(1);
@@ -29,11 +31,17 @@ public abstract class Map
         return ForestMatrix[(int)coords.y, (int)coords.x];
     }
 
+    public TerrainType GetTerrainType(Vector2 coords)
+    {
+        return TerrainMatrix[(int)coords.y, (int)coords.x];
+    }
+
     public Map(ushort width, ushort height)
     {
         HeightMatrix = new float[height, width];
         HexSpriteID_Matrix = new byte?[height, width];
         ForestMatrix = new float[height, width];
+        TerrainMatrix = new TerrainType[height, width];
     }
 }
 

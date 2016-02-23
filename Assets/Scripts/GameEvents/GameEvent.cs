@@ -6,8 +6,8 @@ public class GameEvent //UNDONE
     // Название события
     public string Name;// {get; private set; }
 
-    // Определяет, "хорошее" это событие или "плохое", необходимо для правильного влияния параметра удачи.
-    public bool Good;// {get; private set; }
+    // Определяет, яляется ли событие сюжетным.
+    public bool StoryEvent;// {get; private set; }
 
     //TODO Возможно стоит вместо этого разделить события на два списка?
     // Определяет, может ли это событие произойти от действия.
@@ -19,34 +19,41 @@ public class GameEvent //UNDONE
     // Описание события, выводимое на экран.
     public string Description;// {get; private set; }
 
-    // Базовая вероятность возникновения события, на него будет влиять параметр удачи персонажа.
+    // Базовая вероятность возникновения события.
+    public float BaseProbability
+    {
+        get
+        {
+            return BaseProbability;
+        }
+        set
+        {
+            BaseProbability = Probability = value;
+        }
+    }
+
+    // Текущая (переменная) вероятность возникновения события.
     public float Probability;// {get; private set; }
 
-    // TODO Коэффициент вероятности возникновения события при различных факторах, "1" - максимальное значение, "0" - событие не происходит в этом типе.
-    public class TerrainCoefficients
+    // TODO Вес события при различных факторах.
+
+    public Dictionary<TerrainType, sbyte> TerrainWeights;
+
+    public class TimeWeights
     {
-        public float ForestСoef;// {get; private set; }
-        public float RiverСoef;// {get; private set; }
+        public sbyte Day;// {get; private set; }
+        public sbyte Night;// {get; private set; }
         // и т.п.
     }
 
-    public TerrainCoefficients TerrainCoef;
+    public TimeWeights TimeWeight;
 
-    public class TimeCoefficients
-    {
-        public float DayСoef;// {get; private set; }
-        public float NightСoef;// {get; private set; }
-        // и т.п.
-    }
-
-    public TimeCoefficients TimeCoef;
-
-    public class StateCoefficients
+    public class StateWeights
     {
         //TODO
     }
 
-    public StateCoefficients StateCoef;
+    public StateWeights StateWeight;
 
     // TODO Реакции на событие.
     public class Reaction
@@ -64,17 +71,17 @@ public class GameEvent //UNDONE
 
     public List<Reaction> Reactions;
 
-    public GameEvent(string name, bool good, bool byAction, bool byTime, string description, float probability, TerrainCoefficients terrainCoef, TimeCoefficients timeCoef, StateCoefficients stateCoef, List<Reaction> reactions)
+    public GameEvent(string name, bool storyEvent, bool byAction, bool byTime, string description, float probability, Dictionary<TerrainType, sbyte> terrainWeights, TimeWeights timeWeight, StateWeights stateWeight, List<Reaction> reactions)
     {
         Name = name;
         ByAction = byAction;
         ByTime = byTime;
         Description = description;
         Probability = probability;
-        Good = good;
-        TerrainCoef = terrainCoef;
-        TimeCoef = timeCoef;
-        StateCoef = stateCoef;
+        StoryEvent = storyEvent;
+        TerrainWeights = terrainWeights;
+        TimeWeight = timeWeight;
+        StateWeight = stateWeight;
         Reactions = reactions;
     }
 }
