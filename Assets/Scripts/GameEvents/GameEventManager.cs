@@ -24,12 +24,12 @@ public class GameEventManager : MonoBehaviour
     public void MakeActionEvent(TerrainType terrain)
     {
         //Событие при переходе игрока на тайл.
-        List<GameEvent> possibleEvents = Events.Where(e => e.ByAction).ToList(); // UNDONE Не учитываются веса.
-        short weight = possibleEvents[0].TerrainWeights[terrain];
-        GameEvent evnt = possibleEvents[0];
+        List<GameEvent> possibleEvents = Events.Where(e => e.ByAction).ToList();
+		short weight = -100; //TODO
+        GameEvent evnt=null;
         foreach (GameEvent e in possibleEvents)
         {
-            short buf = evnt.TerrainWeights[terrain]/*+...*/;
+			short buf = CalculateTerrainWeight(e,terrain)/*+...*/;
             if (buf > weight)
             {
                 weight = buf;
@@ -38,6 +38,7 @@ public class GameEventManager : MonoBehaviour
         }
         if (Random.value < evnt.Probability)
         {
+			evnt.Probability=evnt.BaseProbability;
             CurrentEvent = evnt;
             EventPanel.SetActive(true);
             EventPanel.transform.GetChild(0).GetComponent<Text>().text = evnt.Description;//ParseEventDescription(evnt.Description); TODO
@@ -71,6 +72,19 @@ public class GameEventManager : MonoBehaviour
     {
         //TODO Событие от таймера.
     }
+
+	short CalculateTerrainWeight(GameEvent evnt,TerrainType terrain)
+	{
+		short weight=0;
+		byte terrainsCount=(byte)(System.Enum.GetNames(typeof(TerrainType)).Length-1);
+		for(byte i=0;i<terrainsCount;++i)
+		{
+			TerrainType t=(TerrainType)Mathf.Pow(2,i);
+			if((t&terrain)!=0)
+				weight+=evnt.TerrainWeights[t];
+		}
+		return weight;
+	}
 
     public void EventPanelButtonPress(byte index)
     {
@@ -120,13 +134,13 @@ public class GameEventManager : MonoBehaviour
                     string description = reader.ReadString();
                     float probability = reader.ReadSingle();
 
-                    byte terrainsCount = (byte)System.Enum.GetNames(typeof(TerrainType)).Length;
+                    byte terrainsCount = (byte)(System.Enum.GetNames(typeof(TerrainType)).Length-1);
                     Dictionary<TerrainType, sbyte> terrainWeights = new Dictionary<TerrainType, sbyte>(terrainsCount);
                     byte weightsCount = reader.ReadByte();
                     for (byte i = 0; i < weightsCount; ++i)
-                        terrainWeights.Add((TerrainType)i, reader.ReadSByte());
+                        terrainWeights.Add((TerrainType)Mathf.Pow(2,i), reader.ReadSByte()); //TODO Если нужно, при возведении можно использовать сдвиг.
                     for (byte i = weightsCount; i < terrainsCount; ++i)
-                        terrainWeights.Add((TerrainType)i, 0);
+						terrainWeights.Add((TerrainType)Mathf.Pow(2,i), 0);
 
                     //weightsCount = reader.ReadByte();
                     GameEvent.TimeWeights timeWeights = new GameEvent.TimeWeights()

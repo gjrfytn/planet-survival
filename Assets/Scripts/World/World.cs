@@ -15,6 +15,9 @@ public class World : MonoBehaviour
     public ushort GlobalMapChunkSize; //Должен быть 2 в n-ой степени
     public Vector2 LocalMapSize; //Должен быть 2 в n-ой степени
 
+	public byte ForestDensity;
+	public byte TreeCountForForestTerrain;
+
     public GameObject[] Enemies;
 
     public Map CurrentMap { get; private set; } //TODO Возможно, можно будет убрать. Карта, на которой находится игрок.
@@ -661,12 +664,28 @@ public class World : MonoBehaviour
         WorldGenerator.CreateHeightmap(chunk.ForestMatrix, ForestRoughness, ((leftChunk != null ? leftChunk.ForestMatrix[GlobalMapChunkSize - 1, GlobalMapChunkSize - 1] : Random.value) + (topChunk != null ? topChunk.ForestMatrix[0, 0] : Random.value)) / 2f, ((topChunk != null ? topChunk.ForestMatrix[0, GlobalMapChunkSize - 1] : Random.value) + (rightChunk != null ? rightChunk.ForestMatrix[GlobalMapChunkSize - 1, 0] : Random.value)) / 2f, ((leftChunk != null ? leftChunk.ForestMatrix[0, GlobalMapChunkSize - 1] : Random.value) + (bottomChunk != null ? bottomChunk.ForestMatrix[GlobalMapChunkSize - 1, 0] : Random.value)) / 2f, ((bottomChunk != null ? bottomChunk.ForestMatrix[GlobalMapChunkSize - 1, GlobalMapChunkSize - 1] : Random.value) + (rightChunk != null ? rightChunk.ForestMatrix[0, 0] : Random.value)) / 2f);
         for (ushort y = 0; y < GlobalMapChunkSize; ++y)
             for (ushort x = 0; x < GlobalMapChunkSize; ++x)
+			{
+				chunk.ForestMatrix[y, x]*=ForestDensity;
                 chunk.ForestMatrix[y, x] = Mathf.Clamp(chunk.ForestMatrix[y, x], 0, Mathf.Abs(chunk.ForestMatrix[y, x]));
+			}
         chunk.Rivers = WorldGenerator.CreateRivers(chunk.HeightMatrix, chunk.RiverMatrix, RiverParam);
         chunk.Clusters = WorldGenerator.CreateClusters(chunk, ClusterParam);
         chunk.Roads = WorldGenerator.CreateRoads(chunk.HeightMatrix, chunk.RoadMatrix, chunk.Clusters);
+		CalculateChunkTerrains(chunk);
         return chunk;
     }
+
+	void CalculateChunkTerrains(GlobalMap chunk)
+	{
+		for (ushort y = 0; y < GlobalMapChunkSize; ++y)
+			for (ushort x = 0; x < GlobalMapChunkSize; ++x)
+				chunk.TerrainMatrix[y,x]=MakeTerrainFromHeight(chunk.HeightMatrix[y,x])|(chunk.ForestMatrix[y,x]>TreeCountForForestTerrain?TerrainType.FOREST:TerrainType.NONE)|(chunk.RiverMatrix[y,x]?TerrainType.RIVER:TerrainType.NONE);
+	}
+
+	TerrainType MakeTerrainFromHeight(float height)
+	{
+		return TerrainType.MEADOW; //UNDONE
+	}
 
     //TEST
     public void EnemyAttack()

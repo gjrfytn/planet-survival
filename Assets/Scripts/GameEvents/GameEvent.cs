@@ -20,15 +20,16 @@ public class GameEvent //UNDONE
     public string Description;// {get; private set; }
 
     // Базовая вероятность возникновения события.
+	float BaseProbability_;
     public float BaseProbability
     {
         get
         {
-            return BaseProbability;
+			return BaseProbability_;
         }
         set
         {
-            BaseProbability = Probability = value;
+			BaseProbability_ = Probability = value;
         }
     }
 

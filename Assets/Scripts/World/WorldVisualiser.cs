@@ -38,7 +38,6 @@ public class WorldVisualiser : MonoBehaviour
     }
     public LocalMapSettings LocalMapParam;
     public Material DiffuseMaterial;
-    public byte ForestDensity;
     public byte ForestGenGridSize;
     public float FadeInTime;
     public float FadeTime;
@@ -464,12 +463,12 @@ public class WorldVisualiser : MonoBehaviour
     /// <param name="mapCoords">Координаты в матрице.</param>
     void MakeHexForest(ListType hex, Vector2 mapCoords, Map map) //TODO (WIP)
     {
-        if (map.GetForest(mapCoords) * ForestDensity >= 1)
+        if (map.GetForest(mapCoords)>= 1) //TODO
         {
             float gridStepX = HexSpriteSize.x / ForestGenGridSize;
             float gridStepY = HexSpriteSize.y / ForestGenGridSize;
             Vector2 gridOrigin = new Vector2(hex.Hex.transform.position.x - HexSpriteSize.x * 0.375f, hex.Hex.transform.position.y - HexSpriteSize.y * 0.5f);
-            byte treesCount = (byte)(map.GetForest(mapCoords) * ForestDensity);
+            byte treesCount = (byte)map.GetForest(mapCoords);
 
             while (true)
             {
