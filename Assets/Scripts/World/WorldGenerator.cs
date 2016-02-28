@@ -184,16 +184,6 @@ public static class WorldGenerator
         return rivers;
     }
 
-    enum Direction : byte
-    {
-        TOP_LEFT,
-        BOTTOM_LEFT,
-        TOP,
-        BOTTOM,
-        TOP_RIGHT,
-        BOTTOM_RIGHT
-    }
-
     /// <summary>
     /// Выбирает направление распространения реки.
     /// </summary>
@@ -216,9 +206,9 @@ public static class WorldGenerator
             byte k = (byte)((x % 2) != 0 ? 1 : 0); //Учитываем чётность/нечётность ряда хексов
             do
             {
-                switch (Random.Range(0, 7))
-                { //Выбираем случайное направление
-                    case (int)Direction.BOTTOM_LEFT:
+                switch (Random.Range(0, 7))//Выбираем случайное направление
+                {
+                    case (int)HexDirection.BOTTOM_LEFT:
                         if (heightMatrix[y - 1 + k, x - 1] * flowHeightKoef <= heightMatrix[y, x] && !riverMatrix[y - 1 + k, x - 1] && RiverNeighbours((ushort)(y - 1 + k), (ushort)(x - 1), riverMatrix) < 2)
                         {
                             DirectRiver((ushort)(y - 1 + k), (ushort)(x - 1), heightMatrix, riverMatrix, flowHeightKoef);
@@ -226,7 +216,7 @@ public static class WorldGenerator
                         }
                         limiter++;
                         break;
-                    case (int)Direction.TOP_LEFT:
+                    case (int)HexDirection.TOP_LEFT:
                         if (heightMatrix[y + k, x - 1] * flowHeightKoef <= heightMatrix[y, x] && !riverMatrix[y + k, x - 1] && RiverNeighbours((ushort)(y + k), (ushort)(x - 1), riverMatrix) < 2)
                         {
                             DirectRiver((ushort)(y + k), (ushort)(x - 1), heightMatrix, riverMatrix, flowHeightKoef);
@@ -234,7 +224,7 @@ public static class WorldGenerator
                         }
                         limiter++;
                         break;
-                    case (int)Direction.BOTTOM:
+                    case (int)HexDirection.BOTTOM:
                         if (heightMatrix[y - 1, x] * flowHeightKoef <= heightMatrix[y, x] && !riverMatrix[y - 1, x] && RiverNeighbours((ushort)(y - 1), x, riverMatrix) < 2)
                         {
                             DirectRiver((ushort)(y - 1), x, heightMatrix, riverMatrix, flowHeightKoef);
@@ -242,7 +232,7 @@ public static class WorldGenerator
                         }
                         limiter++;
                         break;
-                    case (int)Direction.TOP:
+                    case (int)HexDirection.TOP:
                         if (heightMatrix[y + 1, x] * flowHeightKoef <= heightMatrix[y, x] && !riverMatrix[y + 1, x] && RiverNeighbours((ushort)(y + 1), x, riverMatrix) < 2)
                         {
                             DirectRiver((ushort)(y + 1), x, heightMatrix, riverMatrix, flowHeightKoef);
@@ -250,7 +240,7 @@ public static class WorldGenerator
                         }
                         limiter++;
                         break;
-                    case (int)Direction.BOTTOM_RIGHT:
+                    case (int)HexDirection.BOTTOM_RIGHT:
                         if (heightMatrix[y - 1 + k, x + 1] * flowHeightKoef <= heightMatrix[y, x] && !riverMatrix[y - 1 + k, x + 1] && RiverNeighbours((ushort)(y - 1 + k), (ushort)(x + 1), riverMatrix) < 2)
                         {
                             DirectRiver((ushort)(y - 1 + k), (ushort)(x + 1), heightMatrix, riverMatrix, flowHeightKoef);
@@ -258,7 +248,7 @@ public static class WorldGenerator
                         }
                         limiter++;
                         break;
-                    case (int)Direction.TOP_RIGHT:
+                    case (int)HexDirection.TOP_RIGHT:
                         if (heightMatrix[y + k, x + 1] * flowHeightKoef <= heightMatrix[y, x] && !riverMatrix[y + k, x + 1] && RiverNeighbours((ushort)(y + k), (ushort)(x + 1), riverMatrix) < 2)
                         {
                             DirectRiver((ushort)(y + k), (ushort)(x + 1), heightMatrix, riverMatrix, flowHeightKoef);

@@ -15,8 +15,8 @@ public class World : MonoBehaviour
     public ushort GlobalMapChunkSize; //Должен быть 2 в n-ой степени
     public Vector2 LocalMapSize; //Должен быть 2 в n-ой степени
 
-	public byte ForestDensity;
-	public byte TreeCountForForestTerrain;
+    public byte ForestDensity;
+    public byte TreeCountForForestTerrain;
 
     public GameObject[] Enemies;
 
@@ -90,12 +90,10 @@ public class World : MonoBehaviour
         Player.transform.position = WorldVisualiser.GetTransformPosFromMapCoords(Player.GetComponent<Player>().MapCoords);
         Camera.main.transform.position = transform.position = new Vector3(Player.transform.position.x, Player.transform.position.y + Camera.main.transform.position.z * (Mathf.Tan((360 - Camera.main.transform.rotation.eulerAngles.x) / 57.3f)), Camera.main.transform.position.z);
         Visualiser.RenderVisibleHexes(Player.GetComponent<Player>().MapCoords, Player.GetComponent<Player>().ViewDistance, CashedGlobalMapChunks, ChunkY, ChunkX);
-        Visualiser.HighlightHex(GetTopLeftMapCoords(Player.GetComponent<Player>().MapCoords), Visualiser.BlueHexSprite);
-        Visualiser.HighlightHex(GetTopMapCoords(Player.GetComponent<Player>().MapCoords), Visualiser.BlueHexSprite);
-        Visualiser.HighlightHex(GetTopRightMapCoords(Player.GetComponent<Player>().MapCoords), Visualiser.BlueHexSprite);
-        Visualiser.HighlightHex(GetBottomRightMapCoords(Player.GetComponent<Player>().MapCoords), Visualiser.BlueHexSprite);
-        Visualiser.HighlightHex(GetBottomMapCoords(Player.GetComponent<Player>().MapCoords), Visualiser.BlueHexSprite);
-        Visualiser.HighlightHex(GetBottomLeftMapCoords(Player.GetComponent<Player>().MapCoords), Visualiser.BlueHexSprite);
+        for (byte i = 0; i < 6; ++i)
+        {
+            Visualiser.HighlightHex(GetNeighborMapCoords(Player.GetComponent<Player>().MapCoords, (HexDirection)i), Visualiser.BlueHexSprite);
+        }
     }
 
     /// <summary>
@@ -142,28 +140,19 @@ public class World : MonoBehaviour
 
             Visualiser.RenderVisibleHexes(mapCoords, Player.GetComponent<Player>().ViewDistance, CashedGlobalMapChunks, ChunkY, ChunkX);
             Visualiser.DestroyAllObjects();//TODO Временно
-            Visualiser.HighlightHex(GetTopLeftMapCoords(mapCoords), Visualiser.BlueHexSprite);
-            Visualiser.HighlightHex(GetTopMapCoords(mapCoords), Visualiser.BlueHexSprite);
-            Visualiser.HighlightHex(GetTopRightMapCoords(mapCoords), Visualiser.BlueHexSprite);
-            Visualiser.HighlightHex(GetBottomRightMapCoords(mapCoords), Visualiser.BlueHexSprite);
-            Visualiser.HighlightHex(GetBottomMapCoords(mapCoords), Visualiser.BlueHexSprite);
-            Visualiser.HighlightHex(GetBottomLeftMapCoords(mapCoords), Visualiser.BlueHexSprite);
+            for (byte i = 0; i < 6; ++i)
+            {
+                Visualiser.HighlightHex(GetNeighborMapCoords(mapCoords, (HexDirection)i), Visualiser.BlueHexSprite);
+            }
         }
         else
         {
             Visualiser.DestroyAllObjects();//TODO Временно
-            if (IsHexFree(GetTopLeftMapCoords(mapCoords)))
-                Visualiser.HighlightHex(GetTopLeftMapCoords(mapCoords), Visualiser.BlueHexSprite);
-            if (IsHexFree(GetTopMapCoords(mapCoords)))
-                Visualiser.HighlightHex(GetTopMapCoords(mapCoords), Visualiser.BlueHexSprite);
-            if (IsHexFree(GetTopRightMapCoords(mapCoords)))
-                Visualiser.HighlightHex(GetTopRightMapCoords(mapCoords), Visualiser.BlueHexSprite);
-            if (IsHexFree(GetBottomRightMapCoords(mapCoords)))
-                Visualiser.HighlightHex(GetBottomRightMapCoords(mapCoords), Visualiser.BlueHexSprite);
-            if (IsHexFree(GetBottomMapCoords(mapCoords)))
-                Visualiser.HighlightHex(GetBottomMapCoords(mapCoords), Visualiser.BlueHexSprite);
-            if (IsHexFree(GetBottomLeftMapCoords(mapCoords)))
-                Visualiser.HighlightHex(GetBottomLeftMapCoords(mapCoords), Visualiser.BlueHexSprite);
+            for (byte i = 0; i < 6; ++i)
+            {
+                if (IsHexFree(GetNeighborMapCoords(mapCoords, (HexDirection)i)))
+                    Visualiser.HighlightHex(GetNeighborMapCoords(mapCoords, (HexDirection)i), Visualiser.BlueHexSprite);
+            }
         }
     }
 
@@ -206,12 +195,10 @@ public class World : MonoBehaviour
         Visualiser.DestroyAllObjects();
         Visualiser.RenderWholeMap(CurrentMap as LocalMap);
 
-        Visualiser.HighlightHex(GetTopLeftMapCoords(Player.GetComponent<Player>().MapCoords), Visualiser.BlueHexSprite);
-        Visualiser.HighlightHex(GetTopMapCoords(Player.GetComponent<Player>().MapCoords), Visualiser.BlueHexSprite);
-        Visualiser.HighlightHex(GetTopRightMapCoords(Player.GetComponent<Player>().MapCoords), Visualiser.BlueHexSprite);
-        Visualiser.HighlightHex(GetBottomRightMapCoords(Player.GetComponent<Player>().MapCoords), Visualiser.BlueHexSprite);
-        Visualiser.HighlightHex(GetBottomMapCoords(Player.GetComponent<Player>().MapCoords), Visualiser.BlueHexSprite);
-        Visualiser.HighlightHex(GetBottomLeftMapCoords(Player.GetComponent<Player>().MapCoords), Visualiser.BlueHexSprite);
+        for (byte i = 0; i < 6; ++i)
+        {
+            Visualiser.HighlightHex(GetNeighborMapCoords(Player.GetComponent<Player>().MapCoords, (HexDirection)i), Visualiser.BlueHexSprite);
+        }
     }
 
     /// <summary>
@@ -224,12 +211,10 @@ public class World : MonoBehaviour
         Visualiser.RenderVisibleHexes(Player.GetComponent<Player>().MapCoords, Player.GetComponent<Player>().ViewDistance, CashedGlobalMapChunks, ChunkY, ChunkX);
 
         Visualiser.DestroyAllObjects();
-        Visualiser.HighlightHex(GetTopLeftMapCoords(Player.GetComponent<Player>().MapCoords), Visualiser.BlueHexSprite);
-        Visualiser.HighlightHex(GetTopMapCoords(Player.GetComponent<Player>().MapCoords), Visualiser.BlueHexSprite);
-        Visualiser.HighlightHex(GetTopRightMapCoords(Player.GetComponent<Player>().MapCoords), Visualiser.BlueHexSprite);
-        Visualiser.HighlightHex(GetBottomRightMapCoords(Player.GetComponent<Player>().MapCoords), Visualiser.BlueHexSprite);
-        Visualiser.HighlightHex(GetBottomMapCoords(Player.GetComponent<Player>().MapCoords), Visualiser.BlueHexSprite);
-        Visualiser.HighlightHex(GetBottomLeftMapCoords(Player.GetComponent<Player>().MapCoords), Visualiser.BlueHexSprite);
+        for (byte i = 0; i < 6; ++i)
+        {
+            Visualiser.HighlightHex(GetNeighborMapCoords(Player.GetComponent<Player>().MapCoords, (HexDirection)i), Visualiser.BlueHexSprite);
+        }
     }
 
     /// <summary>
@@ -566,34 +551,24 @@ public class World : MonoBehaviour
         }
     }
 
-    public static Vector2 GetTopLeftMapCoords(Vector2 mapCoords)
+    public static Vector2 GetNeighborMapCoords(Vector2 mapCoords, HexDirection direction)
     {
-        return new Vector2(mapCoords.x - 1, mapCoords.y + 1 - ((mapCoords.x % 2) != 0 ? 0 : 1));
-    }
-
-    public static Vector2 GetTopMapCoords(Vector2 mapCoords)
-    {
-        return new Vector2(mapCoords.x, mapCoords.y + 1);
-    }
-
-    public static Vector2 GetTopRightMapCoords(Vector2 mapCoords)
-    {
-        return new Vector2(mapCoords.x + 1, mapCoords.y + 1 - ((mapCoords.x % 2) != 0 ? 0 : 1));
-    }
-
-    public static Vector2 GetBottomRightMapCoords(Vector2 mapCoords)
-    {
-        return new Vector2(mapCoords.x + 1, mapCoords.y - ((mapCoords.x % 2) != 0 ? 0 : 1));
-    }
-
-    public static Vector2 GetBottomMapCoords(Vector2 mapCoords)
-    {
-        return new Vector2(mapCoords.x, mapCoords.y - 1);
-    }
-
-    public static Vector2 GetBottomLeftMapCoords(Vector2 mapCoords)
-    {
-        return new Vector2(mapCoords.x - 1, mapCoords.y - ((mapCoords.x % 2) != 0 ? 0 : 1));
+        switch (direction)
+        {
+            case HexDirection.TOP_LEFT:
+                return new Vector2(mapCoords.x - 1, mapCoords.y + 1 - ((mapCoords.x % 2) != 0 ? 0 : 1));
+            case HexDirection.TOP:
+                return new Vector2(mapCoords.x, mapCoords.y + 1);
+            case HexDirection.TOP_RIGHT:
+                return new Vector2(mapCoords.x + 1, mapCoords.y + 1 - ((mapCoords.x % 2) != 0 ? 0 : 1));
+            case HexDirection.BOTTOM_RIGHT:
+                return new Vector2(mapCoords.x + 1, mapCoords.y - ((mapCoords.x % 2) != 0 ? 0 : 1));
+            case HexDirection.BOTTOM:
+                return new Vector2(mapCoords.x, mapCoords.y - 1);
+            case HexDirection.BOTTOM_LEFT:
+                return new Vector2(mapCoords.x - 1, mapCoords.y - ((mapCoords.x % 2) != 0 ? 0 : 1));
+        }
+        throw new System.ArgumentException("Invalid direction", "direction");
     }
 
     /// <summary>
@@ -664,28 +639,28 @@ public class World : MonoBehaviour
         WorldGenerator.CreateHeightmap(chunk.ForestMatrix, ForestRoughness, ((leftChunk != null ? leftChunk.ForestMatrix[GlobalMapChunkSize - 1, GlobalMapChunkSize - 1] : Random.value) + (topChunk != null ? topChunk.ForestMatrix[0, 0] : Random.value)) / 2f, ((topChunk != null ? topChunk.ForestMatrix[0, GlobalMapChunkSize - 1] : Random.value) + (rightChunk != null ? rightChunk.ForestMatrix[GlobalMapChunkSize - 1, 0] : Random.value)) / 2f, ((leftChunk != null ? leftChunk.ForestMatrix[0, GlobalMapChunkSize - 1] : Random.value) + (bottomChunk != null ? bottomChunk.ForestMatrix[GlobalMapChunkSize - 1, 0] : Random.value)) / 2f, ((bottomChunk != null ? bottomChunk.ForestMatrix[GlobalMapChunkSize - 1, GlobalMapChunkSize - 1] : Random.value) + (rightChunk != null ? rightChunk.ForestMatrix[0, 0] : Random.value)) / 2f);
         for (ushort y = 0; y < GlobalMapChunkSize; ++y)
             for (ushort x = 0; x < GlobalMapChunkSize; ++x)
-			{
-				chunk.ForestMatrix[y, x]*=ForestDensity;
+            {
+                chunk.ForestMatrix[y, x] *= ForestDensity;
                 chunk.ForestMatrix[y, x] = Mathf.Clamp(chunk.ForestMatrix[y, x], 0, Mathf.Abs(chunk.ForestMatrix[y, x]));
-			}
+            }
         chunk.Rivers = WorldGenerator.CreateRivers(chunk.HeightMatrix, chunk.RiverMatrix, RiverParam);
         chunk.Clusters = WorldGenerator.CreateClusters(chunk, ClusterParam);
         chunk.Roads = WorldGenerator.CreateRoads(chunk.HeightMatrix, chunk.RoadMatrix, chunk.Clusters);
-		CalculateChunkTerrains(chunk);
+        CalculateChunkTerrains(chunk);
         return chunk;
     }
 
-	void CalculateChunkTerrains(GlobalMap chunk)
-	{
-		for (ushort y = 0; y < GlobalMapChunkSize; ++y)
-			for (ushort x = 0; x < GlobalMapChunkSize; ++x)
-				chunk.TerrainMatrix[y,x]=MakeTerrainFromHeight(chunk.HeightMatrix[y,x])|(chunk.ForestMatrix[y,x]>TreeCountForForestTerrain?TerrainType.FOREST:TerrainType.NONE)|(chunk.RiverMatrix[y,x]?TerrainType.RIVER:TerrainType.NONE);
-	}
+    void CalculateChunkTerrains(GlobalMap chunk)
+    {
+        for (ushort y = 0; y < GlobalMapChunkSize; ++y)
+            for (ushort x = 0; x < GlobalMapChunkSize; ++x)
+                chunk.TerrainMatrix[y, x] = MakeTerrainFromHeight(chunk.HeightMatrix[y, x]) | (chunk.ForestMatrix[y, x] > TreeCountForForestTerrain ? TerrainType.FOREST : TerrainType.NONE) | (chunk.RiverMatrix[y, x] ? TerrainType.RIVER : TerrainType.NONE);
+    }
 
-	TerrainType MakeTerrainFromHeight(float height)
-	{
-		return TerrainType.MEADOW; //UNDONE
-	}
+    TerrainType MakeTerrainFromHeight(float height)
+    {
+        return TerrainType.MEADOW; //UNDONE
+    }
 
     //TEST
     public void EnemyAttack()

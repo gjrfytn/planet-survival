@@ -463,7 +463,7 @@ public class WorldVisualiser : MonoBehaviour
     /// <param name="mapCoords">Координаты в матрице.</param>
     void MakeHexForest(ListType hex, Vector2 mapCoords, Map map) //TODO (WIP)
     {
-        if (map.GetForest(mapCoords)>= 1) //TODO
+        if (map.GetForest(mapCoords) >= 1) //TODO
         {
             float gridStepX = HexSpriteSize.x / ForestGenGridSize;
             float gridStepY = HexSpriteSize.y / ForestGenGridSize;

@@ -25,11 +25,11 @@ public class GameEventManager : MonoBehaviour
     {
         //Событие при переходе игрока на тайл.
         List<GameEvent> possibleEvents = Events.Where(e => e.ByAction).ToList();
-		short weight = -100; //TODO
-        GameEvent evnt=null;
+        short weight = -100; //TODO
+        GameEvent evnt = null;
         foreach (GameEvent e in possibleEvents)
         {
-			short buf = CalculateTerrainWeight(e,terrain)/*+...*/;
+            short buf = CalculateTerrainWeight(e, terrain)/*+...*/;
             if (buf > weight)
             {
                 weight = buf;
@@ -38,7 +38,7 @@ public class GameEventManager : MonoBehaviour
         }
         if (Random.value < evnt.Probability)
         {
-			evnt.Probability=evnt.BaseProbability;
+            evnt.Probability = evnt.BaseProbability;
             CurrentEvent = evnt;
             EventPanel.SetActive(true);
             EventPanel.transform.GetChild(0).GetComponent<Text>().text = evnt.Description;//ParseEventDescription(evnt.Description); TODO
@@ -73,18 +73,18 @@ public class GameEventManager : MonoBehaviour
         //TODO Событие от таймера.
     }
 
-	short CalculateTerrainWeight(GameEvent evnt,TerrainType terrain)
-	{
-		short weight=0;
-		byte terrainsCount=(byte)(System.Enum.GetNames(typeof(TerrainType)).Length-1);
-		for(byte i=0;i<terrainsCount;++i)
-		{
-			TerrainType t=(TerrainType)Mathf.Pow(2,i);
-			if((t&terrain)!=0)
-				weight+=evnt.TerrainWeights[t];
-		}
-		return weight;
-	}
+    short CalculateTerrainWeight(GameEvent evnt, TerrainType terrain)
+    {
+        short weight = 0;
+        byte terrainsCount = (byte)(System.Enum.GetNames(typeof(TerrainType)).Length - 1);
+        for (byte i = 0; i < terrainsCount; ++i)
+        {
+            TerrainType t = (TerrainType)Mathf.Pow(2, i);
+            if ((t & terrain) != 0)
+                weight += evnt.TerrainWeights[t];
+        }
+        return weight;
+    }
 
     public void EventPanelButtonPress(byte index)
     {
@@ -134,13 +134,13 @@ public class GameEventManager : MonoBehaviour
                     string description = reader.ReadString();
                     float probability = reader.ReadSingle();
 
-                    byte terrainsCount = (byte)(System.Enum.GetNames(typeof(TerrainType)).Length-1);
+                    byte terrainsCount = (byte)(System.Enum.GetNames(typeof(TerrainType)).Length - 1);
                     Dictionary<TerrainType, sbyte> terrainWeights = new Dictionary<TerrainType, sbyte>(terrainsCount);
                     byte weightsCount = reader.ReadByte();
                     for (byte i = 0; i < weightsCount; ++i)
-                        terrainWeights.Add((TerrainType)Mathf.Pow(2,i), reader.ReadSByte()); //TODO Если нужно, при возведении можно использовать сдвиг.
+                        terrainWeights.Add((TerrainType)Mathf.Pow(2, i), reader.ReadSByte()); //TODO Если нужно, при возведении можно использовать сдвиг.
                     for (byte i = weightsCount; i < terrainsCount; ++i)
-						terrainWeights.Add((TerrainType)Mathf.Pow(2,i), 0);
+                        terrainWeights.Add((TerrainType)Mathf.Pow(2, i), 0);
 
                     //weightsCount = reader.ReadByte();
                     GameEvent.TimeWeights timeWeights = new GameEvent.TimeWeights()

@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class Creature : Entity
 {
@@ -20,6 +21,7 @@ public class Creature : Entity
     Vector2 PreviousCoords;
     AI_State State;
     GameObject Target;
+    Stack<Vector2> Path;
 
     protected new void OnEnable()
     {
@@ -59,51 +61,80 @@ public class Creature : Entity
     {
         State = AI_State.STATE_MOVE;
         TargetCoords = mapCoords;
+        if (World.IsCurrentMapLocal())//TODO Временно?
+        {
+            List<Vector2> buf = Pathfinder.MakePath((World.CurrentMap as LocalMap).BlockMatrix, MapCoords, TargetCoords);//TODO Тут?
+            buf.Reverse();
+            Path = new Stack<Vector2>(buf);
+            Path.Pop();
+        }
     }
 
     public void Attack(GameObject target)
     {
         State = AI_State.STATE_ATTACK;
         Target = target;
-        TargetCoords = Target.GetComponent<Creature>().MapCoords;
+        TargetCoords = Target.GetComponent<Creature>().MapCoords; //TODO Нужно?
+        World = GameObject.FindWithTag("World").GetComponent<World>();//TODO Костыль
+        List<Vector2> buf = Pathfinder.MakePath((World.CurrentMap as LocalMap).BlockMatrix, MapCoords, TargetCoords);//TODO Тут?
+        buf.Reverse();
+        Path = new Stack<Vector2>(buf);
+        Path.Pop();
     }
 
     public void Idle()
     {
         Target = null;
+        Path = null;
         State = AI_State.STATE_IDLE;
     }
 
     void Move()
     {
-        sbyte dx = (sbyte)(TargetCoords.x - MapCoords.x);
-        sbyte dy = (sbyte)(TargetCoords.y - MapCoords.y);
-
-        if (dx != 0)
-            dx = (sbyte)(dx > 0 ? 1 : -1);
-        if (dy != 0)
-            dy = (sbyte)(dy > 0 ? 1 : -1);
-
-        if (!World.IsHexFree(new Vector2(MapCoords.x + dx, MapCoords.y + dy)))
+        if (World.IsCurrentMapLocal())//TODO Временно?
         {
-            if (!World.IsHexFree(new Vector2(MapCoords.x, MapCoords.y + dy)))
+            Vector2 node = Path.Pop();
+            if (!World.IsHexFree(node))
             {
-                if (!World.IsHexFree(new Vector2(MapCoords.x + dx, MapCoords.y)))
+                List<Vector2> buf = Pathfinder.MakePath((World.CurrentMap as LocalMap).BlockMatrix, MapCoords, TargetCoords);//TODO Тут?
+                buf.Reverse();
+                Path = new Stack<Vector2>(buf);
+                Path.Pop();
+                node = Path.Pop();
+            }
+            EventManager.OnCreatureMove(MapCoords, node);
+            MapCoords = node;
+        }
+        else
+        {
+            sbyte dx = (sbyte)(TargetCoords.x - MapCoords.x);
+            sbyte dy = (sbyte)(TargetCoords.y - MapCoords.y);
+
+            if (dx != 0)
+                dx = (sbyte)(dx > 0 ? 1 : -1);
+            if (dy != 0)
+                dy = (sbyte)(dy > 0 ? 1 : -1);
+
+            if (!World.IsHexFree(new Vector2(MapCoords.x + dx, MapCoords.y + dy)))
+            {
+                if (!World.IsHexFree(new Vector2(MapCoords.x, MapCoords.y + dy)))
                 {
-                    Debug.Log("Pathfind error.");
-                    return;
+                    if (!World.IsHexFree(new Vector2(MapCoords.x + dx, MapCoords.y)))
+                    {
+                        Debug.Log("Pathfind error.");
+                        return;
+                    }
+                    else
+                        dy = 0;
                 }
                 else
-                    dy = 0;
+                    dx = 0;
             }
-            else
-                dx = 0;
+            Vector2 buf = MapCoords;
+            MapCoords.x += dx;
+            MapCoords.y += dy;
+            EventManager.OnCreatureMove(buf, MapCoords);
         }
-        Vector2 buf = MapCoords;
-        MapCoords.x += dx;
-        MapCoords.y += dy;
-        EventManager.OnCreatureMove(buf, MapCoords);
-
         MoveTime = MoveAnimationTime;
         Moving = true;
     }
@@ -141,7 +172,14 @@ public class Creature : Entity
                     Move();
                 break;
             case AI_State.STATE_ATTACK:
-                TargetCoords = Target.GetComponent<Creature>().MapCoords;
+                if (TargetCoords != Target.GetComponent<Creature>().MapCoords)//TODO Тут?
+                {
+                    TargetCoords = Target.GetComponent<Creature>().MapCoords;
+                    List<Vector2> buf = Pathfinder.MakePath((World.CurrentMap as LocalMap).BlockMatrix, MapCoords, TargetCoords);//TODO Тут?
+                    buf.Reverse();
+                    Path = new Stack<Vector2>(buf);
+                    Path.Pop();
+                }
                 if (World.IsMapCoordsAdjacent(TargetCoords, MapCoords))
                 {
                     PerformAttack();
