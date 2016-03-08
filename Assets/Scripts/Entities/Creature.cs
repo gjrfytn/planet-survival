@@ -49,8 +49,9 @@ public class Creature : Entity
             {
                 float tstep = MoveTime / Time.deltaTime;
                 MoveTime -= Time.deltaTime;
-                float dstep = Vector2.Distance(transform.position, WorldVisualiser.GetTransformPosFromMapCoords(MapCoords)) / tstep;
-                transform.position = Vector2.MoveTowards(transform.position, WorldVisualiser.GetTransformPosFromMapCoords(MapCoords), dstep);
+                //TODO Возможно стоит сохранять значение из GetTransformPosFromMapCoords(MapCoords,World.IsCurrentMapLocal())), так как это улучшит(?) производительность
+                float dstep = Vector2.Distance(transform.position, WorldVisualiser.GetTransformPosFromMapCoords(MapCoords, World.IsCurrentMapLocal())) / tstep; //TODO IsCurrentMapLocal - временно?
+                transform.position = Vector2.MoveTowards(transform.position, WorldVisualiser.GetTransformPosFromMapCoords(MapCoords, World.IsCurrentMapLocal()), dstep);
             }
             else
                 Moving = false;
@@ -180,7 +181,7 @@ public class Creature : Entity
                     Path = new Stack<Vector2>(buf);
                     Path.Pop();
                 }
-                if (World.IsMapCoordsAdjacent(TargetCoords, MapCoords))
+                if (HexNavigHelper.IsMapCoordsAdjacent(TargetCoords, MapCoords, true))
                 {
                     PerformAttack();
                 }

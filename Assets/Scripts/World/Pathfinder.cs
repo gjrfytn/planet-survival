@@ -36,7 +36,7 @@ public static class Pathfinder
 
                 for (byte i = 0; i < 6; ++i)
                 {
-                    Vector2 node = World.GetNeighborMapCoords(cur, (HexDirection)i);
+                    Vector2 node = HexNavigHelper.GetNeighborMapCoords(cur, (TurnedHexDirection)i);
                     if (node.y >= 0 && node.y < height && node.x >= 0 && node.x < width && !blocks[(int)node.y, (int)node.x])
                     {
                         queue.Add(new DistCoordPair() { Dist = (ushort)(Mathf.Abs(to.x - node.x) + Mathf.Abs(to.y - node.y)), Coord = node });

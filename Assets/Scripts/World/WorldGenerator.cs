@@ -204,61 +204,61 @@ public static class WorldGenerator
             bool dirFound = false;
 
             byte k = (byte)((x % 2) != 0 ? 1 : 0); //Учитываем чётность/нечётность ряда хексов
-            do
+            do //TODO Провести рефакторинг.
             {
                 switch (Random.Range(0, 7))//Выбираем случайное направление
                 {
                     case (int)HexDirection.BOTTOM_LEFT:
-                        if (heightMatrix[y - 1 + k, x - 1] * flowHeightKoef <= heightMatrix[y, x] && !riverMatrix[y - 1 + k, x - 1] && RiverNeighbours((ushort)(y - 1 + k), (ushort)(x - 1), riverMatrix) < 2)
+                        if ((limiter & 1) == 0 && !RiverStack.Contains(new Vector2(x - 1, y - 1 + k)) && heightMatrix[y - 1 + k, x - 1] * flowHeightKoef <= heightMatrix[y, x] && !riverMatrix[y - 1 + k, x - 1] && RiverNeighbours((ushort)(y - 1 + k), (ushort)(x - 1), riverMatrix) < 2)
                         {
                             DirectRiver((ushort)(y - 1 + k), (ushort)(x - 1), heightMatrix, riverMatrix, flowHeightKoef);
                             dirFound = true;
                         }
-                        limiter++;
+                        limiter |= 1;
                         break;
                     case (int)HexDirection.TOP_LEFT:
-                        if (heightMatrix[y + k, x - 1] * flowHeightKoef <= heightMatrix[y, x] && !riverMatrix[y + k, x - 1] && RiverNeighbours((ushort)(y + k), (ushort)(x - 1), riverMatrix) < 2)
+                        if ((limiter & 2) == 0 && !RiverStack.Contains(new Vector2(x - 1, y + k)) && heightMatrix[y + k, x - 1] * flowHeightKoef <= heightMatrix[y, x] && !riverMatrix[y + k, x - 1] && RiverNeighbours((ushort)(y + k), (ushort)(x - 1), riverMatrix) < 2)
                         {
                             DirectRiver((ushort)(y + k), (ushort)(x - 1), heightMatrix, riverMatrix, flowHeightKoef);
                             dirFound = true;
                         }
-                        limiter++;
+                        limiter |= 2;
                         break;
                     case (int)HexDirection.BOTTOM:
-                        if (heightMatrix[y - 1, x] * flowHeightKoef <= heightMatrix[y, x] && !riverMatrix[y - 1, x] && RiverNeighbours((ushort)(y - 1), x, riverMatrix) < 2)
+                        if ((limiter & 4) == 0 && !RiverStack.Contains(new Vector2(x, y - 1)) && heightMatrix[y - 1, x] * flowHeightKoef <= heightMatrix[y, x] && !riverMatrix[y - 1, x] && RiverNeighbours((ushort)(y - 1), x, riverMatrix) < 2)
                         {
                             DirectRiver((ushort)(y - 1), x, heightMatrix, riverMatrix, flowHeightKoef);
                             dirFound = true;
                         }
-                        limiter++;
+                        limiter |= 4;
                         break;
                     case (int)HexDirection.TOP:
-                        if (heightMatrix[y + 1, x] * flowHeightKoef <= heightMatrix[y, x] && !riverMatrix[y + 1, x] && RiverNeighbours((ushort)(y + 1), x, riverMatrix) < 2)
+                        if ((limiter & 8) == 0 && !RiverStack.Contains(new Vector2(x, y + 1)) && heightMatrix[y + 1, x] * flowHeightKoef <= heightMatrix[y, x] && !riverMatrix[y + 1, x] && RiverNeighbours((ushort)(y + 1), x, riverMatrix) < 2)
                         {
                             DirectRiver((ushort)(y + 1), x, heightMatrix, riverMatrix, flowHeightKoef);
                             dirFound = true;
                         }
-                        limiter++;
+                        limiter |= 8;
                         break;
                     case (int)HexDirection.BOTTOM_RIGHT:
-                        if (heightMatrix[y - 1 + k, x + 1] * flowHeightKoef <= heightMatrix[y, x] && !riverMatrix[y - 1 + k, x + 1] && RiverNeighbours((ushort)(y - 1 + k), (ushort)(x + 1), riverMatrix) < 2)
+                        if ((limiter & 16) == 0 && !RiverStack.Contains(new Vector2(x + 1, y - 1 + k)) && heightMatrix[y - 1 + k, x + 1] * flowHeightKoef <= heightMatrix[y, x] && !riverMatrix[y - 1 + k, x + 1] && RiverNeighbours((ushort)(y - 1 + k), (ushort)(x + 1), riverMatrix) < 2)
                         {
                             DirectRiver((ushort)(y - 1 + k), (ushort)(x + 1), heightMatrix, riverMatrix, flowHeightKoef);
                             dirFound = true;
                         }
-                        limiter++;
+                        limiter |= 16;
                         break;
                     case (int)HexDirection.TOP_RIGHT:
-                        if (heightMatrix[y + k, x + 1] * flowHeightKoef <= heightMatrix[y, x] && !riverMatrix[y + k, x + 1] && RiverNeighbours((ushort)(y + k), (ushort)(x + 1), riverMatrix) < 2)
+                        if ((limiter & 32) == 0 && !RiverStack.Contains(new Vector2(x + 1, y + k)) && heightMatrix[y + k, x + 1] * flowHeightKoef <= heightMatrix[y, x] && !riverMatrix[y + k, x + 1] && RiverNeighbours((ushort)(y + k), (ushort)(x + 1), riverMatrix) < 2)
                         {
                             DirectRiver((ushort)(y + k), (ushort)(x + 1), heightMatrix, riverMatrix, flowHeightKoef);
                             dirFound = true;
                         }
-                        limiter++;
+                        limiter |= 32;
                         break;
                 }
             }
-            while (!dirFound && limiter != 6);
+            while (!dirFound && limiter != 63);
         }
     }
 
@@ -276,7 +276,7 @@ public static class WorldGenerator
         ushort height = (ushort)riverMatrix.GetLength(0);
         ushort width = (ushort)riverMatrix.GetLength(1);
 
-        byte k = (byte)((x % 2) != 0 ? 1 : 0);
+        byte k = (byte)((x % 2) != 0 ? 1 : 0); //TODO Провести рефакторинг.
 
         byte riversCount = 0;
         if (y > 0 && x > 0 && (riverMatrix[y - 1 + k, x - 1] || RiverStack.Contains(new Vector2(x - 1, y - 1 + k))))
@@ -328,7 +328,7 @@ public static class WorldGenerator
 
         if (y > 0 && y < height - 1 && x > 0 && x < width - 1 && remainingSize != 0)
         {
-            byte k = (byte)((x % 2) != 0 ? 1 : 0);
+            byte k = (byte)((x % 2) != 0 ? 1 : 0); //TODO Провести рефакторинг.
 
             if (!map.RiverMatrix[y - 1 + k, x - 1] && !map.ClusterMatrix[y - 1 + k, x - 1])
                 SpreadCluster(map, (ushort)(y - 1 + k), (ushort)(x - 1), (byte)(remainingSize - 1), cluster);
@@ -367,7 +367,7 @@ public static class WorldGenerator
 
         if (y > 0 && y < height - 1 && x > 0 && x < width - 1 && !(destination.x == x && destination.y == y))
         {
-            byte k = (byte)((x % 2) != 0 ? 1 : 0);
+            byte k = (byte)((x % 2) != 0 ? 1 : 0); //TODO Провести рефакторинг.
 
             float max = heightMatrix[y + k, x - 1], avg = 0;
             float cur = heightMatrix[y + k, x - 1];

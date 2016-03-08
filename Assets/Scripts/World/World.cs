@@ -87,12 +87,12 @@ public class World : MonoBehaviour
 
         Player = GameObject.FindWithTag("Player");
         Player.GetComponent<Player>().MapCoords = new Vector2(5, 5);
-        Player.transform.position = WorldVisualiser.GetTransformPosFromMapCoords(Player.GetComponent<Player>().MapCoords);
+        Player.transform.position = WorldVisualiser.GetTransformPosFromMapCoords(Player.GetComponent<Player>().MapCoords, false);
         Camera.main.transform.position = transform.position = new Vector3(Player.transform.position.x, Player.transform.position.y + Camera.main.transform.position.z * (Mathf.Tan((360 - Camera.main.transform.rotation.eulerAngles.x) / 57.3f)), Camera.main.transform.position.z);
         Visualiser.RenderVisibleHexes(Player.GetComponent<Player>().MapCoords, Player.GetComponent<Player>().ViewDistance, CashedGlobalMapChunks, ChunkY, ChunkX);
         for (byte i = 0; i < 6; ++i)
         {
-            Visualiser.HighlightHex(GetNeighborMapCoords(Player.GetComponent<Player>().MapCoords, (HexDirection)i), Visualiser.BlueHexSprite);
+            Visualiser.HighlightHex(HexNavigHelper.GetNeighborMapCoords(Player.GetComponent<Player>().MapCoords, (HexDirection)i), Visualiser.BlueHexSprite, false);
         }
     }
 
@@ -142,7 +142,7 @@ public class World : MonoBehaviour
             Visualiser.DestroyAllObjects();//TODO Временно
             for (byte i = 0; i < 6; ++i)
             {
-                Visualiser.HighlightHex(GetNeighborMapCoords(mapCoords, (HexDirection)i), Visualiser.BlueHexSprite);
+                Visualiser.HighlightHex(HexNavigHelper.GetNeighborMapCoords(mapCoords, (HexDirection)i), Visualiser.BlueHexSprite, false);
             }
         }
         else
@@ -150,8 +150,8 @@ public class World : MonoBehaviour
             Visualiser.DestroyAllObjects();//TODO Временно
             for (byte i = 0; i < 6; ++i)
             {
-                if (IsHexFree(GetNeighborMapCoords(mapCoords, (HexDirection)i)))
-                    Visualiser.HighlightHex(GetNeighborMapCoords(mapCoords, (HexDirection)i), Visualiser.BlueHexSprite);
+                if (IsHexFree(HexNavigHelper.GetNeighborMapCoords(mapCoords, (TurnedHexDirection)i)))
+                    Visualiser.HighlightHex(HexNavigHelper.GetNeighborMapCoords(mapCoords, (TurnedHexDirection)i), Visualiser.BlueHexSprite, true);
             }
         }
     }
@@ -166,13 +166,14 @@ public class World : MonoBehaviour
         {
             GotoLocalMap();
             SpawnRandomEnemy();
+            Player.transform.position = WorldVisualiser.GetTransformPosFromMapCoords(Player.GetComponent<Player>().MapCoords, true);
         }
         else
         {
             GotoGlobalMap();
             EventManager.OnLocalMapLeave();
+            Player.transform.position = WorldVisualiser.GetTransformPosFromMapCoords(Player.GetComponent<Player>().MapCoords, false);
         }
-        Player.transform.position = new Vector3(WorldVisualiser.GetTransformPosFromMapCoords(Player.GetComponent<Player>().MapCoords).x, WorldVisualiser.GetTransformPosFromMapCoords(Player.GetComponent<Player>().MapCoords).y, 0f);
         EventManager.OnPlayerObjectMoved();
     }
 
@@ -197,7 +198,7 @@ public class World : MonoBehaviour
 
         for (byte i = 0; i < 6; ++i)
         {
-            Visualiser.HighlightHex(GetNeighborMapCoords(Player.GetComponent<Player>().MapCoords, (HexDirection)i), Visualiser.BlueHexSprite);
+            Visualiser.HighlightHex(HexNavigHelper.GetNeighborMapCoords(Player.GetComponent<Player>().MapCoords, (TurnedHexDirection)i), Visualiser.BlueHexSprite, true);
         }
     }
 
@@ -213,7 +214,7 @@ public class World : MonoBehaviour
         Visualiser.DestroyAllObjects();
         for (byte i = 0; i < 6; ++i)
         {
-            Visualiser.HighlightHex(GetNeighborMapCoords(Player.GetComponent<Player>().MapCoords, (HexDirection)i), Visualiser.BlueHexSprite);
+            Visualiser.HighlightHex(HexNavigHelper.GetNeighborMapCoords(Player.GetComponent<Player>().MapCoords, (HexDirection)i), Visualiser.BlueHexSprite, false);
         }
     }
 
@@ -551,58 +552,10 @@ public class World : MonoBehaviour
         }
     }
 
-    public static Vector2 GetNeighborMapCoords(Vector2 mapCoords, HexDirection direction)
-    {
-        switch (direction)
-        {
-            case HexDirection.TOP_LEFT:
-                return new Vector2(mapCoords.x - 1, mapCoords.y + 1 - ((mapCoords.x % 2) != 0 ? 0 : 1));
-            case HexDirection.TOP:
-                return new Vector2(mapCoords.x, mapCoords.y + 1);
-            case HexDirection.TOP_RIGHT:
-                return new Vector2(mapCoords.x + 1, mapCoords.y + 1 - ((mapCoords.x % 2) != 0 ? 0 : 1));
-            case HexDirection.BOTTOM_RIGHT:
-                return new Vector2(mapCoords.x + 1, mapCoords.y - ((mapCoords.x % 2) != 0 ? 0 : 1));
-            case HexDirection.BOTTOM:
-                return new Vector2(mapCoords.x, mapCoords.y - 1);
-            case HexDirection.BOTTOM_LEFT:
-                return new Vector2(mapCoords.x - 1, mapCoords.y - ((mapCoords.x % 2) != 0 ? 0 : 1));
-        }
-        throw new System.ArgumentException("Invalid direction", "direction");
-    }
-
-    /// <summary>
-    /// Определяет, прилегают ли к друг другу данные координаты.
-    /// </summary>
-    /// <returns><c>true</c> если прилегают, иначе <c>false</c>.</returns>
-    /// <param name="mapCoords1">1 координаты.</param>
-    /// <param name="mapCoords2">2 координаты.</param>
-    public static bool IsMapCoordsAdjacent(Vector2 mapCoords1, Vector2 mapCoords2)
-    {
-        byte k = (byte)((mapCoords1.x % 2) != 0 ? 1 : 0);
-        if (mapCoords1.x - 1 == mapCoords2.x || mapCoords1.x + 1 == mapCoords2.x)
-        {
-            if (mapCoords1.y - 1 + k == mapCoords2.y)
-                return true;
-            if (mapCoords1.y + k == mapCoords2.y)
-                return true;
-            return false;
-        }
-        if (mapCoords1.x == mapCoords2.x)
-        {
-            if (mapCoords1.y - 1 == mapCoords2.y)
-                return true;
-            if (mapCoords1.y + 1 == mapCoords2.y)
-                return true;
-            return false;
-        }
-        return false;
-    }
-
     void SpawnRandomEnemy()
     {
         Vector2 mapCoords = new Vector2(Random.Range(0, (int)LocalMapSize.x), Random.Range(0, (int)LocalMapSize.y));
-        GameObject enemy = Instantiate(Enemies[Random.Range(0, Enemies.Length)], WorldVisualiser.GetTransformPosFromMapCoords(mapCoords), Quaternion.identity) as GameObject;
+        GameObject enemy = Instantiate(Enemies[Random.Range(0, Enemies.Length)], WorldVisualiser.GetTransformPosFromMapCoords(mapCoords, true), Quaternion.identity) as GameObject;
         enemy.GetComponent<Creature>().MapCoords = mapCoords;
         enemy.GetComponent<Creature>().Attack(Player);
         (CurrentMap as LocalMap).BlockMatrix[(int)mapCoords.y, (int)mapCoords.x] = true;
