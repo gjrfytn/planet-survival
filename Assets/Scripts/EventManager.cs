@@ -6,7 +6,7 @@ public static class EventManager
     public delegate void VoidDelegate();
     public delegate void VectorDelegate(Vector2 v);
     public delegate void TwoVectorDelegate(Vector2 v1, Vector2 v2);
-    public delegate void VectorAndFloatDelegate(Vector2 v, float f);
+	public delegate void GameObjectAndFloatDelegate(GameObject obj, float f);
 
     public static event VoidDelegate UIShowed = delegate { };
     public static event VoidDelegate UIHided = delegate { };
@@ -61,10 +61,10 @@ public static class EventManager
         PlayerObjectMoved();
     }
 
-    public static event VectorAndFloatDelegate CreatureHit = delegate { };
+    public static event GameObjectAndFloatDelegate CreatureHit = delegate { };
 
-    public static void OnCreatureHit(Vector2 position, float damage)
+	public static void OnCreatureHit(GameObject obj, float damage)
     {
-    	CreatureHit(position,damage);
+		CreatureHit(obj,damage);
     }
 }

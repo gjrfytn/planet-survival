@@ -7,6 +7,7 @@ public class MainCamera : MonoBehaviour
     World World;
 
     bool MoveX = true, MoveY = true;
+	bool CapturedX=false,CapturedY=false;
 
     void OnEnable()
     {
@@ -30,14 +31,30 @@ public class MainCamera : MonoBehaviour
     {
         if (World.IsCurrentMapLocal())
         {
-            if (Screen.width / 2 < WorldVisualiser.LocalHexSpriteSize.x * 100 * (Player.GetComponent<Player>().MapCoords.x - 1) && Screen.width / 2 < WorldVisualiser.LocalHexSpriteSize.x * 100 * (World.LocalMapSize.x - Player.GetComponent<Player>().MapCoords.x - 1))
-                MoveX = true;
+            if (Screen.width / 2 < WorldVisualiser.LocalHexSpriteSize.x * 100 * (Player.GetComponent<Player>().MapCoords.x) && Screen.width / 2 < WorldVisualiser.LocalHexSpriteSize.x * 100 * (World.LocalMapSize.x - Player.GetComponent<Player>().MapCoords.x))
+			{
+				if(CapturedX)
+					CapturedX=false;
+				else
+					MoveX = true;
+			}
             else
+			{
                 MoveX = false;
-            if (Screen.height / 2 < WorldVisualiser.LocalHexSpriteSize.y * 75 * (Player.GetComponent<Player>().MapCoords.y - 2) && Screen.height / 2 < WorldVisualiser.LocalHexSpriteSize.y * 75 * (World.LocalMapSize.y - Player.GetComponent<Player>().MapCoords.y - 3))
-                MoveY = true;
+				CapturedX=true;
+			}
+            if (Screen.height / 2 < WorldVisualiser.LocalHexSpriteSize.y * 75 * (Player.GetComponent<Player>().MapCoords.y) && Screen.height / 2 < WorldVisualiser.LocalHexSpriteSize.y * 75 * (World.LocalMapSize.y - Player.GetComponent<Player>().MapCoords.y))
+			{
+				if(CapturedY)
+					CapturedY=false;
+				else
+					MoveY = true;
+			}
             else
+			{
                 MoveY = false;
+				CapturedY=true;
+			}
         }
         else
         {

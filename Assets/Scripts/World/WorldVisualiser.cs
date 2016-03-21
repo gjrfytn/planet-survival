@@ -36,9 +36,11 @@ public class WorldVisualiser : MonoBehaviour
     {
         public Sprite[] BottommostTerrainSprites;
         public Terrain[] Terrains;
-        public Sprite BankSprite;
-        public Sprite Tree;
-        public Sprite Bush;
+        public Sprite[] BankSprites;
+		public Sprite[] TreeSprites;
+		public Sprite[] BushSprites;
+		public float PlantProbability;
+		public float BushesForestValue;
     }
     public LocalMapSettings LocalMapParam;
     public Material DiffuseMaterial;
@@ -46,7 +48,7 @@ public class WorldVisualiser : MonoBehaviour
     public float FadeInTime;
     public float FadeTime;
     public Sprite BlueHexSprite;
-    public static Vector2 GlobalHexSpriteSize; //TODO static?
+    public static Vector2 GlobalHexSpriteSize; //TODO static? Перенести в классы?
     public static Vector2 LocalHexSpriteSize;
 
     List<Sprite> AllGlobalHexSprites = new List<Sprite>();
@@ -239,8 +241,7 @@ public class WorldVisualiser : MonoBehaviour
             GameObject riverSprite = new GameObject();
             hex.LandscapeObj.Add(riverSprite);
             riverSprite.transform.position = hex.Hex.transform.position;
-            riverSprite.AddComponent<SpriteRenderer>();
-            riverSprite.GetComponent<SpriteRenderer>().sortingLayerName = "LandscapeObjects";
+            riverSprite.AddComponent<SpriteRenderer>().sortingLayerName = "LandscapeObjects";
             riverSprite.GetComponent<SpriteRenderer>().material = DiffuseMaterial;
             if (map.GetRiverSpriteID(mapCoords).HasValue /*?*/ && map.GetRiverSpriteID(mapCoords) < AllRiverSprites.Count)
             {
@@ -256,8 +257,7 @@ public class WorldVisualiser : MonoBehaviour
             GameObject clusterSprite = new GameObject();
             hex.LandscapeObj.Add(clusterSprite);
             clusterSprite.transform.position = hex.Hex.transform.position;
-            clusterSprite.AddComponent<SpriteRenderer>();
-            clusterSprite.GetComponent<SpriteRenderer>().sortingLayerName = "Infrastructure";
+            clusterSprite.AddComponent<SpriteRenderer>().sortingLayerName = "Infrastructure";
             clusterSprite.GetComponent<SpriteRenderer>().material = DiffuseMaterial;
             if (!map.GetClusterSpriteID(mapCoords).HasValue /*?*/|| map.GetClusterSpriteID(mapCoords) >= GlobalMapParam.RuinSprites.Length)
                 map.ClusterSpriteID_Matrix[(int)mapCoords.y, (int)mapCoords.x] = (byte)Random.Range(0, GlobalMapParam.RuinSprites.Length);
@@ -269,8 +269,7 @@ public class WorldVisualiser : MonoBehaviour
             GameObject roadSprite = new GameObject();
             hex.LandscapeObj.Add(roadSprite);
             roadSprite.transform.position = hex.Hex.transform.position;
-            roadSprite.AddComponent<SpriteRenderer>();
-            roadSprite.GetComponent<SpriteRenderer>().sortingLayerName = "Infrastructure";
+            roadSprite.AddComponent<SpriteRenderer>().sortingLayerName = "Infrastructure";
             roadSprite.GetComponent<SpriteRenderer>().material = DiffuseMaterial;
             if (map.GetRoadSpriteID(mapCoords).HasValue /*?*/ && map.GetRoadSpriteID(mapCoords) < AllRiverSprites.Count)
             {
@@ -296,30 +295,31 @@ public class WorldVisualiser : MonoBehaviour
             hex.Hex.GetComponent<SpriteRenderer>().sprite = ChooseHexSprite(mapCoords, map);
         hex.Hex.GetComponent<SpriteRenderer>().sortingLayerName = "Landscape";//
         if (map.GetHeight(mapCoords) < LocalMapParam.Terrains[0].StartingHeight)
+		{
             for (byte i = 0; i < 6; ++i) //TODO К оптимизации.
                 if (map.Contains(HexNavigHelper.GetNeighborMapCoords(mapCoords, (TurnedHexDirection)i)) && map.GetHeight(HexNavigHelper.GetNeighborMapCoords(mapCoords, (TurnedHexDirection)i)) > LocalMapParam.Terrains[0].StartingHeight)
                 {
                     GameObject bank = new GameObject();
+					hex.LandscapeObj.Add(bank);
                     bank.transform.position = hex.Hex.transform.position;
-                    bank.AddComponent<SpriteRenderer>().sprite = LocalMapParam.BankSprite;
-                    bank.GetComponent<SpriteRenderer>().sortingLayerName = "LandscapeObjects";
+                    bank.AddComponent<SpriteRenderer>().sortingLayerName = "LandscapeObjects";
+				bank.GetComponent<SpriteRenderer>().sprite = LocalMapParam.BankSprites[Random.Range(0,LocalMapParam.BankSprites.Length)];
+					bank.GetComponent<SpriteRenderer>().material = DiffuseMaterial;
                     bank.transform.Rotate(0, 0, (short)(Mathf.Sign(mapCoords.y - HexNavigHelper.GetNeighborMapCoords(mapCoords, (TurnedHexDirection)i).y) * Vector2.Angle(Vector2.left, GetTransformPosFromMapCoords(HexNavigHelper.GetNeighborMapCoords(mapCoords, (TurnedHexDirection)i), true) - (Vector2)hex.Hex.transform.position)));
-                    hex.LandscapeObj.Add(bank);
                 }
-        /*if (hex.Hex.GetComponent<SpriteRenderer>().sprite!=LocalMapParam.BottommostTerrainSprites[0]) //UNDONE
+		}
+		else if(map.GetForest(mapCoords)>0&&Random.value<LocalMapParam.PlantProbability*map.GetForest(mapCoords))
         {
-            GameObject tree = new GameObject();
-            hex.LandscapeObj.Add(tree);
-            tree.transform.position = hex.Hex.transform.position;
-            tree.AddComponent<SpriteRenderer>();
-            tree.GetComponent<SpriteRenderer>().sortingLayerName = "LandscapeObjects";
-            tree.GetComponent<SpriteRenderer>().material = DiffuseMaterial;
-            if(Random.value<0.2f)
-            if(map.GetForest(mapCoords)>0.5f)
-                tree.GetComponent<SpriteRenderer>().sprite=LocalMapParam.Tree;
-            else
-                tree.GetComponent<SpriteRenderer>().sprite=LocalMapParam.Bush;
-        }*/
+            GameObject plant = new GameObject();
+			hex.LandscapeObj.Add(plant);
+			plant.AddComponent<SpriteRenderer>().sortingLayerName = "LandscapeObjects";
+			plant.GetComponent<SpriteRenderer>().material = DiffuseMaterial;            
+            if(map.GetForest(mapCoords)<LocalMapParam.BushesForestValue)
+				plant.GetComponent<SpriteRenderer>().sprite=LocalMapParam.BushSprites[Random.Range(0,LocalMapParam.BushSprites.Length)];
+			else				
+				plant.GetComponent<SpriteRenderer>().sprite=LocalMapParam.TreeSprites[Random.Range(0,LocalMapParam.TreeSprites.Length)];
+			plant.transform.position =new Vector2(hex.Hex.transform.position.x,hex.Hex.transform.position.y+plant.GetComponent<SpriteRenderer>().sprite.bounds.extents.y-LocalHexSpriteSize.y/2);
+        }
         StartCoroutine(RenderHelper.FadeIn(hex.Hex.GetComponent<Renderer>(), FadeInTime));
         hex.LandscapeObj.ForEach(obj => StartCoroutine(RenderHelper.FadeIn(obj.GetComponent<Renderer>(), FadeInTime)));
     }
@@ -505,8 +505,7 @@ public class WorldVisualiser : MonoBehaviour
                             GameObject tree = new GameObject();
                             hex.Trees.Add(tree);
                             tree.transform.position = new Vector2(gridOrigin.x + x + v.x, gridOrigin.y + y + v.y);
-                            tree.AddComponent<SpriteRenderer>();
-                            tree.GetComponent<SpriteRenderer>().sortingLayerName = "LandscapeObjects";//
+                            tree.AddComponent<SpriteRenderer>().sortingLayerName = "LandscapeObjects";//
                             tree.GetComponent<SpriteRenderer>().sprite = GlobalMapParam.TreeSprites[Random.Range(0, GlobalMapParam.TreeSprites.Length)];
                             tree.GetComponent<SpriteRenderer>().material = DiffuseMaterial;
                             --treesCount;
@@ -520,8 +519,7 @@ public class WorldVisualiser : MonoBehaviour
                     GameObject tree = new GameObject();
                     hex.Trees.Add(tree);
                     tree.transform.position = new Vector2(hex.Hex.transform.position.x + v.x, hex.Hex.transform.position.y + v.y);
-                    tree.AddComponent<SpriteRenderer>();
-                    tree.GetComponent<SpriteRenderer>().sortingLayerName = "LandscapeObjects";//
+                    tree.AddComponent<SpriteRenderer>().sortingLayerName = "LandscapeObjects";//
                     tree.GetComponent<SpriteRenderer>().sprite = GlobalMapParam.TreeSprites[Random.Range(0, GlobalMapParam.TreeSprites.Length)];
                     tree.GetComponent<SpriteRenderer>().material = DiffuseMaterial;
                     --treesCount;

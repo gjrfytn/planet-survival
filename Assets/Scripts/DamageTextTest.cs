@@ -27,14 +27,14 @@ public class DamageTextTest : MonoBehaviour
 		CameraCanvas = GameObject.Find("CameraCanvas");
 	}
 
-	void ShowDamageText(Vector2 pos,float damage)
+	void ShowDamageText(GameObject obj,float damage)
 	{
 		GameObject textObj=Instantiate(Text);
 		textObj.GetComponent<Text>().text=damage.ToString();
-		textObj.GetComponent<Text>().color=Color.red;
+		textObj.GetComponent<Text>().color=new Color(1,1-damage/obj.GetComponent<Creature>().MaxHealth,0);
 		textObj.transform.SetParent(CameraCanvas.transform);
 		textObj.transform.localScale = Vector3.one;
-		StartCoroutine(MoveHelper.Fly(textObj, new Vector2(pos.x, pos.y + Offset), new Vector2(pos.x, pos.y + FlyHeight),FlyTime));
+		StartCoroutine(MoveHelper.Fly(textObj, new Vector2(obj.transform.position.x, obj.transform.position.y + Offset), new Vector2(obj.transform.position.x, obj.transform.position.y + FlyHeight),FlyTime));
 		StartCoroutine(RenderHelper.FadeAndDestroyObject(textObj.GetComponent<CanvasRenderer>(), FadeTime));
 	}
 }
