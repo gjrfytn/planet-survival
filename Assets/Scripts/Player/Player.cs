@@ -26,24 +26,19 @@ public sealed class Player : Creature
     [Header("Дальность обзора")]
     public byte ViewDistance;
 
-    new void OnEnable()
+    protected override void OnEnable()
     {
         base.OnEnable();
         EventManager.LocalMapLeft -= Destroy;
     }
 
-    new void OnDisable()
-    {
-        base.OnDisable();
-    }
-
-    new void Start()
+    protected override void Start()
     {
         base.Start();
         GetComponent<SpriteRenderer>().sortingLayerName = "Player";
     }
 
-    new void Update()
+    protected override void Update()
     {
         base.Update();
 
@@ -102,7 +97,7 @@ public sealed class Player : Creature
         //CurrentHungreedText.text = "Hungreed: " + CurrentHungreed + " / " + MaxHungreed;
     }
 
-    public new void MoveToMapCoords(Vector2 mapCoords)
+    public override void MoveToMapCoords(Vector2 mapCoords)
     {
         base.MoveToMapCoords(mapCoords);
         EventManager.OnTurn();

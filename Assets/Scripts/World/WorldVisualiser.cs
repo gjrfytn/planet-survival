@@ -37,10 +37,10 @@ public class WorldVisualiser : MonoBehaviour
         public Sprite[] BottommostTerrainSprites;
         public Terrain[] Terrains;
         public Sprite[] BankSprites;
-		public Sprite[] TreeSprites;
-		public Sprite[] BushSprites;
-		public float PlantProbability;
-		public float BushesForestValue;
+        public Sprite[] TreeSprites;
+        public Sprite[] BushSprites;
+        public float PlantProbability;
+        public float BushesForestValue;
     }
     public LocalMapSettings LocalMapParam;
     public Material DiffuseMaterial;
@@ -184,7 +184,7 @@ public class WorldVisualiser : MonoBehaviour
     {
         GlobalMap map;
         Vector2 chunkCoords;
-        ushort chunkSize = (ushort)CashedChunks[1, 1].HeightMatrix.GetLength(0);
+        ushort chunkSize = CashedChunks[1, 1].Width;
 
         float chunkX = mapCoords.x / chunkSize, chunkY = mapCoords.y / chunkSize;
 
@@ -295,30 +295,30 @@ public class WorldVisualiser : MonoBehaviour
             hex.Hex.GetComponent<SpriteRenderer>().sprite = ChooseHexSprite(mapCoords, map);
         hex.Hex.GetComponent<SpriteRenderer>().sortingLayerName = "Landscape";//
         if (map.GetHeight(mapCoords) < LocalMapParam.Terrains[0].StartingHeight)
-		{
+        {
             for (byte i = 0; i < 6; ++i) //TODO К оптимизации.
                 if (map.Contains(HexNavigHelper.GetNeighborMapCoords(mapCoords, (TurnedHexDirection)i)) && map.GetHeight(HexNavigHelper.GetNeighborMapCoords(mapCoords, (TurnedHexDirection)i)) > LocalMapParam.Terrains[0].StartingHeight)
                 {
                     GameObject bank = new GameObject();
-					hex.LandscapeObj.Add(bank);
+                    hex.LandscapeObj.Add(bank);
                     bank.transform.position = hex.Hex.transform.position;
                     bank.AddComponent<SpriteRenderer>().sortingLayerName = "LandscapeObjects";
-				bank.GetComponent<SpriteRenderer>().sprite = LocalMapParam.BankSprites[Random.Range(0,LocalMapParam.BankSprites.Length)];
-					bank.GetComponent<SpriteRenderer>().material = DiffuseMaterial;
+                    bank.GetComponent<SpriteRenderer>().sprite = LocalMapParam.BankSprites[Random.Range(0, LocalMapParam.BankSprites.Length)];
+                    bank.GetComponent<SpriteRenderer>().material = DiffuseMaterial;
                     bank.transform.Rotate(0, 0, (short)(Mathf.Sign(mapCoords.y - HexNavigHelper.GetNeighborMapCoords(mapCoords, (TurnedHexDirection)i).y) * Vector2.Angle(Vector2.left, GetTransformPosFromMapCoords(HexNavigHelper.GetNeighborMapCoords(mapCoords, (TurnedHexDirection)i), true) - (Vector2)hex.Hex.transform.position)));
                 }
-		}
-		else if(map.GetForest(mapCoords)>0&&Random.value<LocalMapParam.PlantProbability*map.GetForest(mapCoords))
+        }
+        else if (map.GetForest(mapCoords) > 0 && Random.value < LocalMapParam.PlantProbability * map.GetForest(mapCoords))
         {
             GameObject plant = new GameObject();
-			hex.LandscapeObj.Add(plant);
-			plant.AddComponent<SpriteRenderer>().sortingLayerName = "LandscapeObjects";
-			plant.GetComponent<SpriteRenderer>().material = DiffuseMaterial;            
-            if(map.GetForest(mapCoords)<LocalMapParam.BushesForestValue)
-				plant.GetComponent<SpriteRenderer>().sprite=LocalMapParam.BushSprites[Random.Range(0,LocalMapParam.BushSprites.Length)];
-			else				
-				plant.GetComponent<SpriteRenderer>().sprite=LocalMapParam.TreeSprites[Random.Range(0,LocalMapParam.TreeSprites.Length)];
-			plant.transform.position =new Vector2(hex.Hex.transform.position.x,hex.Hex.transform.position.y+plant.GetComponent<SpriteRenderer>().sprite.bounds.extents.y-LocalHexSpriteSize.y/2);
+            hex.LandscapeObj.Add(plant);
+            plant.AddComponent<SpriteRenderer>().sortingLayerName = "LandscapeObjects";
+            plant.GetComponent<SpriteRenderer>().material = DiffuseMaterial;
+            if (map.GetForest(mapCoords) < LocalMapParam.BushesForestValue)
+                plant.GetComponent<SpriteRenderer>().sprite = LocalMapParam.BushSprites[Random.Range(0, LocalMapParam.BushSprites.Length)];
+            else
+                plant.GetComponent<SpriteRenderer>().sprite = LocalMapParam.TreeSprites[Random.Range(0, LocalMapParam.TreeSprites.Length)];
+            plant.transform.position = new Vector2(hex.Hex.transform.position.x, hex.Hex.transform.position.y + plant.GetComponent<SpriteRenderer>().sprite.bounds.extents.y - LocalHexSpriteSize.y / 2);
         }
         StartCoroutine(RenderHelper.FadeIn(hex.Hex.GetComponent<Renderer>(), FadeInTime));
         hex.LandscapeObj.ForEach(obj => StartCoroutine(RenderHelper.FadeIn(obj.GetComponent<Renderer>(), FadeInTime)));
@@ -536,8 +536,8 @@ public class WorldVisualiser : MonoBehaviour
     /// <param name="map">Карта.</param>
     public void RenderWholeMap(LocalMap map)
     {
-        ushort height = (ushort)map.HeightMatrix.GetLength(0);
-        ushort width = (ushort)map.HeightMatrix.GetLength(1);
+        ushort height = map.Height;
+        ushort width = map.Width;
         RenderedHexes.Capacity = height * width;
 
         for (ushort y = 0; y < height; ++y)

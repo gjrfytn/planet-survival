@@ -23,25 +23,25 @@ public class Creature : Entity
     GameObject Target;
     Stack<Vector2> Path;
 
-    protected new void OnEnable()
+    protected override void OnEnable()
     {
         base.OnEnable();
         EventManager.TurnMade += MakeTurn;
     }
 
-    protected new void OnDisable()
+	protected override void OnDisable()
     {
         base.OnDisable();
         EventManager.TurnMade -= MakeTurn;
     }
 
-    protected void Start()
+	protected virtual void Start()
     {
         Health = MaxHealth;
         World = GameObject.FindWithTag("World").GetComponent<World>();
     }
 
-    protected void Update()
+	protected virtual void Update()
     {
         if (Moving)
         {
@@ -58,7 +58,7 @@ public class Creature : Entity
         }
     }
 
-    public void MoveToMapCoords(Vector2 mapCoords)
+    public virtual void MoveToMapCoords(Vector2 mapCoords)
     {
         State = AI_State.STATE_MOVE;
         TargetCoords = mapCoords;

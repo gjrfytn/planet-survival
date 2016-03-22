@@ -298,8 +298,8 @@ public static class WorldGenerator
     //UNDONE
     public static List<List<Vector2>> CreateClusters(GlobalMap map, ClustersParameters clustersParam)
     {
-        ushort height = (ushort)map.HeightMatrix.GetLength(0);
-        ushort width = (ushort)map.HeightMatrix.GetLength(1);
+        ushort height = map.Height;
+        ushort width = map.Width;
 
         List<List<Vector2>> clusters = new List<List<Vector2>>(clustersParam.Count);
 
@@ -320,8 +320,8 @@ public static class WorldGenerator
 
     static void SpreadCluster(GlobalMap map, ushort y, ushort x, byte remainingSize, List<Vector2> cluster)
     {
-        ushort height = (ushort)map.ClusterMatrix.GetLength(0);
-        ushort width = (ushort)map.ClusterMatrix.GetLength(1);
+        ushort height = map.Height;
+        ushort width = map.Width;
 
         cluster.Add(new Vector2(x, y));
         map.ClusterMatrix[y, x] = true;

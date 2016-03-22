@@ -6,12 +6,12 @@ public class Entity : MonoBehaviour
     [HideInInspector]
     public Vector2 MapCoords;
 
-    protected void OnEnable()
+    protected virtual void OnEnable()
     {
         EventManager.LocalMapLeft += Destroy;
     }
 
-    protected void OnDisable()
+    protected virtual void OnDisable()
     {
         EventManager.LocalMapLeft -= Destroy;
     }

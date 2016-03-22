@@ -182,12 +182,11 @@ public class World : MonoBehaviour
     /// </summary>
     void GotoLocalMap()
     {
-        Vector2 mapCoords = Player.GetComponent<Player>().MapCoords;
+        GlobalMapCoords = Player.GetComponent<Player>().MapCoords;
+        Vector2 mapCoords = new Vector2(GlobalMapCoords.x - ChunkX * GlobalMapChunkSize, GlobalMapCoords.y - ChunkY * GlobalMapChunkSize);
         if (LocalMaps[(int)mapCoords.y, (int)mapCoords.x] == null)
-            CreateLocalMap(mapCoords, CashedGlobalMapChunks[1, 1].GetHeight(mapCoords), CashedGlobalMapChunks[1, 1].GetForest(mapCoords), CashedGlobalMapChunks[1, 1].HasRiver(mapCoords), CashedGlobalMapChunks[1, 1].HasRoad(mapCoords), CashedGlobalMapChunks[1, 1].HasCluster(mapCoords));
+            LocalMaps[(int)mapCoords.y, (int)mapCoords.x] = CreateLocalMap(CashedGlobalMapChunks[1, 1].GetHeight(mapCoords), CashedGlobalMapChunks[1, 1].GetForest(mapCoords), CashedGlobalMapChunks[1, 1].HasRiver(mapCoords), CashedGlobalMapChunks[1, 1].HasRoad(mapCoords), CashedGlobalMapChunks[1, 1].HasCluster(mapCoords));
         CurrentMap = LocalMaps[(int)mapCoords.y, (int)mapCoords.x];
-
-        GlobalMapCoords = mapCoords;
 
         //TEMP
         Player.GetComponent<Player>().MapCoords.x = (ushort)LocalMapSize.x / 2;
@@ -222,7 +221,7 @@ public class World : MonoBehaviour
     /// Создаёт локальную карту.
     /// </summary>
     /// <param name="coords">Координаты новой карты на глобальной.</param>
-    void CreateLocalMap(Vector2 mapCoords, float height, float forest, bool river, bool road, bool ruins)
+    LocalMap CreateLocalMap(float height, float forest, bool river, bool road, bool ruins)
     {
         LocalMap map = new LocalMap((ushort)LocalMapSize.x, (ushort)LocalMapSize.y);
 
@@ -240,7 +239,7 @@ public class World : MonoBehaviour
                 map.HeightMatrix[y, x] = buf[y, x].Value;
         WorldGenerator.CreateHeightmap(map.ForestMatrix, ForestRoughness, forest, forest, forest, forest);
 
-        LocalMaps[(int)mapCoords.y, (int)mapCoords.x] = map;
+        return map;
     }
 
     /// <summary>
@@ -309,101 +308,7 @@ public class World : MonoBehaviour
             chunk = new GlobalMap(GlobalMapChunkSize, GlobalMapChunkSize);
             using (BinaryReader reader = new BinaryReader(File.Open(filePath, FileMode.Open)))
             {
-                for (ushort y = 0; y < GlobalMapChunkSize; ++y)
-                    for (ushort x = 0; x < GlobalMapChunkSize; ++x)
-                        chunk.HeightMatrix[y, x] = reader.ReadSingle();
-                for (ushort y = 0; y < GlobalMapChunkSize; ++y)
-                    for (ushort x = 0; x < GlobalMapChunkSize; ++x)
-                    {
-                        short buf = reader.ReadInt16();
-                        chunk.HexSpriteID_Matrix[y, x] = buf == -1 ? null : (byte?)buf;
-                    }
-
-                for (ushort y = 0; y < GlobalMapChunkSize; ++y)
-                    for (ushort x = 0; x < GlobalMapChunkSize; ++x)
-                        chunk.ForestMatrix[y, x] = reader.ReadSingle();
-
-                for (ushort y = 0; y < GlobalMapChunkSize; ++y)
-                    for (ushort x = 0; x < GlobalMapChunkSize; ++x)
-                        chunk.RiverMatrix[y, x] = reader.ReadBoolean();
-                for (ushort y = 0; y < GlobalMapChunkSize; ++y)
-                    for (ushort x = 0; x < GlobalMapChunkSize; ++x)
-                    {
-                        short buf = reader.ReadInt16();
-                        chunk.RiverSpriteID_Matrix[y, x] = buf == -1 ? null : (byte?)buf;
-                    }
-                for (ushort y = 0; y < GlobalMapChunkSize; ++y)
-                    for (ushort x = 0; x < GlobalMapChunkSize; ++x)
-                        chunk.RiverSpriteRotationMatrix[y, x] = reader.ReadInt16();
-
-                for (ushort y = 0; y < GlobalMapChunkSize; ++y)
-                    for (ushort x = 0; x < GlobalMapChunkSize; ++x)
-                        chunk.ClusterMatrix[y, x] = reader.ReadBoolean();
-                for (ushort y = 0; y < GlobalMapChunkSize; ++y)
-                    for (ushort x = 0; x < GlobalMapChunkSize; ++x)
-                    {
-                        short buf = reader.ReadInt16();
-                        chunk.ClusterSpriteID_Matrix[y, x] = buf == -1 ? null : (byte?)buf;
-                    }
-
-                for (ushort y = 0; y < GlobalMapChunkSize; ++y)
-                    for (ushort x = 0; x < GlobalMapChunkSize; ++x)
-                        chunk.RoadMatrix[y, x] = reader.ReadBoolean();
-                for (ushort y = 0; y < GlobalMapChunkSize; ++y)
-                    for (ushort x = 0; x < GlobalMapChunkSize; ++x)
-                    {
-                        short buf = reader.ReadInt16();
-                        chunk.RoadSpriteID_Matrix[y, x] = buf == -1 ? null : (byte?)buf;
-                    }
-                for (ushort y = 0; y < GlobalMapChunkSize; ++y)
-                    for (ushort x = 0; x < GlobalMapChunkSize; ++x)
-                        chunk.RoadSpriteRotationMatrix[y, x] = reader.ReadInt16();
-
-
-
-                byte riversCount = reader.ReadByte();
-                chunk.Rivers = new List<List<Vector2>>(riversCount);
-                for (byte i = 0; i < riversCount; ++i)
-                {
-                    ushort riverLength = reader.ReadUInt16();
-                    chunk.Rivers[i] = new List<Vector2>(riverLength);
-                    for (byte j = 0; j < riverLength; ++j)
-                    {
-                        chunk.Rivers[i].Add(new Vector2(
-                            reader.ReadSingle(),
-                            reader.ReadSingle()
-                            ));
-                    }
-                }
-
-                byte clusterCount = reader.ReadByte();
-                chunk.Clusters = new List<List<Vector2>>(clusterCount);
-                for (byte i = 0; i < clusterCount; ++i)
-                {
-                    ushort clusterSize = reader.ReadUInt16();
-                    chunk.Clusters[i] = new List<Vector2>(clusterSize);
-                    for (byte j = 0; j < clusterSize; ++j)
-                    {
-                        chunk.Clusters[i].Add(new Vector2(
-                            reader.ReadSingle(),
-                            reader.ReadSingle()
-                            ));
-                    }
-                }
-                byte roadCount = reader.ReadByte();
-                chunk.Roads = new List<List<Vector2>>(roadCount);
-                for (byte i = 0; i < roadCount; ++i)
-                {
-                    ushort roadLength = reader.ReadUInt16();
-                    chunk.Roads[i] = new List<Vector2>(roadLength);
-                    for (byte j = 0; j < roadLength; ++j)
-                    {
-                        chunk.Roads[i].Add(new Vector2(
-                            reader.ReadSingle(),
-                            reader.ReadSingle()
-                            ));
-                    }
-                }
+                chunk.Read(reader);
             }
             return true;
         }
@@ -422,74 +327,7 @@ public class World : MonoBehaviour
         Directory.CreateDirectory(ChunksDirectoryPath);
         using (BinaryWriter writer = new BinaryWriter(File.Open(Path.Combine(ChunksDirectoryPath, chunkY + "_" + chunkX), FileMode.Create)))
         {
-            for (ushort y = 0; y < GlobalMapChunkSize; ++y)
-                for (ushort x = 0; x < GlobalMapChunkSize; ++x)
-                    writer.Write(chunk.HeightMatrix[y, x]);
-            for (ushort y = 0; y < GlobalMapChunkSize; ++y)
-                for (ushort x = 0; x < GlobalMapChunkSize; ++x)
-                    writer.Write((short)(chunk.HexSpriteID_Matrix[y, x] ?? -1));
-
-            for (ushort y = 0; y < GlobalMapChunkSize; ++y)
-                for (ushort x = 0; x < GlobalMapChunkSize; ++x)
-                    writer.Write(chunk.ForestMatrix[y, x]);
-
-            for (ushort y = 0; y < GlobalMapChunkSize; ++y)
-                for (ushort x = 0; x < GlobalMapChunkSize; ++x)
-                    writer.Write(chunk.RiverMatrix[y, x]);
-            for (ushort y = 0; y < GlobalMapChunkSize; ++y)
-                for (ushort x = 0; x < GlobalMapChunkSize; ++x)
-                    writer.Write((short)(chunk.RiverSpriteID_Matrix[y, x] ?? -1));
-            for (ushort y = 0; y < GlobalMapChunkSize; ++y)
-                for (ushort x = 0; x < GlobalMapChunkSize; ++x)
-                    writer.Write(chunk.RiverSpriteRotationMatrix[y, x]);
-
-            for (ushort y = 0; y < GlobalMapChunkSize; ++y)
-                for (ushort x = 0; x < GlobalMapChunkSize; ++x)
-                    writer.Write(chunk.ClusterMatrix[y, x]);
-            for (ushort y = 0; y < GlobalMapChunkSize; ++y)
-                for (ushort x = 0; x < GlobalMapChunkSize; ++x)
-                    writer.Write((short)(chunk.ClusterSpriteID_Matrix[y, x] ?? -1));
-
-            for (ushort y = 0; y < GlobalMapChunkSize; ++y)
-                for (ushort x = 0; x < GlobalMapChunkSize; ++x)
-                    writer.Write(chunk.RoadMatrix[y, x]);
-            for (ushort y = 0; y < GlobalMapChunkSize; ++y)
-                for (ushort x = 0; x < GlobalMapChunkSize; ++x)
-                    writer.Write((short)(chunk.RoadSpriteID_Matrix[y, x] ?? -1));
-            for (ushort y = 0; y < GlobalMapChunkSize; ++y)
-                for (ushort x = 0; x < GlobalMapChunkSize; ++x)
-                    writer.Write(chunk.RoadSpriteRotationMatrix[y, x]);
-
-            writer.Write(chunk.Rivers.Count);
-            for (byte i = 0; i < chunk.Rivers.Count; ++i)
-            {
-                writer.Write((ushort)chunk.Rivers[i].Count);
-                for (byte j = 0; j < chunk.Rivers[i].Count; ++j)
-                {
-                    writer.Write(chunk.Rivers[i][j].x);
-                    writer.Write(chunk.Rivers[i][j].y);
-                }
-            }
-            writer.Write(chunk.Clusters.Count);
-            for (byte i = 0; i < chunk.Clusters.Count; ++i)
-            {
-                writer.Write((ushort)chunk.Clusters[i].Count);
-                for (byte j = 0; j < chunk.Clusters[i].Count; ++j)
-                {
-                    writer.Write(chunk.Clusters[i][j].x);
-                    writer.Write(chunk.Clusters[i][j].y);
-                }
-            }
-            writer.Write(chunk.Roads.Count);
-            for (byte i = 0; i < chunk.Roads.Count; ++i)
-            {
-                writer.Write((ushort)chunk.Roads[i].Count);
-                for (byte j = 0; j < chunk.Roads[i].Count; ++j)
-                {
-                    writer.Write(chunk.Roads[i][j].x);
-                    writer.Write(chunk.Roads[i][j].y);
-                }
-            }
+            chunk.Write(writer);
         }
     }
 
@@ -512,11 +350,7 @@ public class World : MonoBehaviour
                         if (reader.ReadString() == "null")
                             LocalMaps[y, x] = null;
                         else
-                        {
-                            for (ushort lmY = 0; lmY < LocalMapSize.y; ++lmY)
-                                for (ushort lmX = 0; lmX < LocalMapSize.x; ++lmX)
-                                    LocalMaps[y, x].BlockMatrix[lmY, lmX] = reader.ReadBoolean();
-                        }
+                            LocalMaps[y, x].Read(reader);
                         //...
 
                     }
@@ -542,9 +376,7 @@ public class World : MonoBehaviour
                     else
                     {
                         writer.Write("notnull");
-                        for (ushort lmY = 0; lmY < LocalMapSize.y; ++lmY)
-                            for (ushort lmX = 0; lmX < LocalMapSize.x; ++lmX)
-                                writer.Write(LocalMaps[y, x].BlockMatrix[lmY, lmX]);
+                        LocalMaps[y, x].Write(writer);
                     }
 
                     //...
@@ -619,5 +451,10 @@ public class World : MonoBehaviour
     public void EnemyAttack()
     {
         SwitchMap();
+    }
+
+    public TerrainType GetHexTerrain(Vector2 hexCoords)
+    {
+        return (CurrentMap as GlobalMap).GetTerrainType(new Vector2(hexCoords.x - ChunkX * GlobalMapChunkSize, hexCoords.y - ChunkY * GlobalMapChunkSize));
     }
 }
