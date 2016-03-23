@@ -29,19 +29,19 @@ public class Creature : Entity
         EventManager.TurnMade += MakeTurn;
     }
 
-	protected override void OnDisable()
+    protected override void OnDisable()
     {
         base.OnDisable();
         EventManager.TurnMade -= MakeTurn;
     }
 
-	protected virtual void Start()
+    protected virtual void Start()
     {
         Health = MaxHealth;
-        World = GameObject.FindWithTag("World").GetComponent<World>();
+        World = GameObject.FindWithTag("World").GetComponent<WorldWrapper>().World;
     }
 
-	protected virtual void Update()
+    protected virtual void Update()
     {
         if (Moving)
         {
@@ -76,7 +76,7 @@ public class Creature : Entity
         State = AI_State.STATE_ATTACK;
         Target = target;
         TargetCoords = Target.GetComponent<Creature>().MapCoords; //TODO Нужно?
-        World = GameObject.FindWithTag("World").GetComponent<World>();//TODO Костыль
+        World = GameObject.FindWithTag("World").GetComponent<WorldWrapper>().World;//TODO Костыль
         List<Vector2> buf = Pathfinder.MakePath((World.CurrentMap as LocalMap).BlockMatrix, MapCoords, TargetCoords);//TODO Тут?
         buf.Reverse();
         Path = new Stack<Vector2>(buf);

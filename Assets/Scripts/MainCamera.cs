@@ -24,7 +24,7 @@ public class MainCamera : MonoBehaviour
     void Start()
     {
         Player = GameObject.FindWithTag("Player");
-        World = GameObject.FindWithTag("World").GetComponent<World>();
+        World = GameObject.FindWithTag("World").GetComponent<WorldWrapper>().World;
     }
 
     void CalculateMove(Vector2 playerMCoords)

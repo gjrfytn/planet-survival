@@ -32,7 +32,6 @@ public static class WorldGenerator
     public static void CreateHeightmap(float[,] matrix, float roughness, float topLeft, float topRight, float bottomLeft, float bottomRight)
     {
         //Debug.Assert(topLeft >= 0 && topRight >= 0 && bottomLeft >= 0 && bottomRight >= 0);
-
         ushort height = (ushort)matrix.GetLength(0);
         ushort width = (ushort)matrix.GetLength(1);
 

@@ -5,8 +5,8 @@ using System.IO;
 
 public abstract class Map : IBinaryReadableWriteable
 {
-    public ushort Width { get; private set; }
-    public ushort Height { get; private set; }
+    public readonly ushort Width;
+    public readonly ushort Height;
 
     public float[,] HeightMatrix;
     public byte?[,] HexSpriteID_Matrix;

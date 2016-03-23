@@ -4,25 +4,23 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-public class World : MonoBehaviour
+public class World
 {
-    public float LandscapeRoughness;
-    public float ForestRoughness;
+    public readonly float LandscapeRoughness;
+    public readonly float ForestRoughness;
 
-    public RiversParameters RiverParam;
-    public ClustersParameters ClusterParam;
+    public readonly RiversParameters RiverParam;
+    public readonly ClustersParameters ClusterParam;
 
-    public ushort GlobalMapChunkSize; //Должен быть 2 в n-ой степени
-    public Vector2 LocalMapSize; //Должен быть 2 в n-ой степени
+    public readonly ushort GlobalMapChunkSize; //Должен быть 2 в n-ой степени
+    public readonly Vector2 LocalMapSize; //Должен быть 2 в n-ой степени
 
-    public byte ForestDensity;
-    public byte TreeCountForForestTerrain;
+    public readonly byte ForestDensity;
+    public readonly byte TreeCountForForestTerrain;
 
-    public GameObject[] Enemies;
+    public readonly GameObject[] Enemies;
 
     public Map CurrentMap { get; private set; } //TODO Возможно, можно будет убрать. Карта, на которой находится игрок.
-
-    //const byte CashedChunksSize=3;
 
     GlobalMap[,] CashedGlobalMapChunks = new GlobalMap[3, 3];
     LocalMap[,] LocalMaps;
@@ -35,20 +33,18 @@ public class World : MonoBehaviour
     const string ChunksDirectoryName = "chunks";
     string ChunksDirectoryPath;
 
-    void OnEnable()
+    public World(float landscapeRoughness, float forestRoughness, RiversParameters riverParam, ClustersParameters clusterParam, ushort globalMapChunkSize, Vector2 localMapSize, byte forestDensity, byte treeCountForForestTerrain, GameObject[] enemies)
     {
-        EventManager.CreatureMoved += ChangeBlockMatrix;
-        EventManager.PlayerMoved += OnPlayerGotoHex;
-    }
-
-    void OnDisable()
-    {
-        EventManager.CreatureMoved -= ChangeBlockMatrix;
-        EventManager.PlayerMoved -= OnPlayerGotoHex;
-    }
-
-    void Awake()
-    {
+        LandscapeRoughness = landscapeRoughness;
+        ForestRoughness = forestRoughness;
+        RiverParam = riverParam;
+        ClusterParam = clusterParam;
+        GlobalMapChunkSize = globalMapChunkSize;
+        LocalMapSize = localMapSize;
+        ForestDensity = forestDensity;
+        TreeCountForForestTerrain = treeCountForForestTerrain;
+        Enemies = enemies;
+        //--
         Debug.Assert(Mathf.IsPowerOfTwo(GlobalMapChunkSize));
         Debug.Assert(Mathf.IsPowerOfTwo((int)LocalMapSize.x));
         Debug.Assert(Mathf.IsPowerOfTwo((int)LocalMapSize.y));
@@ -56,16 +52,14 @@ public class World : MonoBehaviour
         GlobalMapChunkSize++; //TODO !!!
         LocalMapSize.x++; //TODO !!!
         LocalMapSize.y++; //TODO !!!
-    }
 
-    void Start()
-    {
+        //--
         ChunksDirectoryPath = Path.Combine(Application.streamingAssetsPath, ChunksDirectoryName); //UNDONE Не будет работать на Android?
 
         if (Directory.Exists(ChunksDirectoryPath))
             Directory.Delete(ChunksDirectoryPath, true);
 
-        Visualiser = GetComponent<WorldVisualiser>(); //Временно
+        Visualiser = GameObject.FindWithTag("World").GetComponent<WorldVisualiser>(); //Временно
 
         // Это всё временно, как пример. На самом деле карта должна создаваться только при начале новой игры, иначе загружаться из сохранения.
         //--
@@ -88,12 +82,22 @@ public class World : MonoBehaviour
         Player = GameObject.FindWithTag("Player");
         Player.GetComponent<Player>().MapCoords = new Vector2(5, 5);
         Player.transform.position = WorldVisualiser.GetTransformPosFromMapCoords(Player.GetComponent<Player>().MapCoords, false);
-        Camera.main.transform.position = transform.position = new Vector3(Player.transform.position.x, Player.transform.position.y + Camera.main.transform.position.z * (Mathf.Tan((360 - Camera.main.transform.rotation.eulerAngles.x) / 57.3f)), Camera.main.transform.position.z);
+        Camera.main.transform.position = new Vector3(Player.transform.position.x, Player.transform.position.y + Camera.main.transform.position.z * (Mathf.Tan((360 - Camera.main.transform.rotation.eulerAngles.x) / 57.3f)), Camera.main.transform.position.z);
         Visualiser.RenderVisibleHexes(Player.GetComponent<Player>().MapCoords, Player.GetComponent<Player>().ViewDistance, CashedGlobalMapChunks, ChunkY, ChunkX);
         for (byte i = 0; i < 6; ++i)
         {
             Visualiser.HighlightHex(HexNavigHelper.GetNeighborMapCoords(Player.GetComponent<Player>().MapCoords, (HexDirection)i), Visualiser.BlueHexSprite, false);
         }
+        //--
+
+        EventManager.CreatureMoved += ChangeBlockMatrix;
+        EventManager.PlayerMoved += OnPlayerGotoHex;
+    }
+
+    ~World()
+    {
+        EventManager.CreatureMoved -= ChangeBlockMatrix;
+        EventManager.PlayerMoved -= OnPlayerGotoHex;
     }
 
     /// <summary>
@@ -387,7 +391,7 @@ public class World : MonoBehaviour
     void SpawnRandomEnemy()
     {
         Vector2 mapCoords = new Vector2(Random.Range(0, (int)LocalMapSize.x), Random.Range(0, (int)LocalMapSize.y));
-        GameObject enemy = Instantiate(Enemies[Random.Range(0, Enemies.Length)], WorldVisualiser.GetTransformPosFromMapCoords(mapCoords, true), Quaternion.identity) as GameObject;
+        GameObject enemy = MonoBehaviour.Instantiate(Enemies[Random.Range(0, Enemies.Length)], WorldVisualiser.GetTransformPosFromMapCoords(mapCoords, true), Quaternion.identity) as GameObject;
         enemy.GetComponent<Creature>().MapCoords = mapCoords;
         enemy.GetComponent<Creature>().Attack(Player);
         (CurrentMap as LocalMap).BlockMatrix[(int)mapCoords.y, (int)mapCoords.x] = true;
