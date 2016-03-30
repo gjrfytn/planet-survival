@@ -19,7 +19,7 @@ public class WorldWrapper : MonoBehaviour
 
     public World World { get; private set; }
 
-    void Start()
+    void Awake()
     {
         World = new World(
             LandscapeRoughness, ForestRoughness,

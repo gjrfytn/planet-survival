@@ -16,10 +16,10 @@ public class PopupButtons : MonoBehaviour
 
     bool ButtonsShowed;
 
-	void Start()
-	{
-		CameraCanvas = GameObject.Find("CameraCanvas");
-	}
+    void Start()
+    {
+        CameraCanvas = GameObject.Find("CameraCanvas");
+    }
 
     void OnMouseUpAsButton()
     {
@@ -30,7 +30,7 @@ public class PopupButtons : MonoBehaviour
             Buttons.Clear();
         }
         else
-        {   
+        {
             ButtonsShowed = true;
 
             Vector2 screenPos = Camera.main.WorldToScreenPoint(transform.position);
@@ -45,13 +45,13 @@ public class PopupButtons : MonoBehaviour
             float radAngle = Angle;
             for (byte i = 0; i < 4; ++i)///TODO
             {
-                Buttons.Add(Instantiate(Button,Vector3.zero, Quaternion.identity) as GameObject);
+                Buttons.Add(Instantiate(Button, Vector3.zero, Quaternion.identity) as GameObject);
                 Buttons[i].GetComponent<ActionButton>().Entity = gameObject;
                 Buttons[i].transform.SetParent(CameraCanvas.transform);
                 Buttons[i].transform.localScale = Vector3.one;
                 float angle = radAngle * ((i / 2) * 2 + 1);
-				StartCoroutine(MoveHelper.Fly(Buttons[i], transform.position, new Vector2(transform.position.x + axis.x * Mathf.Cos(angle) - axis.y * Mathf.Sin(angle), transform.position.y + axis.x * Mathf.Sin(angle) + axis.y * Mathf.Cos(angle)),FlyTime));
-                StartCoroutine(RenderHelper.FadeIn(Buttons[i].GetComponent<CanvasRenderer>(), FadeInTime));
+                StartCoroutine(MoveHelper.Fly(Buttons[i], transform.position, new Vector2(transform.position.x + axis.x * Mathf.Cos(angle) - axis.y * Mathf.Sin(angle), transform.position.y + axis.x * Mathf.Sin(angle) + axis.y * Mathf.Cos(angle)), FlyTime));
+                Buttons[i].GetComponent<Fader>().FadeIn(FadeInTime);
                 radAngle *= -1;
             }
         }
@@ -62,7 +62,9 @@ public class PopupButtons : MonoBehaviour
         Buttons.Remove(btn);
         Buttons.ForEach(b => Destroy(b));
         Buttons.Clear();
-        StartCoroutine(RenderHelper.FadeAndDestroyObject(btn.GetComponent<CanvasRenderer>(), 0.3f));
+        btn.GetComponent<UnityEngine.UI.Button>().transition = UnityEngine.UI.Selectable.Transition.None;///
+        btn.GetComponent<UnityEngine.UI.Button>().interactable = false;///
+        btn.GetComponent<Fader>().FadeAndDestroyObject(0.3f);
         ButtonsShowed = false;
     }
 }

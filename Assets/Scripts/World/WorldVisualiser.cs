@@ -37,10 +37,10 @@ public class WorldVisualiser : MonoBehaviour
         public Sprite[] BottommostTerrainSprites;
         public Terrain[] Terrains;
         public Sprite[] BankSprites;
-		public Sprite[] TreeSprites;
-		public Sprite[] BushSprites;
-		public float PlantProbability;
-		public float BushesForestValue;
+        public Sprite[] TreeSprites;
+        public Sprite[] BushSprites;
+        public float PlantProbability;
+        public float BushesForestValue;
     }
     public LocalMapSettings LocalMapParam;
     public Material DiffuseMaterial;
@@ -114,12 +114,12 @@ public class WorldVisualiser : MonoBehaviour
 
         GlobalHexSpriteSize.x = GlobalMapParam.BottommostTerrainSprites[0].bounds.size.x;
         GlobalHexSpriteSize.y = GlobalMapParam.BottommostTerrainSprites[0].bounds.size.y;
-		LocalHexSpriteSize.x = LocalMapParam.BottommostTerrainSprites[0].bounds.size.x*xxx;
-		LocalHexSpriteSize.y = LocalMapParam.BottommostTerrainSprites[0].bounds.size.y*yyy;
+        LocalHexSpriteSize.x = LocalMapParam.BottommostTerrainSprites[0].bounds.size.x * xxx;
+        LocalHexSpriteSize.y = LocalMapParam.BottommostTerrainSprites[0].bounds.size.y * yyy;
     }
 
-	float xxx=1.8f;
-	float yyy=0.72f;
+    float xxx = 1.8f;
+    float yyy = 0.72f;
 
     /// <summary>
     /// Уничтожает все хексы.
@@ -170,9 +170,9 @@ public class WorldVisualiser : MonoBehaviour
                 // if (RenderedHexes[i].RiverSprite != null)
                 //    StartCoroutine(RenderHelper.FadeAndDestroyObject(RenderedHexes[i].RiverSprite.GetComponent<Renderer>(), FadeTime));
 
-                RenderedHexes[i].Trees.ForEach(tree => StartCoroutine(RenderHelper.FadeAndDestroyObject(tree.GetComponent<Renderer>(), FadeTime)));
-                RenderedHexes[i].LandscapeObj.ForEach(obj => StartCoroutine(RenderHelper.FadeAndDestroyObject(obj.GetComponent<Renderer>(), FadeTime)));
-                StartCoroutine(RenderHelper.FadeAndDestroyObject(RenderedHexes[i].Hex.GetComponent<Renderer>(), FadeTime));
+                RenderedHexes[i].Trees.ForEach(tree => tree.GetComponent<Fader>().FadeAndDestroyObject(FadeTime));
+                RenderedHexes[i].LandscapeObj.ForEach(obj => obj.GetComponent<Fader>().FadeAndDestroyObject(FadeTime));
+                RenderedHexes[i].Hex.GetComponent<Fader>().FadeAndDestroyObject(FadeTime);
                 RenderedHexes.RemoveAt(i);
                 --i;
             }
@@ -187,7 +187,7 @@ public class WorldVisualiser : MonoBehaviour
     {
         GlobalMap map;
         Vector2 chunkCoords;
-		ushort chunkSize = CashedChunks[1, 1].Width;
+        ushort chunkSize = CashedChunks[1, 1].Width;
 
         float chunkX = mapCoords.x / chunkSize, chunkY = mapCoords.y / chunkSize;
 
@@ -253,6 +253,7 @@ public class WorldVisualiser : MonoBehaviour
             }
             else
                 riverSprite.GetComponent<SpriteRenderer>().sprite = ChooseHexRiverSprite(riverSprite.transform, mapCoords, map);
+            riverSprite.AddComponent<Fader>();
             forestBlocked = true;
         }
         if (map.HasCluster(mapCoords))
@@ -265,6 +266,7 @@ public class WorldVisualiser : MonoBehaviour
             if (!map.GetClusterSpriteID(mapCoords).HasValue /*?*/|| map.GetClusterSpriteID(mapCoords) >= GlobalMapParam.RuinSprites.Length)
                 map.ClusterSpriteID_Matrix[(int)mapCoords.y, (int)mapCoords.x] = (byte)Random.Range(0, GlobalMapParam.RuinSprites.Length);
             clusterSprite.GetComponent<SpriteRenderer>().sprite = GlobalMapParam.RuinSprites[map.GetClusterSpriteID(mapCoords).Value];
+            clusterSprite.AddComponent<Fader>();
             forestBlocked = true;
         }
         if (map.HasRoad(mapCoords))
@@ -281,13 +283,14 @@ public class WorldVisualiser : MonoBehaviour
             }
             else
                 roadSprite.GetComponent<SpriteRenderer>().sprite = ChooseHexRoadSprite(roadSprite.transform, mapCoords, map);
+            roadSprite.AddComponent<Fader>();
             forestBlocked = true;
         }
         if (!forestBlocked)
             MakeHexForest(hex, mapCoords, map);
-        StartCoroutine(RenderHelper.FadeIn(hex.Hex.GetComponent<Renderer>(), FadeInTime));
-        hex.LandscapeObj.ForEach(obj => StartCoroutine(RenderHelper.FadeIn(obj.GetComponent<Renderer>(), FadeInTime)));
-        hex.Trees.ForEach(tree => StartCoroutine(RenderHelper.FadeIn(tree.GetComponent<Renderer>(), FadeInTime)));
+        hex.Hex.GetComponent<Fader>().FadeIn(FadeInTime);
+        hex.LandscapeObj.ForEach(obj => obj.GetComponent<Fader>().FadeIn(FadeInTime));
+        hex.Trees.ForEach(tree => tree.GetComponent<Fader>().FadeIn(FadeInTime));
     }
 
     void MakeHexGraphics(ListType hex, Vector2 mapCoords, LocalMap map)
@@ -298,33 +301,35 @@ public class WorldVisualiser : MonoBehaviour
             hex.Hex.GetComponent<SpriteRenderer>().sprite = ChooseHexSprite(mapCoords, map);
         hex.Hex.GetComponent<SpriteRenderer>().sortingLayerName = "Landscape";//
         if (map.GetHeight(mapCoords) < LocalMapParam.Terrains[0].StartingHeight)
-		{
+        {
             for (byte i = 0; i < 6; ++i) //TODO К оптимизации.
                 if (map.Contains(HexNavigHelper.GetNeighborMapCoords(mapCoords, (TurnedHexDirection)i)) && map.GetHeight(HexNavigHelper.GetNeighborMapCoords(mapCoords, (TurnedHexDirection)i)) > LocalMapParam.Terrains[0].StartingHeight)
                 {
                     GameObject bank = new GameObject();
-					hex.LandscapeObj.Add(bank);
+                    hex.LandscapeObj.Add(bank);
                     bank.transform.position = hex.Hex.transform.position;
                     bank.AddComponent<SpriteRenderer>().sortingLayerName = "LandscapeObjects";
-				bank.GetComponent<SpriteRenderer>().sprite = LocalMapParam.BankSprites[Random.Range(0,LocalMapParam.BankSprites.Length)];
-					bank.GetComponent<SpriteRenderer>().material = DiffuseMaterial;
+                    bank.GetComponent<SpriteRenderer>().sprite = LocalMapParam.BankSprites[Random.Range(0, LocalMapParam.BankSprites.Length)];
+                    bank.GetComponent<SpriteRenderer>().material = DiffuseMaterial;
                     bank.transform.Rotate(0, 0, (short)(Mathf.Sign(mapCoords.y - HexNavigHelper.GetNeighborMapCoords(mapCoords, (TurnedHexDirection)i).y) * Vector2.Angle(Vector2.left, GetTransformPosFromMapCoords(HexNavigHelper.GetNeighborMapCoords(mapCoords, (TurnedHexDirection)i), true) - (Vector2)hex.Hex.transform.position)));
+                    bank.AddComponent<Fader>();
                 }
-		}
-		else if(map.GetForest(mapCoords)>0&&Random.value<LocalMapParam.PlantProbability*map.GetForest(mapCoords))
+        }
+        else if (map.GetForest(mapCoords) > 0 && Random.value < LocalMapParam.PlantProbability * map.GetForest(mapCoords))
         {
             GameObject plant = new GameObject();
-			hex.LandscapeObj.Add(plant);
-			plant.AddComponent<SpriteRenderer>().sortingLayerName = "LandscapeObjects";
-			plant.GetComponent<SpriteRenderer>().material = DiffuseMaterial;            
-            if(map.GetForest(mapCoords)<LocalMapParam.BushesForestValue)
-				plant.GetComponent<SpriteRenderer>().sprite=LocalMapParam.BushSprites[Random.Range(0,LocalMapParam.BushSprites.Length)];
-			else				
-				plant.GetComponent<SpriteRenderer>().sprite=LocalMapParam.TreeSprites[Random.Range(0,LocalMapParam.TreeSprites.Length)];
-			plant.transform.position =new Vector2(hex.Hex.transform.position.x,hex.Hex.transform.position.y+plant.GetComponent<SpriteRenderer>().sprite.bounds.extents.y-LocalHexSpriteSize.y/2);
+            hex.LandscapeObj.Add(plant);
+            plant.AddComponent<SpriteRenderer>().sortingLayerName = "LandscapeObjects";
+            plant.GetComponent<SpriteRenderer>().material = DiffuseMaterial;
+            if (map.GetForest(mapCoords) < LocalMapParam.BushesForestValue)
+                plant.GetComponent<SpriteRenderer>().sprite = LocalMapParam.BushSprites[Random.Range(0, LocalMapParam.BushSprites.Length)];
+            else
+                plant.GetComponent<SpriteRenderer>().sprite = LocalMapParam.TreeSprites[Random.Range(0, LocalMapParam.TreeSprites.Length)];
+            plant.transform.position = new Vector2(hex.Hex.transform.position.x, hex.Hex.transform.position.y + plant.GetComponent<SpriteRenderer>().sprite.bounds.extents.y - LocalHexSpriteSize.y / 2);
+            plant.AddComponent<Fader>();
         }
-        StartCoroutine(RenderHelper.FadeIn(hex.Hex.GetComponent<Renderer>(), FadeInTime));
-        hex.LandscapeObj.ForEach(obj => StartCoroutine(RenderHelper.FadeIn(obj.GetComponent<Renderer>(), FadeInTime)));
+        hex.Hex.GetComponent<Fader>().FadeIn(FadeInTime);
+        hex.LandscapeObj.ForEach(obj => obj.GetComponent<Fader>().FadeIn(FadeInTime));
     }
 
     /// <summary>
@@ -511,6 +516,7 @@ public class WorldVisualiser : MonoBehaviour
                             tree.AddComponent<SpriteRenderer>().sortingLayerName = "LandscapeObjects";//
                             tree.GetComponent<SpriteRenderer>().sprite = GlobalMapParam.TreeSprites[Random.Range(0, GlobalMapParam.TreeSprites.Length)];
                             tree.GetComponent<SpriteRenderer>().material = DiffuseMaterial;
+                            tree.AddComponent<Fader>();
                             --treesCount;
                         }
                 }
@@ -525,6 +531,7 @@ public class WorldVisualiser : MonoBehaviour
                     tree.AddComponent<SpriteRenderer>().sortingLayerName = "LandscapeObjects";//
                     tree.GetComponent<SpriteRenderer>().sprite = GlobalMapParam.TreeSprites[Random.Range(0, GlobalMapParam.TreeSprites.Length)];
                     tree.GetComponent<SpriteRenderer>().material = DiffuseMaterial;
+                    tree.AddComponent<Fader>();
                     --treesCount;
                     if (treesCount == 0)
                         return;
@@ -539,8 +546,8 @@ public class WorldVisualiser : MonoBehaviour
     /// <param name="map">Карта.</param>
     public void RenderWholeMap(LocalMap map)
     {
-		ushort height = map.Height;
-		ushort width = map.Width;
+        ushort height = map.Height;
+        ushort width = map.Width;
         RenderedHexes.Capacity = height * width;
 
         for (ushort y = 0; y < height; ++y)
@@ -551,7 +558,7 @@ public class WorldVisualiser : MonoBehaviour
                 hex.Hex.GetComponent<HexData>().MapCoords = new Vector2(x, y);
                 MakeHexGraphics(hex, new Vector2(x, y), map);
                 RenderedHexes.Add(hex);
-			hex.Hex.transform.localScale=new Vector3(xxx,yyy,1);
+                hex.Hex.transform.localScale = new Vector3(xxx, yyy, 1);
             }
     }
 
