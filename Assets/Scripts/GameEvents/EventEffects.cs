@@ -5,7 +5,7 @@ using System.Collections.Generic;
 public class EventEffects : MonoBehaviour
 {
     delegate void EffectApplier();
-    delegate void ParamEffectApplier(float value);
+    delegate void ParamEffectApplier(byte value);
     static Dictionary<string, EffectApplier> Effects;
     static Dictionary<string, ParamEffectApplier> ParamEffects;
 
@@ -27,7 +27,7 @@ public class EventEffects : MonoBehaviour
         Effects[tag]();
     }
 
-    public static void ApplyEffect(string tag, float value)
+    public static void ApplyEffect(string tag, byte value)
     {
         ParamEffects[tag](value);
     }

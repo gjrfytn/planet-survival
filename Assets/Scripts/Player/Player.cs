@@ -9,21 +9,36 @@ public sealed class Player : Creature
     //public Text CurrentStaminaText;
     //public Text CurrentHungreedText;
 
-    [Header("Факторы влияющие на характеристики")]
-    public float HungerTime = 20;  // Переменная времени голода (через сколько секунд отнимаем еду)
-    public float HungerTimeSet = 20; // Переменная времени голода (для повтора отнимания еды); надо переделать
+    // [Header("Факторы влияющие на характеристики")]
+    // public float HungerTime = 20;  // Переменная времени голода (через сколько секунд отнимаем еду)
+    //  public float HungerTimeSet = 20; // Переменная времени голода (для повтора отнимания еды); надо переделать
 
 
     [Header("Основные характеристики")]
-    public float MaxEnergy = 100; // Максимальное количество энергии
-    public float MaxStamina = 1000; // Максимальное количество силы
-    public float MaxHungreed = 500; // Максимальное количество еды
+    [Range(0, 255)]
+    public byte MaxWater = 100;
+    [Range(0, 255)]
+    public byte MaxFood = 100;
+    [Range(0, 255)]
+    public byte MaxEnergy = 100; // Максимальное количество энергии
+    [Range(0, 255)]
+    public byte MaxMental = 100;
+    [Range(0, 255)]
+    public byte MentalRegen = 100;
+    //  public float MaxHunger = 500; // Максимальное количество еды
 
-    public float CurrentEnergy = 100; // Энергия (в данный момент)
-    public float CurrentStamina = 1000; // Выносливость (сколько в данный момент)
-    public float CurrentHunger = 500; // Голод (в данный момент)
+    [Range(0, 255)]
+    public byte Water = 100;
+    [Range(0, 255)]
+    public byte Food = 100;
+    [Range(0, 255)]
+    public byte Energy = 100; // Энергия (в данный момент)
+    [Range(0, 255)]
+    public byte Mental = 100;
+    //public float CurrentHunger = 500; // Голод (в данный момент)
 
     [Header("Дальность обзора")]
+    [Range(0, 255)]
     public byte ViewDistance;
 
     protected override void OnEnable()
@@ -45,16 +60,12 @@ public sealed class Player : Creature
         if (Moving)//TODO Возможно, временно
             EventManager.OnPlayerObjectMoved();
 
-        if (Health <= 0)
+        if (Health == 0)
         {
             //Health=0;
             Application.LoadLevel("Menu");
         }
-        if (CurrentEnergy <= 0)
-        { //Если жизни меньше или равно 0
-            CurrentEnergy = 0; // Задаём значение 0
-        }
-        if (HungerTime > 0)
+        /*if (HungerTime > 0)
         {  // Если HungerTime больше нуля
             HungerTime -= Time.deltaTime; //Отсчитываем в минус
         }
@@ -70,23 +81,7 @@ public sealed class Player : Creature
         if (CurrentHunger <= 0)
         { //Если еда меньше или равна 0
             CurrentEnergy -= 0.0025f; // Отнимаем здоровье
-        }
-        if (CurrentStamina != 1000)
-        { // Если выносливость не равна 1000
-            CurrentStamina += 0.0025f; // Прибавляем выносливость (Отдых)
-        }
-        if (Input.GetKey(KeyCode.LeftShift))
-        { // Если нажать кнопку LeftShift (Для теста)
-            CurrentStamina -= 1; // Отнимаем выносливлость
-        }
-        if (CurrentStamina == 1000)
-        { //Если выносливость равна 1000
-            CurrentStamina = MaxStamina; // Задаём число значения MaxStamina
-        }
-        if (CurrentStamina <= 0)
-        { // Если выносливость меньше или равна 0
-            CurrentStamina = 0; // Задаём число 0
-        }
+        }*/
 
 
 

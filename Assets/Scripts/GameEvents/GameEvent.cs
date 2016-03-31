@@ -9,27 +9,20 @@ public class GameEvent //UNDONE
     // Определяет, яляется ли событие сюжетным.
     public bool StoryEvent;// {get; private set; }
 
-    //TODO Возможно стоит вместо этого разделить события на два списка?
-    // Определяет, может ли это событие произойти от действия.
-    public bool ByAction;// {get; private set; }
-
-    // Определяет, может ли это событие произойти от таймера.
-    public bool ByTime;// {get; private set; }
-
     // Описание события, выводимое на экран.
     public string Description;// {get; private set; }
 
     // Базовая вероятность возникновения события.
-	float BaseProbability_;
+    float BaseProbability_;
     public float BaseProbability
     {
         get
         {
-			return BaseProbability_;
+            return BaseProbability_;
         }
         set
         {
-			BaseProbability_ = Probability = value;
+            BaseProbability_ = Probability = value;
         }
     }
 
@@ -72,11 +65,9 @@ public class GameEvent //UNDONE
 
     public List<Reaction> Reactions;
 
-    public GameEvent(string name, bool storyEvent, bool byAction, bool byTime, string description, float probability, Dictionary<TerrainType, sbyte> terrainWeights, TimeWeights timeWeight, StateWeights stateWeight, List<Reaction> reactions)
+    public GameEvent(string name, bool storyEvent, string description, float probability, Dictionary<TerrainType, sbyte> terrainWeights, TimeWeights timeWeight, StateWeights stateWeight, List<Reaction> reactions)
     {
         Name = name;
-        ByAction = byAction;
-        ByTime = byTime;
         Description = description;
         Probability = probability;
         StoryEvent = storyEvent;

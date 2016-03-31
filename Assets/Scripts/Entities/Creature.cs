@@ -7,12 +7,18 @@ public class Creature : Entity
     public enum AI_State : byte { STATE_IDLE, STATE_MOVE, STATE_ATTACK };
 
     public float MoveAnimationTime;
-    public float MaxHealth;
-    public float Damage;
-    public float Armor;
+	[Range(0,255)]
+    public byte MaxHealth;
+	[Range(0,255)]
+    public byte BaseDamage;
+	public const float DamageSpread=0.1f;
+	[Range(0,1)]
+	public float BaseAccuracy;
+	[Range(0,1)]
+    public float BaseArmor;
     //public float Experience;
 
-    public float Health { get; private set; }
+    public byte Health { get; private set; }
 
     World World;
     protected bool Moving { get; private set; }
@@ -142,22 +148,25 @@ public class Creature : Entity
 
     void PerformAttack()
     {
-        Target.GetComponent<Creature>().TakeDamage(Damage);
+		if(Random.value<BaseAccuracy)
+			Target.GetComponent<Creature>().TakeDamage((byte)(BaseDamage+Random.Range(-BaseDamage*DamageSpread,BaseDamage*DamageSpread)));
+		else
+			EventManager.OnAttackMiss(transform.position);
     }
 
-    public void TakeDamage(float damage)
+    public void TakeDamage(byte damage)
     {
         Debug.Assert(damage >= 0);
         EventManager.OnCreatureHit(gameObject, damage);
-        Health -= Mathf.Clamp(damage - Armor, 0, damage);
-        if (Health <= 0)
+		Health =(byte)((Health-damage*(1-BaseArmor)>0)?Health-damage*(1-BaseArmor):0);
+        if (Health == 0)
             Destroy(gameObject);
     }
 
-    public void TakeHeal(float heal)
+    public void TakeHeal(byte heal)
     {
         Debug.Assert(heal >= 0);
-        Health = Mathf.Clamp(Health + heal, 0, MaxHealth);
+        Health =(byte) Mathf.Clamp(Health + heal, 0, MaxHealth);
     }
 
     void MakeTurn()

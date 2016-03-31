@@ -158,27 +158,29 @@ public class PlayerInventory : MonoBehaviour
         for (int i = 0; i < item.itemAttributes.Count; i++)
         {
             if (item.itemAttributes[i].attributeName == "Health")
-                PlayerChars.TakeHeal(item.itemAttributes[i].attributeValue);
+                PlayerChars.TakeHeal(/*TODO*/(byte)item.itemAttributes[i].attributeValue);
             if (item.itemAttributes[i].attributeName == "Mana")
             {
-                if ((PlayerChars.CurrentEnergy + item.itemAttributes[i].attributeValue) > PlayerChars.MaxEnergy)
-                    PlayerChars.CurrentEnergy = PlayerChars.MaxEnergy;
+                if ((PlayerChars.Energy + item.itemAttributes[i].attributeValue) > PlayerChars.MaxEnergy)
+                    PlayerChars.Energy = PlayerChars.MaxEnergy;
                 else
-                    PlayerChars.CurrentEnergy += item.itemAttributes[i].attributeValue;
+					PlayerChars.Energy += /*TODO*/(byte)item.itemAttributes[i].attributeValue;
             }
             if (item.itemAttributes[i].attributeName == "Armor")
             {
                 //if ((PlayerChars.currentArmor + item.itemAttributes[i].attributeValue) > PlayerChars.maxArmor)
                 //	PlayerChars.currentArmor = PlayerChars.maxArmor;
                 //else
-                PlayerChars.Armor += item.itemAttributes[i].attributeValue;
+
+                //PlayerChars.Armor += item.itemAttributes[i].attributeValue;
             }
             if (item.itemAttributes[i].attributeName == "Damage")
             {
                 //if ((PlayerChars.currentDamage + item.itemAttributes[i].attributeValue) > PlayerChars.maxDamage)
                 //	PlayerChars.currentDamage = PlayerChars.maxDamage;
                 //else
-                PlayerChars.Damage += item.itemAttributes[i].attributeValue;
+
+                //PlayerChars.Damage += item.itemAttributes[i].attributeValue;
             }
         }
     }
@@ -188,13 +190,13 @@ public class PlayerInventory : MonoBehaviour
         for (int i = 0; i < item.itemAttributes.Count; i++)
         {
             if (item.itemAttributes[i].attributeName == "Health")
-                PlayerChars.MaxHealth += item.itemAttributes[i].attributeValue;
+				PlayerChars.MaxHealth += /*TODO*/(byte)item.itemAttributes[i].attributeValue;
             if (item.itemAttributes[i].attributeName == "Energy")
-                PlayerChars.MaxEnergy += item.itemAttributes[i].attributeValue;
-            if (item.itemAttributes[i].attributeName == "Armor")
-                PlayerChars.Armor += item.itemAttributes[i].attributeValue;
-            if (item.itemAttributes[i].attributeName == "Damage")
-                PlayerChars.Damage += item.itemAttributes[i].attributeValue;
+				PlayerChars.MaxEnergy += /*TODO*/(byte)item.itemAttributes[i].attributeValue;
+           // if (item.itemAttributes[i].attributeName == "Armor")
+            //    PlayerChars.Armor += item.itemAttributes[i].attributeValue;
+            //if (item.itemAttributes[i].attributeName == "Damage")
+           //     PlayerChars.Damage += item.itemAttributes[i].attributeValue;
         }
     }
 
@@ -203,13 +205,13 @@ public class PlayerInventory : MonoBehaviour
         for (int i = 0; i < item.itemAttributes.Count; i++)
         {
             if (item.itemAttributes[i].attributeName == "Health")
-                PlayerChars.MaxHealth -= item.itemAttributes[i].attributeValue;
+				PlayerChars.MaxHealth -= /*TODO*/(byte)item.itemAttributes[i].attributeValue;
             if (item.itemAttributes[i].attributeName == "Energy")
-                PlayerChars.MaxEnergy -= item.itemAttributes[i].attributeValue;
-            if (item.itemAttributes[i].attributeName == "Armor")
-                PlayerChars.Armor -= item.itemAttributes[i].attributeValue;
-            if (item.itemAttributes[i].attributeName == "Damage")
-                PlayerChars.Damage -= item.itemAttributes[i].attributeValue;
+				PlayerChars.MaxEnergy -= /*TODO*/(byte)item.itemAttributes[i].attributeValue;
+           // if (item.itemAttributes[i].attributeName == "Armor")
+            //    PlayerChars.Armor -= item.itemAttributes[i].attributeValue;
+           // if (item.itemAttributes[i].attributeName == "Damage")
+           //     PlayerChars.Damage -= item.itemAttributes[i].attributeValue;
         }
     }
 

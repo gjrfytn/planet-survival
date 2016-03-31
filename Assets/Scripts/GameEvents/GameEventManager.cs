@@ -16,15 +16,27 @@ public class GameEventManager : MonoBehaviour
     List<GameObject> ReactionButtons = new List<GameObject>();
     GameEvent CurrentEvent;
 
+    void OnEnable()
+    {
+        EventManager.HourPassed += CallEvent;
+    }
+
+    void OnDisable()
+    {
+        EventManager.HourPassed -= CallEvent;
+    }
+
     void Start()
     {
         LoadEventsFromFile(Path.Combine(Application.streamingAssetsPath, EventsFilename)); //UNDONE Не будет работать на Android?
     }
 
-    public void MakeActionEvent(TerrainType terrain)
+    void CallEvent()
     {
-        //Событие при переходе игрока на тайл.
-        List<GameEvent> possibleEvents = Events.Where(e => e.ByAction).ToList();
+        //CollectFactors();
+        TerrainType terrain = (GameObject.FindWithTag("World").GetComponent<WorldWrapper>().World.CurrentMap as GlobalMap).GetTerrainType(GameObject.FindWithTag("Player").GetComponent<Player>().MapCoords);
+
+        List<GameEvent> possibleEvents = Events.Where(e => true == true).ToList(); //TODO Фильтрация
         short weight = -100; //TODO
         GameEvent evnt = null;
         foreach (GameEvent e in possibleEvents)
@@ -68,9 +80,9 @@ public class GameEventManager : MonoBehaviour
             evnt.Probability += 0.01f;
     }
 
-    public void MakeTimeEvent()
+    void CollectFactors()
     {
-        //TODO Событие от таймера.
+
     }
 
     short CalculateTerrainWeight(GameEvent evnt, TerrainType terrain)
@@ -106,9 +118,9 @@ public class GameEventManager : MonoBehaviour
                     resultLst.Remove(result);
             }
         }
-        Dictionary<string, float?> effects;
+        Dictionary<string, byte?> effects;
         Debug.Log(ParseResultDescription(result.Description, out effects));
-        foreach (KeyValuePair<string, float?> effect in effects)
+        foreach (KeyValuePair<string, byte?> effect in effects)
         {
             if (effect.Value.HasValue)
                 EventEffects.ApplyEffect(effect.Key, effect.Value.Value);
@@ -129,8 +141,6 @@ public class GameEventManager : MonoBehaviour
                 {
                     string name = reader.ReadString();
                     bool storyEvent = reader.ReadBoolean();
-                    bool byAction = reader.ReadBoolean();
-                    bool byTime = reader.ReadBoolean();
                     string description = reader.ReadString();
                     float probability = reader.ReadSingle();
 
@@ -174,7 +184,7 @@ public class GameEventManager : MonoBehaviour
                                           Results = results
                                       });
                     }
-                    Events.Add(new GameEvent(name, storyEvent, byAction, byTime, description, probability, terrainWeights, timeWeights, stateWeights, reactions));
+                    Events.Add(new GameEvent(name, storyEvent, description, probability, terrainWeights, timeWeights, stateWeights, reactions));
                 }
             }
         }
@@ -209,15 +219,15 @@ public class GameEventManager : MonoBehaviour
         return parsedDesc;
     }
 
-    string ParseResultDescription(string description, out Dictionary<string, float?> effects)
+    string ParseResultDescription(string description, out Dictionary<string, byte?> effects)
     {
         string parsedDesc = description;
-        effects = new Dictionary<string, float?>();
+        effects = new Dictionary<string, byte?>();
         for (ushort i = 0; i < parsedDesc.Length; ++i)
             if (parsedDesc[i] == '<')
             {
                 string tag = string.Empty;
-                float? value = null;
+                byte? value = null;
                 byte j;
                 for (j = 1; parsedDesc[i + j] != '>'; ++j)
                 {
@@ -234,7 +244,7 @@ public class GameEventManager : MonoBehaviour
                             }
                             strValue += parsedDesc[i + j];
                         }
-                        value = float.Parse(strValue);
+                        value = byte.Parse(strValue);
                         break;
                     }
                     tag += parsedDesc[i + j];

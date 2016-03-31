@@ -10,7 +10,7 @@ public class HexInteraction : MonoBehaviour
         // {
         GameObject.FindWithTag("Player").GetComponent<Player>().MoveToMapCoords(GetComponent<HexData>().MapCoords);
         if (!GameObject.FindWithTag("World").GetComponent<WorldWrapper>().World.IsCurrentMapLocal())
-            GameObject.FindWithTag("GameEventManager").GetComponent<GameEventManager>().MakeActionEvent(GameObject.FindWithTag("World").GetComponent<WorldWrapper>().World.GetHexTerrain(GetComponent<HexData>().MapCoords));
+            EventManager.OnActionStart(18);//TODO Временно
         // }
     }
 

@@ -83,7 +83,6 @@ public class Fader : MonoBehaviour
     IEnumerator FadeAndDestroyObject(CanvasRenderer renderer, float time)
     {
         float a = renderer.GetAlpha();
-
         while (renderer.GetAlpha() > 0)
         {
             renderer.SetAlpha(renderer.GetAlpha() - (Time.deltaTime / time) * a);

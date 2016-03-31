@@ -114,12 +114,9 @@ public class WorldVisualiser : MonoBehaviour
 
         GlobalHexSpriteSize.x = GlobalMapParam.BottommostTerrainSprites[0].bounds.size.x;
         GlobalHexSpriteSize.y = GlobalMapParam.BottommostTerrainSprites[0].bounds.size.y;
-        LocalHexSpriteSize.x = LocalMapParam.BottommostTerrainSprites[0].bounds.size.x * xxx;
-        LocalHexSpriteSize.y = LocalMapParam.BottommostTerrainSprites[0].bounds.size.y * yyy;
+        LocalHexSpriteSize.x = LocalMapParam.BottommostTerrainSprites[0].bounds.size.x;
+        LocalHexSpriteSize.y = LocalMapParam.BottommostTerrainSprites[0].bounds.size.y;
     }
-
-    float xxx = 1.8f;
-    float yyy = 0.72f;
 
     /// <summary>
     /// Уничтожает все хексы.
@@ -558,7 +555,6 @@ public class WorldVisualiser : MonoBehaviour
                 hex.Hex.GetComponent<HexData>().MapCoords = new Vector2(x, y);
                 MakeHexGraphics(hex, new Vector2(x, y), map);
                 RenderedHexes.Add(hex);
-                hex.Hex.transform.localScale = new Vector3(xxx, yyy, 1);
             }
     }
 
