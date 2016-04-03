@@ -13,7 +13,6 @@ public sealed class Player : Creature
     // public float HungerTime = 20;  // Переменная времени голода (через сколько секунд отнимаем еду)
     //  public float HungerTimeSet = 20; // Переменная времени голода (для повтора отнимания еды); надо переделать
 
-
     [Header("Основные характеристики")]
     [Range(0, 255)]
     public byte MaxWater = 100;
@@ -41,6 +40,9 @@ public sealed class Player : Creature
     [Range(0, 255)]
     public byte ViewDistance;
 
+    float DefaultMoveAnimTime;
+    byte Level;
+
     protected override void OnEnable()
     {
         base.OnEnable();
@@ -50,6 +52,7 @@ public sealed class Player : Creature
     protected override void Start()
     {
         base.Start();
+        DefaultMoveAnimTime = MoveAnimTime;
         GetComponent<SpriteRenderer>().sortingLayerName = "Player";
     }
 
@@ -94,6 +97,15 @@ public sealed class Player : Creature
 
     public override void MoveToMapCoords(Vector2 mapCoords)
     {
+        MoveAnimTime = DefaultMoveAnimTime;
+        base.MoveToMapCoords(mapCoords);
+        EventManager.OnTurn();
+        EventManager.OnPlayerMove(mapCoords); //TODO Временно
+    }
+
+    public void MoveToMapCoords(Vector2 mapCoords, float moveAnimTime)
+    {
+        MoveAnimTime = moveAnimTime;
         base.MoveToMapCoords(mapCoords);
         EventManager.OnTurn();
         EventManager.OnPlayerMove(mapCoords); //TODO Временно

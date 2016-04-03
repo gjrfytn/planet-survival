@@ -4,11 +4,11 @@ using System.Collections;
 public static class EventManager
 {
     public delegate void VoidDelegate();
-	public delegate void FloatDelegate(float f);
+    public delegate void FloatDelegate(float f);
     public delegate void VectorDelegate(Vector2 v);
-	public delegate void Uint16Delegate(ushort s);
+    public delegate void Uint16Delegate(ushort s);
     public delegate void TwoVectorDelegate(Vector2 v1, Vector2 v2);
-	public delegate void GameObjectAndByteDelegate(GameObject obj, byte b);
+    public delegate void GameObjectAndByteDelegate(GameObject obj, byte b);
 
     public static event VoidDelegate UIShowed = delegate { };
     public static event VoidDelegate UIHided = delegate { };
@@ -59,41 +59,41 @@ public static class EventManager
 
     public static event GameObjectAndByteDelegate CreatureHit = delegate { };
 
-	public static void OnCreatureHit(GameObject obj, byte damage)
+    public static void OnCreatureHit(GameObject obj, byte damage)
     {
-		CreatureHit(obj,damage);
+        CreatureHit(obj, damage);
     }
 
-	public static event VectorDelegate AttackMissed = delegate { };
+    public static event VectorDelegate AttackMissed = delegate { };
 
-	public static void OnAttackMiss(Vector2 v)
-	{
-		AttackMissed(v);
-	}
+    public static void OnAttackMiss(Vector2 v)
+    {
+        AttackMissed(v);
+    }
 
-	public static event VoidDelegate HourPassed = delegate { };
-	
-	public static void OnHourPass()
-	{
-		HourPassed();
-	}
+    public static event VoidDelegate HourPassed = delegate { };
 
-	public static event Uint16Delegate ActionStarted = delegate { };
-	public static event FloatDelegate MinutePassed = delegate { };
-	public static event VoidDelegate ActionEnded = delegate { };
-	
-	public static void OnActionStart(ushort durationInMinutes)
-	{
-		ActionStarted(durationInMinutes);
-	}
+    public static void OnHourPass()
+    {
+        HourPassed();
+    }
 
-	public static void OnMinutePass(float progress)
-	{
-		MinutePassed(progress);
-	}
+    public static event Uint16Delegate ActionStarted = delegate { };
+    public static event FloatDelegate MinutePassed = delegate { };
+    public static event VoidDelegate ActionEnded = delegate { };
 
-	public static void OnActionEnd()
-	{
-		ActionEnded();
-	}
+    public static void OnActionStart(ushort durationInMinutes)
+    {
+        ActionStarted(durationInMinutes);
+    }
+
+    public static void OnMinutePass(float progress)
+    {
+        MinutePassed(progress);
+    }
+
+    public static void OnActionEnd()
+    {
+        ActionEnded();
+    }
 }

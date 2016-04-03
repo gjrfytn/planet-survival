@@ -6,22 +6,22 @@ public class Creature : Entity
 {
     public enum AI_State : byte { STATE_IDLE, STATE_MOVE, STATE_ATTACK };
 
-    public float MoveAnimationTime;
-	[Range(0,255)]
+    public float MoveAnimTime;
+    [Range(0, 255)]
     public byte MaxHealth;
-	[Range(0,255)]
+    [Range(0, 255)]
     public byte BaseDamage;
-	public const float DamageSpread=0.1f;
-	[Range(0,1)]
-	public float BaseAccuracy;
-	[Range(0,1)]
+    public const float DamageSpread = 0.1f;
+    [Range(0, 1)]
+    public float BaseAccuracy;
+    [Range(0, 1)]
     public float BaseArmor;
-    //public float Experience;
+    public ushort Experience;
 
     public byte Health { get; private set; }
 
-    World World;
     protected bool Moving { get; private set; }
+    World World;
     Vector2 TargetCoords;
     float MoveTime;
     Vector2 PreviousCoords;
@@ -122,43 +122,28 @@ public class Creature : Entity
             if (dy != 0)
                 dy = (sbyte)(dy > 0 ? 1 : -1);
 
-            if (!World.IsHexFree(new Vector2(MapCoords.x + dx, MapCoords.y + dy)))
-            {
-                if (!World.IsHexFree(new Vector2(MapCoords.x, MapCoords.y + dy)))
-                {
-                    if (!World.IsHexFree(new Vector2(MapCoords.x + dx, MapCoords.y)))
-                    {
-                        Debug.Log("Pathfind error.");
-                        return;
-                    }
-                    else
-                        dy = 0;
-                }
-                else
-                    dx = 0;
-            }
             Vector2 buf = MapCoords;
             MapCoords.x += dx;
             MapCoords.y += dy;
             EventManager.OnCreatureMove(buf, MapCoords);
         }
-        MoveTime = MoveAnimationTime;
+        MoveTime = MoveAnimTime;
         Moving = true;
     }
 
     void PerformAttack()
     {
-		if(Random.value<BaseAccuracy)
-			Target.GetComponent<Creature>().TakeDamage((byte)(BaseDamage+Random.Range(-BaseDamage*DamageSpread,BaseDamage*DamageSpread)));
-		else
-			EventManager.OnAttackMiss(transform.position);
+        if (Random.value < BaseAccuracy)
+            Target.GetComponent<Creature>().TakeDamage((byte)(BaseDamage + Random.Range(-BaseDamage * DamageSpread, BaseDamage * DamageSpread)));
+        else
+            EventManager.OnAttackMiss(transform.position);
     }
 
     public void TakeDamage(byte damage)
     {
         Debug.Assert(damage >= 0);
         EventManager.OnCreatureHit(gameObject, damage);
-		Health =(byte)((Health-damage*(1-BaseArmor)>0)?Health-damage*(1-BaseArmor):0);
+        Health = (byte)((Health - damage * (1 - BaseArmor) > 0) ? Health - damage * (1 - BaseArmor) : 0);
         if (Health == 0)
             Destroy(gameObject);
     }
@@ -166,7 +151,7 @@ public class Creature : Entity
     public void TakeHeal(byte heal)
     {
         Debug.Assert(heal >= 0);
-        Health =(byte) Mathf.Clamp(Health + heal, 0, MaxHealth);
+        Health = (byte)Mathf.Clamp(Health + heal, 0, MaxHealth);
     }
 
     void MakeTurn()

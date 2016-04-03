@@ -78,6 +78,12 @@ public sealed class LocalMap : Map
 {
     public bool[,] BlockMatrix;
 
+    public LocalMap(ushort width, ushort height)
+        : base(width, height)
+    {
+        BlockMatrix = new bool[height, width];
+    }
+
     public override void Write(BinaryWriter writer)
     {
         base.Write(writer);
@@ -97,12 +103,6 @@ public sealed class LocalMap : Map
     public bool IsBlocked(Vector2 coords)
     {
         return BlockMatrix[(int)coords.y, (int)coords.x];
-    }
-
-    public LocalMap(ushort width, ushort height)
-        : base(width, height)
-    {
-        BlockMatrix = new bool[height, width];
     }
 }
 
@@ -124,6 +124,20 @@ public sealed class GlobalMap : Map
     public List<List<Vector2>> Roads;
 
     public TerrainType[,] TerrainMatrix;
+
+    public GlobalMap(ushort width, ushort height)
+        : base(width, height)
+    {
+        RiverMatrix = new bool[height, width];
+        RiverSpriteID_Matrix = new byte?[height, width];
+        RiverSpriteRotationMatrix = new short[height, width];
+        ClusterMatrix = new bool[height, width];
+        ClusterSpriteID_Matrix = new byte?[height, width];
+        RoadMatrix = new bool[height, width];
+        RoadSpriteID_Matrix = new byte?[height, width];
+        RoadSpriteRotationMatrix = new short[height, width];
+        TerrainMatrix = new TerrainType[height, width];
+    }
 
     public override void Write(BinaryWriter writer)
     {
@@ -318,19 +332,5 @@ public sealed class GlobalMap : Map
     public TerrainType GetTerrainType(Vector2 coords)
     {
         return TerrainMatrix[(int)coords.y, (int)coords.x];
-    }
-
-    public GlobalMap(ushort width, ushort height)
-        : base(width, height)
-    {
-        RiverMatrix = new bool[height, width];
-        RiverSpriteID_Matrix = new byte?[height, width];
-        RiverSpriteRotationMatrix = new short[height, width];
-        ClusterMatrix = new bool[height, width];
-        ClusterSpriteID_Matrix = new byte?[height, width];
-        RoadMatrix = new bool[height, width];
-        RoadSpriteID_Matrix = new byte?[height, width];
-        RoadSpriteRotationMatrix = new short[height, width];
-        TerrainMatrix = new TerrainType[height, width];
     }
 }

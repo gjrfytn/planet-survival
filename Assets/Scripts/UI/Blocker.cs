@@ -5,20 +5,26 @@ public class Blocker : MonoBehaviour
 {
     void OnEnable()
     {
-        EventManager.UIShowed += Switch;
-        EventManager.UIHided += Switch;
+        EventManager.UIShowed += Show;
+        EventManager.UIHided += Hide;
     }
 
     void OnDisable()
     {
-        EventManager.UIShowed -= Switch;
-        EventManager.UIHided -= Switch;
+        EventManager.UIShowed -= Show;
+        EventManager.UIHided -= Hide;
     }
 
-    void Switch()
+    void Show()
     {
-        GetComponent<SpriteRenderer>().enabled = !GetComponent<SpriteRenderer>().enabled;
-        GetComponent<BoxCollider2D>().enabled = !GetComponent<BoxCollider2D>().enabled;
+        GetComponent<SpriteRenderer>().enabled = true;
+        GetComponent<BoxCollider2D>().enabled = true;
+    }
+
+    void Hide()
+    {
+        GetComponent<SpriteRenderer>().enabled = false;
+        GetComponent<BoxCollider2D>().enabled = false;
     }
 
     void Start()
