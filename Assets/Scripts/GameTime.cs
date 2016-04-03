@@ -28,7 +28,7 @@ public class GameTime : MonoBehaviour
 		ushort t=0;
 		while(t!=count)
 		{
-			EventManager.OnActionProgress((float)t/count);
+			EventManager.OnMinutePass((float)t/count);
 			t++;
 			Buffer++;
 			if(Buffer==60)

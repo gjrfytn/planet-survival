@@ -24,8 +24,8 @@ public class DuringActionDisabler : MonoBehaviour {
 		//TODO Ждём C# 6.0
 		if(GetComponent<SpriteRenderer>()!=null)
 			GetComponent<SpriteRenderer>().enabled=false;
-		if(GetComponent<BoxCollider2D>()!=null)
-			GetComponent<BoxCollider2D>().enabled=false;
+		if(GetComponent<Collider2D>()!=null)
+			GetComponent<Collider2D>().enabled=false;
 	}
 
 	void Enable()
@@ -35,7 +35,7 @@ public class DuringActionDisabler : MonoBehaviour {
 
 		if(GetComponent<SpriteRenderer>()!=null)
 			GetComponent<SpriteRenderer>().enabled=true;
-		if(GetComponent<BoxCollider2D>()!=null)
-			GetComponent<BoxCollider2D>().enabled=true;
+		if(GetComponent<Collider2D>()!=null)
+			GetComponent<Collider2D>().enabled=true;
 	}
 }

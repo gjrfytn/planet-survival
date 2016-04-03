@@ -79,7 +79,7 @@ public static class EventManager
 	}
 
 	public static event Uint16Delegate ActionStarted = delegate { };
-	public static event FloatDelegate ActionProgressed = delegate { };
+	public static event FloatDelegate MinutePassed = delegate { };
 	public static event VoidDelegate ActionEnded = delegate { };
 	
 	public static void OnActionStart(ushort durationInMinutes)
@@ -87,9 +87,9 @@ public static class EventManager
 		ActionStarted(durationInMinutes);
 	}
 
-	public static void OnActionProgress(float progress)
+	public static void OnMinutePass(float progress)
 	{
-		ActionProgressed(progress);
+		MinutePassed(progress);
 	}
 
 	public static void OnActionEnd()
