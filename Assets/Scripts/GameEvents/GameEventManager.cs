@@ -34,7 +34,7 @@ public class GameEventManager : MonoBehaviour
     void CallEvent()
     {
         //CollectFactors();
-        TerrainType terrain = (GameObject.FindWithTag("World").GetComponent<WorldWrapper>().World.CurrentMap as GlobalMap).GetTerrainType(GameObject.FindWithTag("Player").GetComponent<Player>().MapCoords);
+        TerrainType terrain = (GameObject.FindWithTag("World").GetComponent<WorldWrapper>().World.GetHexTerrain(GameObject.FindWithTag("Player").GetComponent<Player>().MapCoords));
 
         List<GameEvent> possibleEvents = Events.Where(e => true == true).ToList(); //TODO Фильтрация
         short weight = -100; //TODO

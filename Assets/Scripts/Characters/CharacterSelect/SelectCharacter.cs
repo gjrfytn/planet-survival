@@ -93,7 +93,7 @@ public class SelectCharacter : MonoBehaviour {
 	
 	IEnumerator LevelLoad(string name){
 		yield return new WaitForSeconds(1f);
-		Application.LoadLevel("LoadScreen");
+		UnityEngine.SceneManagement.SceneManager.LoadScene("LoadScreen");
 	}
 	
 

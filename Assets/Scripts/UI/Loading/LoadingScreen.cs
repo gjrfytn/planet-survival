@@ -119,7 +119,7 @@ public class LoadingScreen : MonoBehaviour
 
     private IEnumerator LevelProgress()
     {
-        Async = Application.LoadLevelAsync(NextLevel);
+		Async = UnityEngine.SceneManagement.SceneManager.LoadSceneAsync(NextLevel);
         Async.allowSceneActivation = false;
         yield return Async;
     }

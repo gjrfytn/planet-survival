@@ -61,15 +61,15 @@ public class Crafting : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 	
-		Player = GameObject.FindGameObjectWithTag("Player").GetComponent<Player>();
+		//Player = GameObject.FindGameObjectWithTag("Player").GetComponent<Player>();
 		Inventory = GameObject.FindGameObjectWithTag("Inventory").GetComponent<Inventory>();
 
-		CraftingTabs = new List<CraftingTab>();
+		//CraftingTabs = new List<CraftingTab>();
 		SelectedItem = new CraftedItem();
 
 		for(int i = 0; i < CraftAbleItemIDs.Count; i++)
 		{
-			CraftedItem Item = Database.FindCraftItem(CraftAbleItemIDs[i]);
+			//CraftedItem Item = Database.FindCraftItem(CraftAbleItemIDs[i]);
 		}
 
 	}
