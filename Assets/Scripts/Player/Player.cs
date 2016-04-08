@@ -36,6 +36,8 @@ public sealed class Player : Creature
     public byte Mental = 100;
     //public float CurrentHunger = 500; // Голод (в данный момент)
 
+	public bool CanDualWield;
+
     [Header("Дальность обзора")]
     [Range(0, 255)]
     public byte ViewDistance;
