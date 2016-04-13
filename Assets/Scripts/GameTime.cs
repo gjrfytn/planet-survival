@@ -4,7 +4,44 @@ using System.Collections;
 public class GameTime : MonoBehaviour
 {
     public const float GameMinToRealSec = 0.033333f;
-    public uint TimeInMinutes { get; private set; }
+    //TODO Ждём C# 6.0, когда введут инициализацию авто-свойств
+    public static uint TimeInMinutes { get; private set; } //=0;
+
+    public static uint TimeInDays
+    {
+        get
+        {
+            return TimeInMinutes / 1440;
+        }
+        private set
+        {
+
+        }
+    }
+
+    public static uint HoursOfDay
+    {
+        get
+        {
+            return TimeInMinutes / 60 - TimeInDays * 24;
+        }
+        private set
+        {
+
+        }
+    }
+
+    public static uint MinutesOfHour
+    {
+        get
+        {
+            return TimeInMinutes - (TimeInDays * 24 + HoursOfDay) * 60;
+        }
+        private set
+        {
+
+        }
+    }
 
     byte Buffer = 0;
 
