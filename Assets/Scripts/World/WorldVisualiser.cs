@@ -37,6 +37,7 @@ public class WorldVisualiser : MonoBehaviour
         public Sprite[] WaterSprites;
         public Terrain[] Terrains;
         public Sprite[] BankSprites;
+        public Sprite[] DiagBankSprites;
         public Sprite[] TreeSprites;
         public Sprite[] BushSprites;
         public float PlantProbability;
@@ -297,38 +298,57 @@ public class WorldVisualiser : MonoBehaviour
         else
             hex.Hex.GetComponent<SpriteRenderer>().sprite = ChooseHexSprite(mapCoords, map);
         hex.Hex.GetComponent<SpriteRenderer>().sortingLayerName = "Landscape";//
-        //TODO Берега
-        /*if (map.GetHeight(mapCoords) < LocalMapParam.Terrains[0].StartingHeight)
+        if (map.GetHeight(mapCoords) < LocalMapParam.Terrains[0].StartingHeight)
         {
-            float offset=(LocalHexSpriteSize.x-LocalHexSpriteSize.y)/2;
+            //float offsetbuf=(LocalHexSpriteSize.x-LocalHexSpriteSize.y)/2;
             for (byte i = 0; i < 6; ++i) //TODO К оптимизации.
                 if (map.Contains(HexNavigHelper.GetNeighborMapCoords(mapCoords, (TurnedHexDirection)i)) && map.GetHeight(HexNavigHelper.GetNeighborMapCoords(mapCoords, (TurnedHexDirection)i)) > LocalMapParam.Terrains[0].StartingHeight)
                 {
                     GameObject bank = new GameObject();
                     hex.LandscapeObj.Add(bank);
-                    //bank.transform.position = new Vector3(((TurnedHexDirection)i==TurnedHexDirection.LEFT_TOP||(TurnedHexDirection)i==TurnedHexDirection.LEFT_BOTTOM||(TurnedHexDirection)i==TurnedHexDirection.LEFT)? hex.Hex.transform.position.x-offset:hex.Hex.transform.position.x+offset,hex.Hex.transform.position.y,hex.Hex.transform.position.z);
                     bank.transform.position = hex.Hex.transform.position;
                     bank.AddComponent<SpriteRenderer>().sortingLayerName = "LandscapeObjects";
-                    bank.GetComponent<SpriteRenderer>().sprite = LocalMapParam.BankSprites[Random.Range(0, LocalMapParam.BankSprites.Length)];
+                    if ((TurnedHexDirection)i == TurnedHexDirection.LEFT || (TurnedHexDirection)i == TurnedHexDirection.RIGHT)
+                    {
+                        bank.GetComponent<SpriteRenderer>().sprite = LocalMapParam.BankSprites[Random.Range(0, LocalMapParam.BankSprites.Length)];
+                        if ((TurnedHexDirection)i == TurnedHexDirection.RIGHT)
+                            bank.transform.Rotate(0, 0, 180);
+                    }
+                    else
+                    {
+                        bank.GetComponent<SpriteRenderer>().sprite = LocalMapParam.DiagBankSprites[Random.Range(0, LocalMapParam.DiagBankSprites.Length)];
+                        switch ((TurnedHexDirection)i)
+                        {
+                            case TurnedHexDirection.RIGHT_TOP: bank.transform.Rotate(0, 180, 0);
+                                break;
+                            case TurnedHexDirection.RIGHT_BOTTOM: bank.transform.Rotate(180, 180, 0);
+                                break;
+                            case TurnedHexDirection.LEFT_BOTTOM: bank.transform.Rotate(180, 0, 0);
+                                break;
+                        }
+
+                    }
+                    //float offset=((TurnedHexDirection)i==TurnedHexDirection.LEFT_TOP||(TurnedHexDirection)i==TurnedHexDirection.LEFT_BOTTOM)? -offsetbuf:offsetbuf;
+                    //bank.transform.position = new Vector3(hex.Hex.transform.position.x+offset,hex.Hex.transform.position.y,hex.Hex.transform.position.z);
+                    //bank.transform.Rotate(0, 0, (short)(Mathf.Sign(mapCoords.y - HexNavigHelper.GetNeighborMapCoords(mapCoords, (TurnedHexDirection)i).y) * Vector2.Angle(Vector2.left,new Vector2(GetTransformPosFromMapCoords(HexNavigHelper.GetNeighborMapCoords(mapCoords, (TurnedHexDirection)i), true).x-offset,GetTransformPosFromMapCoords(HexNavigHelper.GetNeighborMapCoords(mapCoords, (TurnedHexDirection)i), true).y) - (Vector2)bank.transform.position)));
                     bank.GetComponent<SpriteRenderer>().material = DiffuseMaterial;
-                    bank.transform.Rotate(0, 0, (short)(Mathf.Sign(mapCoords.y - HexNavigHelper.GetNeighborMapCoords(mapCoords, (TurnedHexDirection)i).y) * Vector2.Angle(Vector2.left, GetTransformPosFromMapCoords(HexNavigHelper.GetNeighborMapCoords(mapCoords, (TurnedHexDirection)i), true) - (Vector2)bank.transform.position)));
                     bank.AddComponent<Fader>();
                 }
         }
-        else*/
-        if (map.GetForest(mapCoords) > 0 && Random.value < LocalMapParam.PlantProbability * map.GetForest(mapCoords))
-        {
-            GameObject plant = new GameObject();
-            hex.LandscapeObj.Add(plant);
-            plant.AddComponent<SpriteRenderer>().sortingLayerName = "LandscapeObjects";
-            plant.GetComponent<SpriteRenderer>().material = DiffuseMaterial;
-            if (map.GetForest(mapCoords) < LocalMapParam.BushesForestValue)
-                plant.GetComponent<SpriteRenderer>().sprite = LocalMapParam.BushSprites[Random.Range(0, LocalMapParam.BushSprites.Length)];
-            else
-                plant.GetComponent<SpriteRenderer>().sprite = LocalMapParam.TreeSprites[Random.Range(0, LocalMapParam.TreeSprites.Length)];
-            plant.transform.position = new Vector2(hex.Hex.transform.position.x, hex.Hex.transform.position.y + plant.GetComponent<SpriteRenderer>().sprite.bounds.extents.y - LocalHexSpriteSize.y / 2);
-            plant.AddComponent<Fader>();
-        }
+        else
+            if (map.GetForest(mapCoords) > 0 && Random.value < LocalMapParam.PlantProbability * map.GetForest(mapCoords))
+            {
+                GameObject plant = new GameObject();
+                hex.LandscapeObj.Add(plant);
+                plant.AddComponent<SpriteRenderer>().sortingLayerName = "LandscapeObjects";
+                plant.GetComponent<SpriteRenderer>().material = DiffuseMaterial;
+                if (map.GetForest(mapCoords) < LocalMapParam.BushesForestValue)
+                    plant.GetComponent<SpriteRenderer>().sprite = LocalMapParam.BushSprites[Random.Range(0, LocalMapParam.BushSprites.Length)];
+                else
+                    plant.GetComponent<SpriteRenderer>().sprite = LocalMapParam.TreeSprites[Random.Range(0, LocalMapParam.TreeSprites.Length)];
+                plant.transform.position = new Vector2(hex.Hex.transform.position.x, hex.Hex.transform.position.y + plant.GetComponent<SpriteRenderer>().sprite.bounds.extents.y - LocalHexSpriteSize.y / 2);
+                plant.AddComponent<Fader>();
+            }
         hex.Hex.GetComponent<Fader>().FadeIn(FadeInTime);
         hex.LandscapeObj.ForEach(obj => obj.GetComponent<Fader>().FadeIn(FadeInTime));
     }
@@ -587,5 +607,15 @@ public class WorldVisualiser : MonoBehaviour
         RenderedObjects[RenderedObjects.Count - 1].GetComponent<SpriteRenderer>().sortingLayerName = "LandscapeHighlights";
 
         RenderedObjects[RenderedObjects.Count - 1].GetComponent<HexData>().MapCoords = mapCoords;//TODO временно
+    }
+
+    public byte[] GetTerrainsSpriteID()
+    {
+        byte[] buf = new byte[1 + LocalMapParam.Terrains.Length];
+        buf[0] = 0;
+        buf[1] = (byte)LocalMapParam.WaterSprites.Length;
+        for (byte i = 0; i < LocalMapParam.Terrains.Length - 1; ++i)
+            buf[i + 2] = (byte)LocalMapParam.Terrains[i].Sprites.Length;
+        return buf;
     }
 }
