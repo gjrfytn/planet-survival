@@ -26,13 +26,13 @@ public class UIController : MonoBehaviour
 
 	public void OnStartGameButtonClick (GameObject button) 
 	{	
-		Application.LoadLevel("Game");	
+		UnityEngine.SceneManagement.SceneManager.LoadScene("Game");
 	}
 
 
 	public void BackToMenuButtonClick (GameObject button) 
 	{	
-		Application.LoadLevel("Menu");	
+		UnityEngine.SceneManagement.SceneManager.LoadScene("Menu");
 	}
 
 	public void OnSoundScrollbarScroll (GameObject soundScrollbar)

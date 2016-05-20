@@ -6,81 +6,83 @@ using System.Collections.Generic;
 public class SelectCharacter : MonoBehaviour {
 	
 
-	public Transform[] marker;
+	public List<Transform> Marker;
 
-	public Transform[] charsPrefabs;
+	public Transform[] CharsPrefabs;
 
-	public static Transform[] charsPrefabsAux;
+	public static Transform[] CharsPrefabsAux;
 
-	private GameObject[] chars;
+	private GameObject[] Chars;
 
 	public Text CharacterNameText;
 
-	public static int currentChar = 1;
+	public static int CurrentChar;
 	
 	void Start() 
 	{
-		charsPrefabsAux = charsPrefabs;
+		CharsPrefabsAux = CharsPrefabs;
 
-		chars = new GameObject[charsPrefabs.Length];
+		Chars = new GameObject[CharsPrefabs.Length];
 
 		int index = 0;
-		foreach (Transform t in charsPrefabs) 
+		foreach (Transform t in CharsPrefabs) 
 		{
-			chars[index++] = GameObject.Instantiate(t.gameObject, marker[4].position, Quaternion.identity) as GameObject;
+			Chars[index++] = GameObject.Instantiate(t.gameObject, Marker[4].position, Quaternion.identity) as GameObject;
 		}
 
 		Transform canvas = transform.parent;
-		foreach(GameObject c in chars)
+		foreach(GameObject c in Chars)
+		{
 			c.transform.SetParent(canvas);
-
+		}
 
 	}
-	void Update() {
-		CharacterNameText.text = chars[currentChar].name;
+	void Update() 
+	{
+		CharacterNameText.text = Chars[CurrentChar].name;
 
-		int current = currentChar;	
-		int backward = currentChar - 1;
-		int forward = currentChar + 1;
+		int current = CurrentChar = 0;	
+		int backward = CurrentChar - 1;
+		int forward = CurrentChar + 1;
 
-		for (int index = 0; index < chars.Length; index++) 
+		for (int i = 0; i < Chars.Length; i++) 
 		{
-			Transform transf = chars[index].transform;
+			Transform transf = Chars[i].transform;
 
-			if (index < backward) {
-				transf.position = Vector3.Lerp(transf.position, marker[0].position, 1);
+			if (i < backward) {
+				transf.position = Vector3.Lerp(transf.position, Marker[0].position, 1);
 
-			} else if (index > forward) {
-				transf.position = Vector3.Lerp(transf.position, marker[1].position, 1);
+			} else if (i > forward) {
+				transf.position = Vector3.Lerp(transf.position, Marker[1].position, 1);
 
-			} else if (index == backward) {
-				transf.position = Vector3.Lerp(transf.position, marker[2].position, 1);
+			} else if (i == backward) {
+				transf.position = Vector3.Lerp(transf.position, Marker[2].position, 1);
 
-			} else if (index == current) {
-				transf.position = Vector3.Lerp(transf.position, marker[3].position, 1);
+			} else if (i == current) {
+				transf.position = Vector3.Lerp(transf.position, Marker[3].position, 1);
 
-			} else if (index == forward) {
-				transf.position = Vector3.Lerp(transf.position, marker[4].position, 1);
+			} else if (i == forward) {
+				transf.position = Vector3.Lerp(transf.position, Marker[4].position, 1);
 			}
 		}
 	}
 
 	public void PreviousButton ()
 	{
-		currentChar--;
+		CurrentChar--;
 		
-		if (currentChar < 0) 
+		if (CurrentChar < 0) 
 		{
-			currentChar = 0;
+			CurrentChar = 0;
 		}
 	}
 	public void NextButton ()
 	{
-		currentChar++;
+		CurrentChar++;
 		
-		if (currentChar >= chars.Length) 
+		if (CurrentChar >= Chars.Length) 
 		{
-			currentChar = chars.Length - 1;
+			CurrentChar = Chars.Length - 1;
 		}
 	}
 	public void PickButton (string name)
@@ -91,7 +93,7 @@ public class SelectCharacter : MonoBehaviour {
 	
 	IEnumerator LevelLoad(string name){
 		yield return new WaitForSeconds(1f);
-		Application.LoadLevel("Game");
+		UnityEngine.SceneManagement.SceneManager.LoadScene("LoadScreen");
 	}
 	
 

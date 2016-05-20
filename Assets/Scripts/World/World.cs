@@ -90,13 +90,11 @@ public class World
         }
         //--
 
-        EventManager.CreatureMoved += ChangeBlockMatrix;
         EventManager.PlayerMoved += OnPlayerGotoHex;
     }
 
     ~World()
     {
-        EventManager.CreatureMoved -= ChangeBlockMatrix;
         EventManager.PlayerMoved -= OnPlayerGotoHex;
     }
 
@@ -196,6 +194,8 @@ public class World
         Player.GetComponent<Player>().MapCoords.x = (ushort)LocalMapSize.x / 2;
         Player.GetComponent<Player>().MapCoords.y = (ushort)LocalMapSize.y / 2;
         //
+        (CurrentMap as LocalMap).AddObject(Player.GetComponent<Entity>());
+
         Visualiser.DestroyAllObjects();
         Visualiser.RenderWholeMap(CurrentMap as LocalMap);
 
@@ -394,7 +394,7 @@ public class World
         GameObject enemy = MonoBehaviour.Instantiate(Enemies[Random.Range(0, Enemies.Length)], WorldVisualiser.GetTransformPosFromMapCoords(mapCoords, true), Quaternion.identity) as GameObject;
         enemy.GetComponent<Creature>().MapCoords = mapCoords;
         enemy.GetComponent<Creature>().Attack(Player);
-        (CurrentMap as LocalMap).BlockMatrix[(int)mapCoords.y, (int)mapCoords.x] = true;
+        (CurrentMap as LocalMap).AddObject(enemy.GetComponent<Entity>());
     }
 
     public bool IsHexFree(Vector2 mapCoords)
@@ -406,15 +406,6 @@ public class World
             return false;
         }
         return true;
-    }
-
-    void ChangeBlockMatrix(Vector2 free, Vector2 blocked)
-    {
-        if (IsCurrentMapLocal())//Временно
-        {
-            (CurrentMap as LocalMap).BlockMatrix[(int)free.y, (int)free.x] = false;
-            (CurrentMap as LocalMap).BlockMatrix[(int)blocked.y, (int)blocked.x] = true;
-        }
     }
 
     GlobalMap AllocAndGenerateChunk(GlobalMap topChunk, GlobalMap rightChunk, GlobalMap bottomChunk, GlobalMap leftChunk)

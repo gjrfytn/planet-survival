@@ -70,7 +70,7 @@ public class Creature : Entity
         TargetCoords = mapCoords;
         if (World.IsCurrentMapLocal())//TODO Временно?
         {
-            List<Vector2> buf = Pathfinder.MakePath((World.CurrentMap as LocalMap).BlockMatrix, MapCoords, TargetCoords);//TODO Тут?
+            List<Vector2> buf = Pathfinder.MakePath((World.CurrentMap as LocalMap).GetBlockMatrix(), MapCoords, TargetCoords);//TODO Тут?
             buf.Reverse();
             Path = new Stack<Vector2>(buf);
             Path.Pop();
@@ -83,7 +83,7 @@ public class Creature : Entity
         Target = target;
         TargetCoords = Target.GetComponent<Creature>().MapCoords; //TODO Нужно?
         World = GameObject.FindWithTag("World").GetComponent<WorldWrapper>().World;//TODO Костыль
-        List<Vector2> buf = Pathfinder.MakePath((World.CurrentMap as LocalMap).BlockMatrix, MapCoords, TargetCoords);//TODO Тут?
+        List<Vector2> buf = Pathfinder.MakePath((World.CurrentMap as LocalMap).GetBlockMatrix(), MapCoords, TargetCoords);//TODO Тут?
         buf.Reverse();
         Path = new Stack<Vector2>(buf);
         Path.Pop();
@@ -103,14 +103,15 @@ public class Creature : Entity
             Vector2 node = Path.Pop();
             if (!World.IsHexFree(node))
             {
-                List<Vector2> buf = Pathfinder.MakePath((World.CurrentMap as LocalMap).BlockMatrix, MapCoords, TargetCoords);//TODO Тут?
+                List<Vector2> buf = Pathfinder.MakePath((World.CurrentMap as LocalMap).GetBlockMatrix(), MapCoords, TargetCoords);//TODO Тут?
                 buf.Reverse();
                 Path = new Stack<Vector2>(buf);
                 Path.Pop();
                 node = Path.Pop();
             }
-            EventManager.OnCreatureMove(MapCoords, node);
+            Vector2 vBuf = MapCoords;
             MapCoords = node;
+            EventManager.OnCreatureMove(vBuf, MapCoords); //TODO name?
         }
         else
         {
@@ -122,10 +123,10 @@ public class Creature : Entity
             if (dy != 0)
                 dy = (sbyte)(dy > 0 ? 1 : -1);
 
-            Vector2 buf = MapCoords;
+            //Vector2 buf = MapCoords; TODO !!!
             MapCoords.x += dx;
             MapCoords.y += dy;
-            EventManager.OnCreatureMove(buf, MapCoords);
+            //EventManager.OnCreatureMove(buf, MapCoords); TODO !!!
         }
         MoveTime = MoveAnimTime;
         Moving = true;
@@ -170,7 +171,7 @@ public class Creature : Entity
                 if (TargetCoords != Target.GetComponent<Creature>().MapCoords)//TODO Тут?
                 {
                     TargetCoords = Target.GetComponent<Creature>().MapCoords;
-                    List<Vector2> buf = Pathfinder.MakePath((World.CurrentMap as LocalMap).BlockMatrix, MapCoords, TargetCoords);//TODO Тут?
+                    List<Vector2> buf = Pathfinder.MakePath((World.CurrentMap as LocalMap).GetBlockMatrix(), MapCoords, TargetCoords);//TODO Тут?
                     buf.Reverse();
                     Path = new Stack<Vector2>(buf);
                     Path.Pop();

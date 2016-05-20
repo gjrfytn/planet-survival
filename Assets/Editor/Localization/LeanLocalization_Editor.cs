@@ -84,7 +84,7 @@ namespace Lean
 				LeanLocalization.UpdateTranslations();
 				
 				EditorUtility.SetDirty(localization);
-				EditorApplication.MarkSceneDirty();
+				UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(UnityEngine.SceneManagement.SceneManager.GetActiveScene());
 			}
 		}
 		

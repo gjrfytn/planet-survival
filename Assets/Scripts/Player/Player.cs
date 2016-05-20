@@ -36,6 +36,8 @@ public sealed class Player : Creature
     public byte Mental = 100;
     //public float CurrentHunger = 500; // Голод (в данный момент)
 
+    public bool CanDualWield;
+
     [Header("Дальность обзора")]
     [Range(0, 255)]
     public byte ViewDistance;
@@ -66,7 +68,8 @@ public sealed class Player : Creature
         if (Health == 0)
         {
             //Health=0;
-            Application.LoadLevel("Menu");
+            // Application.LoadLevel("Menu");
+            UnityEngine.SceneManagement.SceneManager.LoadScene("Menu");
         }
         /*if (HungerTime > 0)
         {  // Если HungerTime больше нуля
@@ -108,6 +111,6 @@ public sealed class Player : Creature
         MoveAnimTime = moveAnimTime;
         base.MoveToMapCoords(mapCoords);
         EventManager.OnTurn();
-        EventManager.OnPlayerMove(mapCoords); //TODO Временно
+        //EventManager.OnPlayerMove(mapCoords); //TODO Временно //Временно закоммент. см. HexInteraction 21
     }
 }

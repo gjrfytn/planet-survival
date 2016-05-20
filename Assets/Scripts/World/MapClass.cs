@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 public abstract class Map : IBinaryReadableWriteable
 {
@@ -12,6 +13,15 @@ public abstract class Map : IBinaryReadableWriteable
     public byte?[,] HexSpriteID_Matrix;
 
     public float[,] ForestMatrix;
+
+    public Map(ushort width, ushort height)
+    {
+        Width = width;
+        Height = height;
+        HeightMatrix = new float[height, width];
+        HexSpriteID_Matrix = new byte?[height, width];
+        ForestMatrix = new float[height, width];
+    }
 
     public virtual void Write(BinaryWriter writer)
     {
@@ -63,47 +73,95 @@ public abstract class Map : IBinaryReadableWriteable
     {
         return ForestMatrix[(int)coords.y, (int)coords.x];
     }
-
-    public Map(ushort width, ushort height)
-    {
-        Width = width;
-        Height = height;
-        HeightMatrix = new float[height, width];
-        HexSpriteID_Matrix = new byte?[height, width];
-        ForestMatrix = new float[height, width];
-    }
 }
 
 public sealed class LocalMap : Map
 {
-    public bool[,] BlockMatrix;
+    ushort freeID;
+    Dictionary<ushort, Entity>[,] ObjectMatrix;
+
 
     public LocalMap(ushort width, ushort height)
         : base(width, height)
     {
-        BlockMatrix = new bool[height, width];
+        ObjectMatrix = new Dictionary<ushort, Entity>[height, width];
+        for (ushort y = 0; y < height; ++y)
+            for (ushort x = 0; x < width; ++x)
+                ObjectMatrix[y, x] = new Dictionary<ushort, Entity>();
+
+        EventManager.CreatureMoved += MoveObject;
+    }
+
+    ~LocalMap()
+    {
+        EventManager.CreatureMoved -= MoveObject;
     }
 
     public override void Write(BinaryWriter writer)
     {
         base.Write(writer);
+        writer.Write(freeID);
         for (ushort y = 0; y < Height; ++y)
             for (ushort x = 0; x < Width; ++x)
-                writer.Write(BlockMatrix[y, x]);
+            {
+                writer.Write((byte)ObjectMatrix[y, x].Count);
+                foreach (KeyValuePair<ushort, Entity> obj in ObjectMatrix[y, x])
+                {
+                    writer.Write(obj.Key);
+                    obj.Value.Write(writer);
+                }
+            }
     }
 
     public override void Read(BinaryReader reader)
     {
         base.Read(reader);
+        freeID = reader.ReadUInt16();
         for (ushort y = 0; y < Height; ++y)
             for (ushort x = 0; x < Width; ++x)
-                BlockMatrix[y, x] = reader.ReadBoolean();
+            {
+                byte objCount = reader.ReadByte();
+                ObjectMatrix[y, x] = new Dictionary<ushort, Entity>(objCount);
+                for (byte i = 0; i < objCount; ++i)
+                {
+                    GameObject buf = new GameObject();
+                    buf.AddComponent<Entity>().Read(reader);
+                    ObjectMatrix[y, x].Add(
+                        reader.ReadUInt16(),
+                        buf.GetComponent<Entity>()
+                    );
+                }
+            }
     }
 
     public bool IsBlocked(Vector2 coords)
     {
-        return BlockMatrix[(int)coords.y, (int)coords.x];
+        return ObjectMatrix[(int)coords.y, (int)coords.x].Any(o => o.Value.Blocking);
     }
+
+    public bool[,] GetBlockMatrix()
+    {
+        bool[,] bm = new bool[Height, Width];
+        for (ushort y = 0; y < Height; ++y)
+            for (ushort x = 0; x < Width; ++x)
+                bm[y, x] = ObjectMatrix[y, x].Any(o => o.Value.Blocking);
+        return bm;
+    }
+
+    public void AddObject(Entity obj)
+    {
+        ObjectMatrix[(int)obj.MapCoords.y, (int)obj.MapCoords.x].Add(freeID, obj);
+        freeID++;
+    }
+
+    void MoveObject(Vector2 from, Vector2 to)
+    {
+        KeyValuePair<ushort, Entity> obj = ObjectMatrix[(int)from.y, (int)from.x].Single(o => o.Value.MapCoords != from);
+        ObjectMatrix[(int)to.y, (int)to.x].Add(obj.Key, obj.Value);
+        ObjectMatrix[(int)from.y, (int)from.x].Remove(obj.Key);
+    }
+
+    //TODO remove
 }
 
 public sealed class GlobalMap : Map
