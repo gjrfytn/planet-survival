@@ -1,12 +1,11 @@
 ﻿using UnityEngine;
-using System.Collections;
 
 public class EventButtonTest : MonoBehaviour
 {
     [HideInInspector]
     public byte Index;
 
-    public void Click()
+    public void Click()//C#6.0 EBD
     {
         GetComponentInParent<GameEventManager>().EventPanelButtonPress(Index);
     }

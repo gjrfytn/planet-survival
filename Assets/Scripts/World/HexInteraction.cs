@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using System.Collections;
 
 public class HexInteraction : MonoBehaviour
 {
@@ -12,24 +11,20 @@ public class HexInteraction : MonoBehaviour
 
     public void OnMouseUpAsButton()
     {
-        // Раскомментировать if, если нужна проверка, соседний ли это гекс.
-        //if (World.IsMapCoordsAdjacent(Player.GetComponent<Player>().MapCoords, GetComponent<HexData>().MapCoords))
-        // {
         if (!World.IsCurrentMapLocal())
         {
-            //TerrainType terrType = (World.CurrentMap as GlobalMap).GetTerrainType( GetComponent<HexData>().MapCoords);
-            EventManager.OnPlayerMove(GetComponent<HexData>().MapCoords); //Временно см. Player 114
-            TerrainType terrType = World.GetHexTerrain(GetComponent<HexData>().MapCoords);
+            //TerrainType terrType = (World.CurrentMap as Chunk).GetTerrainType( GetComponent<HexData>().MapCoords);
+            EventManager.OnPlayerMove(GetComponent<HexData>().Pos); //Временно см. Player 114
+            TerrainType terrType = World.GetHexTerrain(GetComponent<HexData>().Pos);
             ushort time = 0;
             foreach (Terrains.TerrainProperties p in GameObject.FindWithTag("World").GetComponent<Terrains>().TerrainsArray)
                 if ((terrType & p.Terrain) != 0)
                     time += p.TravelTime;
-            GameObject.FindWithTag("Player").GetComponent<Player>().MoveToMapCoords(GetComponent<HexData>().MapCoords, time * GameTime.GameMinToRealSec);
+            GameObject.FindWithTag("Player").GetComponent<Player>().MoveTo(GetComponent<HexData>().Pos, time * GameTime.GameMinToRealSec);
             EventManager.OnActionStart(time);
         }
         else
-            GameObject.FindWithTag("Player").GetComponent<Player>().MoveToMapCoords(GetComponent<HexData>().MapCoords);
-        // }
+            GameObject.FindWithTag("Player").GetComponent<Player>().MoveTo((LocalPos)GetComponent<HexData>().Pos, true);
     }
 
     public void OnMouseEnter()

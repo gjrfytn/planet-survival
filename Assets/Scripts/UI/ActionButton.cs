@@ -1,13 +1,12 @@
 ﻿using UnityEngine;
-using System.Collections;
 
-public class ActionButton : MonoBehaviour 
+public class ActionButton : MonoBehaviour
 {
-	public GameObject Entity;
+    public Entity Entity;
 
-	public void Click()
-	{
-		Entity.GetComponent<PopupButtons>().ButtonClick(gameObject);
-		Entity.GetComponent<Creature>().TakeDamage(10);///Временно
-	}
+    public void Click()
+    {
+        Entity.GetComponent<PopupButtons>().ButtonClick(gameObject);
+        GameObject.FindWithTag("Player").GetComponent<Player>().Attack(Entity as Creature);
+    }
 }

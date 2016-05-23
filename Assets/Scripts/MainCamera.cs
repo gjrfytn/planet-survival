@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using System.Collections;
 
 public class MainCamera : MonoBehaviour
 {
@@ -27,11 +26,11 @@ public class MainCamera : MonoBehaviour
         World = GameObject.FindWithTag("World").GetComponent<WorldWrapper>().World;
     }
 
-    void CalculateMove(Vector2 playerMCoords)
+	void CalculateMove(GlobalPos pos)
     {
         if (World.IsCurrentMapLocal())
         {
-            if (Screen.width / 2 < WorldVisualiser.LocalHexSpriteSize.x * 100 * (Player.GetComponent<Player>().MapCoords.x) && Screen.width / 2 < WorldVisualiser.LocalHexSpriteSize.x * 100 * (World.LocalMapSize.x - Player.GetComponent<Player>().MapCoords.x))
+			if (Screen.width>>1 < WorldVisualiser.LocalHexSpriteSize.x * 100 * (Player.GetComponent<Player>().Pos.X) && Screen.width>>1 < WorldVisualiser.LocalHexSpriteSize.x * 100 * (World.LocalMapSize.X - Player.GetComponent<Player>().Pos.Y))
 			{
 				if(CapturedX)
 					CapturedX=false;
@@ -43,7 +42,7 @@ public class MainCamera : MonoBehaviour
                 MoveX = false;
 				CapturedX=true;
 			}
-            if (Screen.height / 2 < WorldVisualiser.LocalHexSpriteSize.y * 75 * (Player.GetComponent<Player>().MapCoords.y) && Screen.height / 2 < WorldVisualiser.LocalHexSpriteSize.y * 75 * (World.LocalMapSize.y - Player.GetComponent<Player>().MapCoords.y))
+			if (Screen.height>> 1< WorldVisualiser.LocalHexSpriteSize.y * 75 * (Player.GetComponent<Player>().Pos.Y) && Screen.height>> 1 < WorldVisualiser.LocalHexSpriteSize.y * 75 * (World.LocalMapSize.Y - Player.GetComponent<Player>().Pos.Y))
 			{
 				if(CapturedY)
 					CapturedY=false;
@@ -63,7 +62,7 @@ public class MainCamera : MonoBehaviour
         }
     }
 
-    void FollowPlayer()
+	void FollowPlayer()//C#6.0 EBD
     {
         transform.position = new Vector3(MoveX ? Player.transform.position.x : transform.position.x, MoveY ? Player.transform.position.y : transform.position.y, transform.position.z);
     }

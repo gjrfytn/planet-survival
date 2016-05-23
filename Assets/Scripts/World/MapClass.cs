@@ -1,6 +1,4 @@
-﻿using UnityEngine;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
@@ -54,24 +52,9 @@ public abstract class Map : IBinaryReadableWriteable
                 ForestMatrix[y, x] = reader.ReadSingle();
     }
 
-    public bool Contains(Vector2 coords)
+    public bool Contains(GlobalPos coords)//C#6.0 EBD
     {
-        return coords.y >= 0 && coords.y < Height && coords.x >= 0 && coords.x < Width;
-    }
-
-    public float GetHeight(Vector2 coords)
-    {
-        return HeightMatrix[(int)coords.y, (int)coords.x];
-    }
-
-    public byte? GetHexSpriteID(Vector2 coords)
-    {
-        return HexSpriteID_Matrix[(int)coords.y, (int)coords.x];
-    }
-
-    public float GetForest(Vector2 coords)
-    {
-        return ForestMatrix[(int)coords.y, (int)coords.x];
+        return coords.Y >= 0 && coords.Y < Height && coords.X >= 0 && coords.X < Width;
     }
 }
 
@@ -124,7 +107,7 @@ public sealed class LocalMap : Map
                 ObjectMatrix[y, x] = new Dictionary<ushort, Entity>(objCount);
                 for (byte i = 0; i < objCount; ++i)
                 {
-                    GameObject buf = new GameObject();
+                    UnityEngine.GameObject buf = new UnityEngine.GameObject(); //TODO
                     buf.AddComponent<Entity>().Read(reader);
                     ObjectMatrix[y, x].Add(
                         reader.ReadUInt16(),
@@ -134,9 +117,9 @@ public sealed class LocalMap : Map
             }
     }
 
-    public bool IsBlocked(Vector2 coords)
+    public bool IsBlocked(LocalPos coords)//C#6.0 EBD
     {
-        return ObjectMatrix[(int)coords.y, (int)coords.x].Any(o => o.Value.Blocking);
+        return ObjectMatrix[coords.Y, coords.X].Any(o => o.Value.Blocking);
     }
 
     public bool[,] GetBlockMatrix()
@@ -150,21 +133,21 @@ public sealed class LocalMap : Map
 
     public void AddObject(Entity obj)
     {
-        ObjectMatrix[(int)obj.MapCoords.y, (int)obj.MapCoords.x].Add(freeID, obj);
+        ObjectMatrix[obj.Pos.Y, obj.Pos.X].Add(freeID, obj);
         freeID++;
     }
 
-    void MoveObject(Vector2 from, Vector2 to)
+    void MoveObject(LocalPos from, LocalPos to)
     {
-        KeyValuePair<ushort, Entity> obj = ObjectMatrix[(int)from.y, (int)from.x].Single(o => o.Value.MapCoords != from);
-        ObjectMatrix[(int)to.y, (int)to.x].Add(obj.Key, obj.Value);
-        ObjectMatrix[(int)from.y, (int)from.x].Remove(obj.Key);
+        KeyValuePair<ushort, Entity> obj = ObjectMatrix[from.Y, from.X].Single(o => o.Value.Pos != from);
+        ObjectMatrix[to.Y, to.X].Add(obj.Key, obj.Value);
+        ObjectMatrix[from.Y, from.X].Remove(obj.Key);
     }
 
     //TODO remove
 }
 
-public sealed class GlobalMap : Map
+public sealed class Chunk : Map
 {
     public bool[,] RiverMatrix;
     public byte?[,] RiverSpriteID_Matrix;
@@ -177,13 +160,13 @@ public sealed class GlobalMap : Map
     public byte?[,] RoadSpriteID_Matrix;
     public short[,] RoadSpriteRotationMatrix;
 
-    public List<List<Vector2>> Rivers;
-    public List<List<Vector2>> Clusters;
-    public List<List<Vector2>> Roads;
+    public List<List<LocalPos>> Rivers;
+    public List<List<LocalPos>> Clusters;
+    public List<List<LocalPos>> Roads;
 
     public TerrainType[,] TerrainMatrix;
 
-    public GlobalMap(ushort width, ushort height)
+    public Chunk(ushort width, ushort height)
         : base(width, height)
     {
         RiverMatrix = new bool[height, width];
@@ -227,34 +210,34 @@ public sealed class GlobalMap : Map
             for (ushort x = 0; x < Width; ++x)
                 writer.Write(RoadSpriteRotationMatrix[y, x]);
 
-        writer.Write(Rivers.Count);
+        writer.Write((byte)Rivers.Count);
         for (byte i = 0; i < Rivers.Count; ++i)
         {
             writer.Write((ushort)Rivers[i].Count);
-            for (byte j = 0; j < Rivers[i].Count; ++j)
+            for (ushort j = 0; j < Rivers[i].Count; ++j)
             {
-                writer.Write(Rivers[i][j].x);
-                writer.Write(Rivers[i][j].y);
+                writer.Write(Rivers[i][j].X);
+                writer.Write(Rivers[i][j].Y);
             }
         }
-        writer.Write(Clusters.Count);
+        writer.Write((byte)Clusters.Count);
         for (byte i = 0; i < Clusters.Count; ++i)
         {
-            writer.Write((ushort)Clusters[i].Count);
+            writer.Write((byte)Clusters[i].Count);
             for (byte j = 0; j < Clusters[i].Count; ++j)
             {
-                writer.Write(Clusters[i][j].x);
-                writer.Write(Clusters[i][j].y);
+                writer.Write(Clusters[i][j].X);
+                writer.Write(Clusters[i][j].Y);
             }
         }
-        writer.Write(Roads.Count);
+        writer.Write((byte)Roads.Count);
         for (byte i = 0; i < Roads.Count; ++i)
         {
             writer.Write((ushort)Roads[i].Count);
-            for (byte j = 0; j < Roads[i].Count; ++j)
+            for (ushort j = 0; j < Roads[i].Count; ++j)
             {
-                writer.Write(Roads[i][j].x);
-                writer.Write(Roads[i][j].y);
+                writer.Write(Roads[i][j].X);
+                writer.Write(Roads[i][j].Y);
             }
         }
 
@@ -303,92 +286,47 @@ public sealed class GlobalMap : Map
 
 
         byte riversCount = reader.ReadByte();
-        Rivers = new List<List<Vector2>>(riversCount);
+        Rivers = new List<List<LocalPos>>(riversCount);
         for (byte i = 0; i < riversCount; ++i)
         {
             ushort riverLength = reader.ReadUInt16();
-            Rivers[i] = new List<Vector2>(riverLength);
-            for (byte j = 0; j < riverLength; ++j)
+            Rivers.Add(new List<LocalPos>(riverLength));
+            for (ushort j = 0; j < riverLength; ++j)
             {
-                Rivers[i].Add(new Vector2(
-                    reader.ReadSingle(),
-                    reader.ReadSingle()
+                Rivers[i].Add(new LocalPos(
+                    reader.ReadUInt16(),
+                    reader.ReadUInt16()
                     ));
             }
         }
 
         byte clusterCount = reader.ReadByte();
-        Clusters = new List<List<Vector2>>(clusterCount);
+        Clusters = new List<List<LocalPos>>(clusterCount);
         for (byte i = 0; i < clusterCount; ++i)
         {
-            ushort clusterSize = reader.ReadUInt16();
-            Clusters[i] = new List<Vector2>(clusterSize);
+            ushort clusterSize = reader.ReadByte();
+            Clusters.Add(new List<LocalPos>(clusterSize));
             for (byte j = 0; j < clusterSize; ++j)
             {
-                Clusters[i].Add(new Vector2(
-                    reader.ReadSingle(),
-                    reader.ReadSingle()
+                Clusters[i].Add(new LocalPos(
+                    reader.ReadUInt16(),
+                    reader.ReadUInt16()
                     ));
             }
         }
         byte roadCount = reader.ReadByte();
-        Roads = new List<List<Vector2>>(roadCount);
+        Roads = new List<List<LocalPos>>(roadCount);
         for (byte i = 0; i < roadCount; ++i)
         {
             ushort roadLength = reader.ReadUInt16();
-            Roads[i] = new List<Vector2>(roadLength);
-            for (byte j = 0; j < roadLength; ++j)
+            Roads.Add(new List<LocalPos>(roadLength));
+            for (ushort j = 0; j < roadLength; ++j)
             {
-                Roads[i].Add(new Vector2(
-                    reader.ReadSingle(),
-                    reader.ReadSingle()
+                Roads[i].Add(new LocalPos(
+                    reader.ReadUInt16(),
+                    reader.ReadUInt16()
                     ));
             }
         }
-    }
-
-    public bool HasRiver(Vector2 coords)
-    {
-        return RiverMatrix[(int)coords.y, (int)coords.x];
-    }
-
-    public byte? GetRiverSpriteID(Vector2 coords)
-    {
-        return RiverSpriteID_Matrix[(int)coords.y, (int)coords.x];
-    }
-
-    public short GetRiverSpriteRotation(Vector2 coords)
-    {
-        return RiverSpriteRotationMatrix[(int)coords.y, (int)coords.x];
-    }
-
-    public bool HasCluster(Vector2 coords)
-    {
-        return ClusterMatrix[(int)coords.y, (int)coords.x];
-    }
-
-    public byte? GetClusterSpriteID(Vector2 coords)
-    {
-        return ClusterSpriteID_Matrix[(int)coords.y, (int)coords.x];
-    }
-
-    public bool HasRoad(Vector2 coords)
-    {
-        return RoadMatrix[(int)coords.y, (int)coords.x];
-    }
-
-    public byte? GetRoadSpriteID(Vector2 coords)
-    {
-        return RoadSpriteID_Matrix[(int)coords.y, (int)coords.x];
-    }
-
-    public short GetRoadSpriteRotation(Vector2 coords)
-    {
-        return RoadSpriteRotationMatrix[(int)coords.y, (int)coords.x];
-    }
-
-    public TerrainType GetTerrainType(Vector2 coords)
-    {
-        return TerrainMatrix[(int)coords.y, (int)coords.x];
     }
 }

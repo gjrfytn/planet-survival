@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
 
 
@@ -69,13 +68,13 @@ public class WorldVisualiser : MonoBehaviour
     }
 
     List<ListType> RenderedHexes = new List<ListType>();
-    GlobalMap[,] CashedChunks = new GlobalMap[3, 3];
+    Chunk[,] CashedChunks = new Chunk[3, 3];
     int ChunkX, ChunkY;
 
 
     class QueueType
     {
-        public Vector2 MapCoords;
+        public GlobalPos Pos;
         public byte Distance;
     }
 
@@ -147,7 +146,7 @@ public class WorldVisualiser : MonoBehaviour
     /// <param name="mapPosition">Координаты в матрице.</param>
     /// <param name="distance">Дальность обзора.</param>
     /// <param name="currentMap">Активная карта.</param>
-    public void RenderVisibleHexes(Vector2 mapCoords, byte distance, GlobalMap[,] cashedChunks, int chunkY, int chunkX)
+    public void RenderVisibleHexes(GlobalPos pos, byte distance, Chunk[,] cashedChunks, int chunkY, int chunkX)
     {
         CashedChunks = cashedChunks;
         ChunkX = chunkX;
@@ -155,11 +154,11 @@ public class WorldVisualiser : MonoBehaviour
 
         RenderedHexes.ForEach(hex => hex.InSign = false);
 
-        SignQueue.Enqueue(new QueueType { MapCoords = mapCoords, Distance = distance });
+        SignQueue.Enqueue(new QueueType { Pos = pos, Distance = distance });
         while (SignQueue.Count != 0)
         {
             QueueType buf = SignQueue.Dequeue();
-            SpreadRender(buf.MapCoords, buf.Distance);
+            SpreadRender(buf.Pos, buf.Distance);
         }
 
         for (ushort i = 0; i < RenderedHexes.Count; ++i)
@@ -181,28 +180,28 @@ public class WorldVisualiser : MonoBehaviour
     /// </summary>
     /// <param name="mapPosition">Координаты в матрице.</param>
     /// <param name="distance">Оставшееся расстояние для распространения.</param>
-    void SpreadRender(Vector2 mapCoords, byte distance)
+    void SpreadRender(GlobalPos pos, byte distance)
     {
-        GlobalMap map;
-        Vector2 chunkCoords;
+        Chunk map;
         ushort chunkSize = CashedChunks[1, 1].Width;
 
-        float chunkX = mapCoords.x / chunkSize, chunkY = mapCoords.y / chunkSize;
+        float chunkX = (float)pos.X / chunkSize, chunkY = (float)pos.Y / chunkSize;
 
         chunkX = Mathf.Floor(chunkX);
         chunkY = Mathf.Floor(chunkY);
 
         map = CashedChunks[(int)(chunkY - ChunkY + 1), (int)(chunkX - ChunkX + 1)];
 
-        chunkCoords.x = mapCoords.x - chunkSize * chunkX;
-        chunkCoords.y = mapCoords.y - chunkSize * chunkY;
+        LocalPos inchunkPos;
+        inchunkPos.X = (ushort)(pos.X - chunkSize * chunkX);
+        inchunkPos.Y = (ushort)(pos.Y - chunkSize * chunkY);
 
-        short index = (short)RenderedHexes.FindIndex(x => x.Hex.GetComponent<HexData>().MapCoords == mapCoords);
+        short index = (short)RenderedHexes.FindIndex(x => x.Hex.GetComponent<HexData>().Pos == pos);
         if (index == -1)
         {
-            ListType hex = new ListType { Hex = Instantiate(Hex, GetTransformPosFromMapCoords(mapCoords, false), Quaternion.identity) as GameObject, InSign = true };
-            hex.Hex.GetComponent<HexData>().MapCoords = mapCoords;
-            MakeHexGraphics(hex, chunkCoords, map);
+            ListType hex = new ListType { Hex = Instantiate(Hex, GetTransformPosFromMapPos(pos), Quaternion.identity) as GameObject, InSign = true };
+            hex.Hex.GetComponent<HexData>().Pos = pos;
+            MakeHexGraphics(hex, inchunkPos, map);
             RenderedHexes.Add(hex);
         }
         else
@@ -215,12 +214,12 @@ public class WorldVisualiser : MonoBehaviour
 
         if (distance != 0)
         {
-            SignQueue.Enqueue(new QueueType { MapCoords = HexNavigHelper.GetNeighborMapCoords(mapCoords, HexDirection.TOP_LEFT), Distance = (byte)(distance - 1) });
-            SignQueue.Enqueue(new QueueType { MapCoords = HexNavigHelper.GetNeighborMapCoords(mapCoords, HexDirection.TOP), Distance = (byte)(distance - 1) });
-            SignQueue.Enqueue(new QueueType { MapCoords = HexNavigHelper.GetNeighborMapCoords(mapCoords, HexDirection.TOP_RIGHT), Distance = (byte)(distance - 1) });
-            SignQueue.Enqueue(new QueueType { MapCoords = HexNavigHelper.GetNeighborMapCoords(mapCoords, HexDirection.BOTTOM_RIGHT), Distance = (byte)(distance - 1) });
-            SignQueue.Enqueue(new QueueType { MapCoords = HexNavigHelper.GetNeighborMapCoords(mapCoords, HexDirection.BOTTOM), Distance = (byte)(distance - 1) });
-            SignQueue.Enqueue(new QueueType { MapCoords = HexNavigHelper.GetNeighborMapCoords(mapCoords, HexDirection.BOTTOM_LEFT), Distance = (byte)(distance - 1) });
+            SignQueue.Enqueue(new QueueType { Pos = HexNavigHelper.GetNeighborMapCoords(pos, HexDirection.TOP_LEFT), Distance = (byte)(distance - 1) });
+            SignQueue.Enqueue(new QueueType { Pos = HexNavigHelper.GetNeighborMapCoords(pos, HexDirection.TOP), Distance = (byte)(distance - 1) });
+            SignQueue.Enqueue(new QueueType { Pos = HexNavigHelper.GetNeighborMapCoords(pos, HexDirection.TOP_RIGHT), Distance = (byte)(distance - 1) });
+            SignQueue.Enqueue(new QueueType { Pos = HexNavigHelper.GetNeighborMapCoords(pos, HexDirection.BOTTOM_RIGHT), Distance = (byte)(distance - 1) });
+            SignQueue.Enqueue(new QueueType { Pos = HexNavigHelper.GetNeighborMapCoords(pos, HexDirection.BOTTOM), Distance = (byte)(distance - 1) });
+            SignQueue.Enqueue(new QueueType { Pos = HexNavigHelper.GetNeighborMapCoords(pos, HexDirection.BOTTOM_LEFT), Distance = (byte)(distance - 1) });
         }
     }
 
@@ -229,80 +228,80 @@ public class WorldVisualiser : MonoBehaviour
     /// </summary>
     /// <param name="hex">Хекс.</param>
     /// <param name="mapCoords">Координаты в матрице.</param>
-    void MakeHexGraphics(ListType hex, Vector2 mapCoords, GlobalMap map)
+    void MakeHexGraphics(ListType hex, LocalPos pos, Chunk map)
     {
-        if (map.GetHexSpriteID(mapCoords).HasValue /*?*/&& map.GetHexSpriteID(mapCoords) < AllGlobalHexSprites.Count)
-            hex.Hex.GetComponent<SpriteRenderer>().sprite = AllGlobalHexSprites[map.GetHexSpriteID(mapCoords).Value];
+        if (map.HexSpriteID_Matrix[pos.Y, pos.X].HasValue /*?*/&& map.HexSpriteID_Matrix[pos.Y, pos.X] < AllGlobalHexSprites.Count)
+            hex.Hex.GetComponent<SpriteRenderer>().sprite = AllGlobalHexSprites[map.HexSpriteID_Matrix[pos.Y, pos.X].Value];
         else
-            hex.Hex.GetComponent<SpriteRenderer>().sprite = ChooseHexSprite(mapCoords, map);
+            hex.Hex.GetComponent<SpriteRenderer>().sprite = ChooseHexSprite(pos, map);
         hex.Hex.GetComponent<SpriteRenderer>().sortingLayerName = "Landscape";//
         bool forestBlocked = false;
-        if (map.HasRiver(mapCoords))
+        if (map.RiverMatrix[pos.Y, pos.X])
         {
             GameObject riverSprite = new GameObject();
             hex.LandscapeObj.Add(riverSprite);
             riverSprite.transform.position = hex.Hex.transform.position;
             riverSprite.AddComponent<SpriteRenderer>().sortingLayerName = "LandscapeObjects";
             riverSprite.GetComponent<SpriteRenderer>().material = DiffuseMaterial;
-            if (map.GetRiverSpriteID(mapCoords).HasValue /*?*/ && map.GetRiverSpriteID(mapCoords) < AllRiverSprites.Count)
+            if (map.RiverSpriteID_Matrix[pos.Y, pos.X].HasValue && map.RiverSpriteID_Matrix[pos.Y, pos.X] < AllRiverSprites.Count)
             {
-                riverSprite.GetComponent<SpriteRenderer>().sprite = AllRiverSprites[map.GetRiverSpriteID(mapCoords).Value];
-                riverSprite.transform.Rotate(0, 0, map.GetRiverSpriteRotation(mapCoords));
+                riverSprite.GetComponent<SpriteRenderer>().sprite = AllRiverSprites[map.RiverSpriteID_Matrix[pos.Y, pos.X].Value];
+                riverSprite.transform.Rotate(0, 0, map.RiverSpriteRotationMatrix[pos.Y, pos.X]);
             }
             else
-                riverSprite.GetComponent<SpriteRenderer>().sprite = ChooseHexRiverSprite(riverSprite.transform, mapCoords, map);
+                riverSprite.GetComponent<SpriteRenderer>().sprite = ChooseHexRiverSprite(riverSprite.transform, pos, map);
             riverSprite.AddComponent<Fader>();
             forestBlocked = true;
         }
-        if (map.HasCluster(mapCoords))
+        if (map.ClusterMatrix[pos.Y, pos.X])
         {
             GameObject clusterSprite = new GameObject();
             hex.LandscapeObj.Add(clusterSprite);
             clusterSprite.transform.position = hex.Hex.transform.position;
             clusterSprite.AddComponent<SpriteRenderer>().sortingLayerName = "Infrastructure";
             clusterSprite.GetComponent<SpriteRenderer>().material = DiffuseMaterial;
-            if (!map.GetClusterSpriteID(mapCoords).HasValue /*?*/|| map.GetClusterSpriteID(mapCoords) >= GlobalMapParam.RuinSprites.Length)
-                map.ClusterSpriteID_Matrix[(int)mapCoords.y, (int)mapCoords.x] = (byte)Random.Range(0, GlobalMapParam.RuinSprites.Length);
-            clusterSprite.GetComponent<SpriteRenderer>().sprite = GlobalMapParam.RuinSprites[map.GetClusterSpriteID(mapCoords).Value];
+            if (!map.ClusterSpriteID_Matrix[pos.Y, pos.X].HasValue || map.ClusterSpriteID_Matrix[pos.Y, pos.X] >= GlobalMapParam.RuinSprites.Length)
+                map.ClusterSpriteID_Matrix[pos.Y, pos.X] = (byte)Random.Range(0, GlobalMapParam.RuinSprites.Length);
+            clusterSprite.GetComponent<SpriteRenderer>().sprite = GlobalMapParam.RuinSprites[map.ClusterSpriteID_Matrix[pos.Y, pos.X].Value];
             clusterSprite.AddComponent<Fader>();
             forestBlocked = true;
         }
-        if (map.HasRoad(mapCoords))
+        if (map.RoadMatrix[pos.Y, pos.X])
         {
             GameObject roadSprite = new GameObject();
             hex.LandscapeObj.Add(roadSprite);
             roadSprite.transform.position = hex.Hex.transform.position;
             roadSprite.AddComponent<SpriteRenderer>().sortingLayerName = "Infrastructure";
             roadSprite.GetComponent<SpriteRenderer>().material = DiffuseMaterial;
-            if (map.GetRoadSpriteID(mapCoords).HasValue /*?*/ && map.GetRoadSpriteID(mapCoords) < AllRiverSprites.Count)
+            if (map.RoadSpriteID_Matrix[pos.Y, pos.X].HasValue /*?*/ && map.RoadSpriteID_Matrix[pos.Y, pos.X] < AllRiverSprites.Count)
             {
-                roadSprite.GetComponent<SpriteRenderer>().sprite = AllRoadSprites[map.GetRoadSpriteID(mapCoords).Value];
-                roadSprite.transform.Rotate(0, 0, map.GetRoadSpriteRotation(mapCoords));
+                roadSprite.GetComponent<SpriteRenderer>().sprite = AllRoadSprites[map.RoadSpriteID_Matrix[pos.Y, pos.X].Value];
+                roadSprite.transform.Rotate(0, 0, map.RoadSpriteRotationMatrix[pos.Y, pos.X]);
             }
             else
-                roadSprite.GetComponent<SpriteRenderer>().sprite = ChooseHexRoadSprite(roadSprite.transform, mapCoords, map);
+                roadSprite.GetComponent<SpriteRenderer>().sprite = ChooseHexRoadSprite(roadSprite.transform, pos, map);
             roadSprite.AddComponent<Fader>();
             forestBlocked = true;
         }
         if (!forestBlocked)
-            MakeHexForest(hex, mapCoords, map);
+            MakeHexForest(hex, pos, map);
         hex.Hex.GetComponent<Fader>().FadeIn(FadeInTime);
         hex.LandscapeObj.ForEach(obj => obj.GetComponent<Fader>().FadeIn(FadeInTime));
         hex.Trees.ForEach(tree => tree.GetComponent<Fader>().FadeIn(FadeInTime));
     }
 
-    void MakeHexGraphics(ListType hex, Vector2 mapCoords, LocalMap map)
+    void MakeHexGraphics(ListType hex, LocalPos pos, LocalMap map)
     {
-        if (map.GetHexSpriteID(mapCoords).HasValue /*?*/&& map.GetHexSpriteID(mapCoords) < AllLocalHexSprites.Count)
-            hex.Hex.GetComponent<SpriteRenderer>().sprite = AllLocalHexSprites[map.GetHexSpriteID(mapCoords).Value];
+        if (map.HexSpriteID_Matrix[pos.Y, pos.X].HasValue /*?*/&& map.HexSpriteID_Matrix[pos.Y, pos.X] < AllLocalHexSprites.Count)
+            hex.Hex.GetComponent<SpriteRenderer>().sprite = AllLocalHexSprites[map.HexSpriteID_Matrix[pos.Y, pos.X].Value];
         else
-            hex.Hex.GetComponent<SpriteRenderer>().sprite = ChooseHexSprite(mapCoords, map);
+            hex.Hex.GetComponent<SpriteRenderer>().sprite = ChooseHexSprite(pos, map);
         hex.Hex.GetComponent<SpriteRenderer>().sortingLayerName = "Landscape";//
-        if (map.GetHeight(mapCoords) < LocalMapParam.Terrains[0].StartingHeight)
+        if (map.HeightMatrix[pos.Y, pos.X] < LocalMapParam.Terrains[0].StartingHeight)
         {
-            //float offsetbuf=(LocalHexSpriteSize.x-LocalHexSpriteSize.y)/2;
+            //float offsetbuf=(LocalHexSpriteSize.pos.X-LocalHexSpriteSize.y)/2;
             for (byte i = 0; i < 6; ++i) //TODO К оптимизации.
-                if (map.Contains(HexNavigHelper.GetNeighborMapCoords(mapCoords, (TurnedHexDirection)i)) && map.GetHeight(HexNavigHelper.GetNeighborMapCoords(mapCoords, (TurnedHexDirection)i)) > LocalMapParam.Terrains[0].StartingHeight)
+                if (map.Contains(HexNavigHelper.GetNeighborMapCoords(pos, (TurnedHexDirection)i)) && map.HeightMatrix[HexNavigHelper.GetNeighborMapCoords(pos, (TurnedHexDirection)i).Y, HexNavigHelper.GetNeighborMapCoords(pos, (TurnedHexDirection)i).X] > LocalMapParam.Terrains[0].StartingHeight)
                 {
                     GameObject bank = new GameObject();
                     hex.LandscapeObj.Add(bank);
@@ -329,24 +328,24 @@ public class WorldVisualiser : MonoBehaviour
 
                     }
                     //float offset=((TurnedHexDirection)i==TurnedHexDirection.LEFT_TOP||(TurnedHexDirection)i==TurnedHexDirection.LEFT_BOTTOM)? -offsetbuf:offsetbuf;
-                    //bank.transform.position = new Vector3(hex.Hex.transform.position.x+offset,hex.Hex.transform.position.y,hex.Hex.transform.position.z);
-                    //bank.transform.Rotate(0, 0, (short)(Mathf.Sign(mapCoords.y - HexNavigHelper.GetNeighborMapCoords(mapCoords, (TurnedHexDirection)i).y) * Vector2.Angle(Vector2.left,new Vector2(GetTransformPosFromMapCoords(HexNavigHelper.GetNeighborMapCoords(mapCoords, (TurnedHexDirection)i), true).x-offset,GetTransformPosFromMapCoords(HexNavigHelper.GetNeighborMapCoords(mapCoords, (TurnedHexDirection)i), true).y) - (Vector2)bank.transform.position)));
+                    //bank.transform.position = new Vector3(hex.Hex.transform.position.pos.X+offset,hex.Hex.transform.position.y,hex.Hex.transform.position.z);
+                    //bank.transform.Rotate(0, 0, (short)(Mathf.Sign(mapCoords.y - HexNavigHelper.GetNeighborMapCoords(mapCoords, (TurnedHexDirection)i).y) * Vector2.Angle(Vector2.left,new Vector2(GetTransformPosFromMapPos(HexNavigHelper.GetNeighborMapCoords(mapCoords, (TurnedHexDirection)i), true).pos.X-offset,GetTransformPosFromMapPos(HexNavigHelper.GetNeighborMapCoords(mapCoords, (TurnedHexDirection)i), true).y) - (Vector2)bank.transform.position)));
                     bank.GetComponent<SpriteRenderer>().material = DiffuseMaterial;
                     bank.AddComponent<Fader>();
                 }
         }
         else
-            if (map.GetForest(mapCoords) > 0 && Random.value < LocalMapParam.PlantProbability * map.GetForest(mapCoords))
+            if (map.ForestMatrix[pos.Y, pos.X] > 0 && Random.value < LocalMapParam.PlantProbability * map.ForestMatrix[pos.Y, pos.X])
             {
                 GameObject plant = new GameObject();
                 hex.LandscapeObj.Add(plant);
                 plant.AddComponent<SpriteRenderer>().sortingLayerName = "LandscapeObjects";
                 plant.GetComponent<SpriteRenderer>().material = DiffuseMaterial;
-                if (map.GetForest(mapCoords) < LocalMapParam.BushesForestValue)
+                if (map.ForestMatrix[pos.Y, pos.X] < LocalMapParam.BushesForestValue)
                     plant.GetComponent<SpriteRenderer>().sprite = LocalMapParam.BushSprites[Random.Range(0, LocalMapParam.BushSprites.Length)];
                 else
                     plant.GetComponent<SpriteRenderer>().sprite = LocalMapParam.TreeSprites[Random.Range(0, LocalMapParam.TreeSprites.Length)];
-                plant.transform.position = new Vector2(hex.Hex.transform.position.x, hex.Hex.transform.position.y + plant.GetComponent<SpriteRenderer>().sprite.bounds.extents.y - LocalHexSpriteSize.y / 2);
+                plant.transform.position = new Vector2(hex.Hex.transform.position.x, hex.Hex.transform.position.y + plant.GetComponent<SpriteRenderer>().sprite.bounds.extents.y - LocalHexSpriteSize.y * 0.5f);
                 plant.AddComponent<Fader>();
             }
         hex.Hex.GetComponent<Fader>().FadeIn(FadeInTime);
@@ -358,84 +357,83 @@ public class WorldVisualiser : MonoBehaviour
     /// </summary>
     /// <param name="hex">Хекс.</param>
     /// <param name="mapCoords">Координаты в матрице.</param>
-    Sprite ChooseHexSprite(Vector2 mapCoords, GlobalMap map) //UNDONE
+    Sprite ChooseHexSprite(LocalPos pos, Chunk map) //UNDONE
     {
         byte id = 0;
-        if (map.GetHeight(mapCoords) < GlobalMapParam.Terrains[0].StartingHeight)
+        if (map.HeightMatrix[pos.Y, pos.X] < GlobalMapParam.Terrains[0].StartingHeight)
             id = (byte)Random.Range(0, GlobalMapParam.BottommostTerrainSprites.Length);
-        else if (map.GetHeight(mapCoords) >= GlobalMapParam.Terrains[GlobalMapParam.Terrains.Length - 1].StartingHeight)
+        else if (map.HeightMatrix[pos.Y, pos.X] >= GlobalMapParam.Terrains[GlobalMapParam.Terrains.Length - 1].StartingHeight)
         {
             for (byte i = 0; i < GlobalMapParam.Terrains.Length - 1; ++i, id += (byte)GlobalMapParam.Terrains[i].Sprites.Length) ;
             id += (byte)(Random.Range(0, GlobalMapParam.Terrains[GlobalMapParam.Terrains.Length - 1].Sprites.Length) + GlobalMapParam.BottommostTerrainSprites.Length);
         }
         else
             for (byte i = 1; i < GlobalMapParam.Terrains.Length; i++)
-                if (map.GetHeight(mapCoords) >= GlobalMapParam.Terrains[i - 1].StartingHeight && map.GetHeight(mapCoords) < GlobalMapParam.Terrains[i].StartingHeight)
+                if (map.HeightMatrix[pos.Y, pos.X] >= GlobalMapParam.Terrains[i - 1].StartingHeight && map.HeightMatrix[pos.Y, pos.X] < GlobalMapParam.Terrains[i].StartingHeight)
                 {
                     for (byte j = 0; j < i - 1; ++j, id += (byte)GlobalMapParam.Terrains[j].Sprites.Length) ;
                     id += (byte)(Random.Range(0, GlobalMapParam.Terrains[i - 1].Sprites.Length) + GlobalMapParam.BottommostTerrainSprites.Length);
                 }
 
-        map.HexSpriteID_Matrix[(int)mapCoords.y, (int)mapCoords.x] = id;
+        map.HexSpriteID_Matrix[pos.Y, pos.X] = id;
         return AllGlobalHexSprites[id];
     }
 
-    Sprite ChooseHexSprite(Vector2 mapCoords, LocalMap map) //UNDONE
+    Sprite ChooseHexSprite(LocalPos pos, LocalMap map) //UNDONE
     {
         byte id = 0;
-        if (map.GetHeight(mapCoords) < LocalMapParam.Terrains[0].StartingHeight)
+        if (map.HeightMatrix[pos.Y, pos.X] < LocalMapParam.Terrains[0].StartingHeight)
             id = (byte)Random.Range(0, LocalMapParam.WaterSprites.Length);
-        else if (map.GetHeight(mapCoords) >= LocalMapParam.Terrains[LocalMapParam.Terrains.Length - 1].StartingHeight)
+        else if (map.HeightMatrix[pos.Y, pos.X] >= LocalMapParam.Terrains[LocalMapParam.Terrains.Length - 1].StartingHeight)
         {
             for (byte i = 0; i < LocalMapParam.Terrains.Length - 1; ++i, id += (byte)LocalMapParam.Terrains[i].Sprites.Length) ;
             id += (byte)(Random.Range(0, LocalMapParam.Terrains[LocalMapParam.Terrains.Length - 1].Sprites.Length) + LocalMapParam.WaterSprites.Length);
         }
         else
             for (byte i = 1; i < LocalMapParam.Terrains.Length; i++)
-                if (map.GetHeight(mapCoords) >= LocalMapParam.Terrains[i - 1].StartingHeight && map.GetHeight(mapCoords) < LocalMapParam.Terrains[i].StartingHeight)
+                if (map.HeightMatrix[pos.Y, pos.X] >= LocalMapParam.Terrains[i - 1].StartingHeight && map.HeightMatrix[pos.Y, pos.X] < LocalMapParam.Terrains[i].StartingHeight)
                 {
                     for (byte j = 0; j < i - 1; ++j, id += (byte)LocalMapParam.Terrains[j].Sprites.Length) ;
                     id += (byte)(Random.Range(0, LocalMapParam.Terrains[i - 1].Sprites.Length) + LocalMapParam.WaterSprites.Length);
                 }
 
-        map.HexSpriteID_Matrix[(int)mapCoords.y, (int)mapCoords.x] = id;
+        map.HexSpriteID_Matrix[pos.Y, pos.X] = id;
         return AllLocalHexSprites[id];
     }
 
-    Sprite ChooseHexRiverSprite(Transform spriteTransform, Vector2 mapCoords, GlobalMap map)//TODO К оптимизации.
+    Sprite ChooseHexRiverSprite(Transform spriteTransform, LocalPos pos, Chunk map)//TODO К оптимизации.
     {
-        foreach (List<Vector2> river in map.Rivers)
+        foreach (List<LocalPos> river in map.Rivers)
         {
             byte id;
             short angle;
-            short index = (short)river.IndexOf(mapCoords);
+            short index = (short)river.IndexOf(pos);
             if (index != -1)
             {
+                Vector2 inchunkPos = GetTransformPosFromMapPos((GlobalPos)pos);
                 if (index == 0)
                 {
                     id = (byte)Random.Range(0, GlobalMapParam.RiverStartSprites.Length);
-                    angle = (short)(Mathf.Sign(river[1].x - mapCoords.x) * Vector2.Angle(Vector2.down, GetTransformPosFromMapCoords(river[1], false) - (Vector2)spriteTransform.position));
+                    angle = (short)(Mathf.Sign(river[1].X - pos.X) * Vector2.Angle(Vector2.down, GetTransformPosFromMapPos((GlobalPos)river[1]) - inchunkPos));
                 }
                 else if (index == river.Count - 1)
                 {
                     id = (byte)(Random.Range(0, GlobalMapParam.RiverEndSprites.Length) + GlobalMapParam.RiverStartSprites.Length + GlobalMapParam.RiverStraightSprites.Length + GlobalMapParam.RiverTurnSprites.Length);
-                    angle = (short)(Mathf.Sign(river[river.Count - 2].x - mapCoords.x) * Vector2.Angle(Vector2.down, GetTransformPosFromMapCoords(river[river.Count - 2], false) - (Vector2)spriteTransform.position));
+                    angle = (short)(Mathf.Sign(river[river.Count - 2].X - pos.X) * Vector2.Angle(Vector2.down, GetTransformPosFromMapPos((GlobalPos)river[river.Count - 2]) - inchunkPos));
                 }
                 else
                 {
-                    Vector2 prev = GetTransformPosFromMapCoords(river[index - 1], false) - (Vector2)spriteTransform.position;
-                    if ((short)Vector2.Angle(GetTransformPosFromMapCoords(river[index - 1], false) - (Vector2)spriteTransform.position, GetTransformPosFromMapCoords(river[index + 1], false) - (Vector2)spriteTransform.position) > 150) //(==180, !=120)
+                    Vector2 prev = GetTransformPosFromMapPos((GlobalPos)river[index - 1]) - inchunkPos;
+                    Vector2 next = GetTransformPosFromMapPos((GlobalPos)river[index + 1]) - inchunkPos;
+                    if ((short)Vector2.Angle(prev, next) > 150) //(==180, !=120)
                     {
                         id = (byte)(Random.Range(0, GlobalMapParam.RiverStraightSprites.Length) + GlobalMapParam.RiverStartSprites.Length);
-                        angle = (short)(Mathf.Sign(river[index - 1].x - mapCoords.x) * Vector2.Angle(Vector2.down, prev));
+                        angle = (short)(Mathf.Sign(river[index - 1].X - pos.X) * Vector2.Angle(Vector2.down, prev));
                     }
                     else
                     {
                         id = (byte)(Random.Range(0, GlobalMapParam.RiverTurnSprites.Length) + GlobalMapParam.RiverStartSprites.Length + GlobalMapParam.RiverStraightSprites.Length);
-
-                        Vector2 next = GetTransformPosFromMapCoords(river[index + 1], false) - (Vector2)spriteTransform.position;
-
-                        angle = (short)(Mathf.Sign(river[index - 1].x - mapCoords.x) * Vector2.Angle(Vector2.down, prev));
+                        angle = (short)(Mathf.Sign(river[index - 1].X - pos.X) * Vector2.Angle(Vector2.down, prev));
                         if (Mathf.Approximately(prev.x, 0))
                             angle += (short)(240 * (Mathf.Sign(prev.y) == Mathf.Sign(next.x) ? 1 : 0));
                         else
@@ -446,8 +444,8 @@ public class WorldVisualiser : MonoBehaviour
             else
                 continue;
 
-            map.RiverSpriteID_Matrix[(int)mapCoords.y, (int)mapCoords.x] = id;
-            map.RiverSpriteRotationMatrix[(int)mapCoords.y, (int)mapCoords.x] = angle;
+            map.RiverSpriteID_Matrix[pos.Y, pos.X] = id;
+            map.RiverSpriteRotationMatrix[pos.Y, pos.X] = angle;
             spriteTransform.Rotate(0, 0, angle);
 
             return AllRiverSprites[id]; ;
@@ -455,40 +453,39 @@ public class WorldVisualiser : MonoBehaviour
         return null;
     }
 
-    Sprite ChooseHexRoadSprite(Transform spriteTransform, Vector2 mapCoords, GlobalMap map)//TODO К оптимизации.
+    Sprite ChooseHexRoadSprite(Transform spriteTransform, LocalPos pos, Chunk map)//TODO К оптимизации.
     {
-        foreach (List<Vector2> road in map.Roads)
+        foreach (List<LocalPos> road in map.Roads)
         {
             byte id;
             short angle;
-            short index = (short)road.IndexOf(mapCoords);
+            short index = (short)road.IndexOf(pos);
             if (index != -1)
             {
+                Vector2 inchunkPos = GetTransformPosFromMapPos((GlobalPos)pos);
                 if (index == 0)
                 {
-                    id = (byte)(map.HasRiver(mapCoords) ? Random.Range(0, GlobalMapParam.RoadStraightBridgeSprites.Length) + GlobalMapParam.RoadStraightSprites.Length + GlobalMapParam.RoadTurnSprites.Length : Random.Range(0, GlobalMapParam.RoadStraightSprites.Length));
-                    angle = (short)(Mathf.Sign(road[1].x - mapCoords.x) * Vector2.Angle(Vector2.down, GetTransformPosFromMapCoords(road[1], false) - (Vector2)spriteTransform.position));
+                    id = (byte)(map.RiverMatrix[pos.Y, pos.X] ? Random.Range(0, GlobalMapParam.RoadStraightBridgeSprites.Length) + GlobalMapParam.RoadStraightSprites.Length + GlobalMapParam.RoadTurnSprites.Length : Random.Range(0, GlobalMapParam.RoadStraightSprites.Length));
+                    angle = (short)(Mathf.Sign(road[1].X - pos.X) * Vector2.Angle(Vector2.down, GetTransformPosFromMapPos((GlobalPos)road[1]) - inchunkPos));
                 }
                 else if (index == road.Count - 1)
                 {
-                    id = (byte)(map.HasRiver(mapCoords) ? Random.Range(0, GlobalMapParam.RoadStraightBridgeSprites.Length) + GlobalMapParam.RoadStraightSprites.Length + GlobalMapParam.RoadTurnSprites.Length : Random.Range(0, GlobalMapParam.RoadStraightSprites.Length));
-                    angle = (short)(Mathf.Sign(road[road.Count - 2].x - mapCoords.x) * Vector2.Angle(Vector2.down, GetTransformPosFromMapCoords(road[road.Count - 2], false) - (Vector2)spriteTransform.position));
+                    id = (byte)(map.RiverMatrix[pos.Y, pos.X] ? Random.Range(0, GlobalMapParam.RoadStraightBridgeSprites.Length) + GlobalMapParam.RoadStraightSprites.Length + GlobalMapParam.RoadTurnSprites.Length : Random.Range(0, GlobalMapParam.RoadStraightSprites.Length));
+                    angle = (short)(Mathf.Sign(road[road.Count - 2].X - pos.X) * Vector2.Angle(Vector2.down, GetTransformPosFromMapPos((GlobalPos)road[road.Count - 2]) - inchunkPos));
                 }
                 else
                 {
-                    Vector2 prev = GetTransformPosFromMapCoords(road[index - 1], false) - (Vector2)spriteTransform.position;
-                    if ((short)Vector2.Angle(GetTransformPosFromMapCoords(road[index - 1], false) - (Vector2)spriteTransform.position, GetTransformPosFromMapCoords(road[index + 1], false) - (Vector2)spriteTransform.position) > 150) //(==180, !=120)
+                    Vector2 prev = GetTransformPosFromMapPos((GlobalPos)road[index - 1]) - inchunkPos;
+                    Vector2 next = GetTransformPosFromMapPos((GlobalPos)road[index + 1]) - inchunkPos;
+                    if ((short)Vector2.Angle(prev, next) > 150) //(==180, !=120)
                     {
-                        id = (byte)(map.HasRiver(mapCoords) ? Random.Range(0, GlobalMapParam.RoadStraightBridgeSprites.Length) + GlobalMapParam.RoadStraightSprites.Length + GlobalMapParam.RoadTurnSprites.Length : Random.Range(0, GlobalMapParam.RoadStraightSprites.Length));
-                        angle = (short)(Mathf.Sign(road[index - 1].x - mapCoords.x) * Vector2.Angle(Vector2.down, prev));
+                        id = (byte)(map.RiverMatrix[pos.Y, pos.X] ? Random.Range(0, GlobalMapParam.RoadStraightBridgeSprites.Length) + GlobalMapParam.RoadStraightSprites.Length + GlobalMapParam.RoadTurnSprites.Length : Random.Range(0, GlobalMapParam.RoadStraightSprites.Length));
+                        angle = (short)(Mathf.Sign(road[index - 1].X - pos.X) * Vector2.Angle(Vector2.down, prev));
                     }
                     else
                     {
-                        id = (byte)(map.HasRiver(mapCoords) ? Random.Range(0, GlobalMapParam.RoadTurnBridgeSprites.Length) + GlobalMapParam.RoadStraightSprites.Length + GlobalMapParam.RoadTurnSprites.Length + GlobalMapParam.RoadStraightBridgeSprites.Length : Random.Range(0, GlobalMapParam.RoadTurnSprites.Length) + GlobalMapParam.RoadStraightSprites.Length);
-
-                        Vector2 next = GetTransformPosFromMapCoords(road[index + 1], false) - (Vector2)spriteTransform.position;
-
-                        angle = (short)(Mathf.Sign(road[index - 1].x - mapCoords.x) * Vector2.Angle(Vector2.down, prev));
+                        id = (byte)(map.RiverMatrix[pos.Y, pos.X] ? Random.Range(0, GlobalMapParam.RoadTurnBridgeSprites.Length) + GlobalMapParam.RoadStraightSprites.Length + GlobalMapParam.RoadTurnSprites.Length + GlobalMapParam.RoadStraightBridgeSprites.Length : Random.Range(0, GlobalMapParam.RoadTurnSprites.Length) + GlobalMapParam.RoadStraightSprites.Length);
+                        angle = (short)(Mathf.Sign(road[index - 1].X - pos.X) * Vector2.Angle(Vector2.down, prev));
                         if (Mathf.Approximately(prev.x, 0))
                             angle += (short)(240 * (Mathf.Sign(prev.y) == Mathf.Sign(next.x) ? 1 : 0));
                         else
@@ -499,8 +496,8 @@ public class WorldVisualiser : MonoBehaviour
             else
                 continue;
 
-            map.RoadSpriteID_Matrix[(int)mapCoords.y, (int)mapCoords.x] = id;
-            map.RoadSpriteRotationMatrix[(int)mapCoords.y, (int)mapCoords.x] = angle;
+            map.RoadSpriteID_Matrix[pos.Y, pos.X] = id;
+            map.RoadSpriteRotationMatrix[pos.Y, pos.X] = angle;
             spriteTransform.Rotate(0, 0, angle);
 
             return AllRoadSprites[id]; ;
@@ -513,15 +510,15 @@ public class WorldVisualiser : MonoBehaviour
     /// </summary>
     /// <param name="hex">Хекс.</param>
     /// <param name="mapCoords">Координаты в матрице.</param>
-    void MakeHexForest(ListType hex, Vector2 mapCoords, Map map) //TODO (WIP)
+    void MakeHexForest(ListType hex, LocalPos pos, Map map) //TODO (WIP)
     {
         Vector2 spriteSize = hex.Hex.GetComponent<SpriteRenderer>().sprite.bounds.size;
-        if (map.GetForest(mapCoords) >= 1) //TODO
+        if (map.ForestMatrix[pos.Y, pos.X] >= 1) //TODO
         {
             float gridStepX = spriteSize.x / ForestGenGridSize;
             float gridStepY = spriteSize.y / ForestGenGridSize;
-            Vector2 gridOrigin = new Vector2(hex.Hex.transform.position.x - spriteSize.x * 0.375f, hex.Hex.transform.position.y - spriteSize.y * 0.5f);
-            byte treesCount = (byte)map.GetForest(mapCoords);
+            Vector2 gridOrigin = new Vector2(hex.Hex.transform.position.x - spriteSize.x * 0.375f, hex.Hex.transform.position.y - spriteSize.y * 0.5f); //TODO new?
+            byte treesCount = (byte)map.ForestMatrix[pos.Y, pos.X];
 
             while (true)
             {
@@ -530,7 +527,7 @@ public class WorldVisualiser : MonoBehaviour
                     for (float y = 0; y < spriteSize.y; y += gridStepY)
                         for (float x = 0; x < spriteSize.x; x += gridStepX)
                         {
-                            Vector2 v = new Vector2(Random.value * gridStepX, Random.value * gridStepY);
+                            Vector2 v = new Vector2(Random.value * gridStepX, Random.value * gridStepY); //TODO new?
                             GameObject tree = new GameObject();
                             hex.Trees.Add(tree);
                             tree.transform.position = new Vector2(gridOrigin.x + x + v.x, gridOrigin.y + y + v.y);
@@ -575,9 +572,9 @@ public class WorldVisualiser : MonoBehaviour
             for (ushort x = 0; x < width; ++x)
             {
                 // TODO Возможно стоит заменить ListType на Hex?
-                ListType hex = new ListType { Hex = Instantiate(Hex, GetTransformPosFromMapCoords(new Vector2(x, y), true), Quaternion.identity) as GameObject, InSign = true };
-                hex.Hex.GetComponent<HexData>().MapCoords = new Vector2(x, y);
-                MakeHexGraphics(hex, new Vector2(x, y), map);
+                ListType hex = new ListType { Hex = Instantiate(Hex, GetTransformPosFromMapPos(new LocalPos(x, y)), Quaternion.identity) as GameObject, InSign = true };
+                hex.Hex.GetComponent<HexData>().Pos = new GlobalPos(x, y);//TODO new?
+                MakeHexGraphics(hex, new LocalPos(x, y), map);
                 RenderedHexes.Add(hex);
             }
     }
@@ -587,26 +584,38 @@ public class WorldVisualiser : MonoBehaviour
     /// </summary>
     /// <returns>Координаты в сцене.</returns>
     /// <param name="mapCoords">Координаты на карте.</param>
-    public static Vector2 GetTransformPosFromMapCoords(Vector2 mapCoords, bool localMap)
+    public static Vector2 GetTransformPosFromMapPos(LocalPos pos)//C#6.0 EBD
     {
-        if (localMap)
-            return new Vector2(mapCoords.x * LocalHexSpriteSize.x + ((mapCoords.y % 2) != 0 ? 1 : 0) * LocalHexSpriteSize.x * 0.5f, mapCoords.y * LocalHexSpriteSize.y * 0.75f);
-        else
-            return new Vector2(mapCoords.x * GlobalHexSpriteSize.x * 0.75f, mapCoords.y * GlobalHexSpriteSize.y + ((mapCoords.x % 2) != 0 ? 1 : 0) * GlobalHexSpriteSize.y * 0.5f);
+        return new Vector2(pos.X * LocalHexSpriteSize.x + (pos.Y % 2) * LocalHexSpriteSize.x * 0.5f, pos.Y * LocalHexSpriteSize.y * 0.75f);
     }
+
+    public static Vector2 GetTransformPosFromMapPos(GlobalPos pos)//C#6.0 EBD
+    {
+        return new Vector2(pos.X * GlobalHexSpriteSize.x * 0.75f, pos.Y * GlobalHexSpriteSize.y + ((pos.X % 2) != 0 ? 1 : 0) * GlobalHexSpriteSize.y * 0.5f);
+    }
+
 
     /// <summary>
     /// Накладывает на хекс спрайт.
     /// </summary>
     /// <param name="mapCoords">Координаты хекса.</param>
     /// <param name="highlightHexSprite">Спрайт.</param>
-    public void HighlightHex(Vector2 mapCoords, Sprite highlightHexSprite, bool localMap)
+    public void HighlightHex(GlobalPos pos, Sprite highlightHexSprite)
     {
-        RenderedObjects.Add(Instantiate(InteractableHex, GetTransformPosFromMapCoords(mapCoords, localMap), localMap ? Quaternion.Euler(0, 0, 90) : Quaternion.identity) as GameObject);
+        RenderedObjects.Add(Instantiate(InteractableHex, GetTransformPosFromMapPos(pos), Quaternion.identity) as GameObject);
         RenderedObjects[RenderedObjects.Count - 1].GetComponent<SpriteRenderer>().sprite = highlightHexSprite;
         RenderedObjects[RenderedObjects.Count - 1].GetComponent<SpriteRenderer>().sortingLayerName = "LandscapeHighlights";
 
-        RenderedObjects[RenderedObjects.Count - 1].GetComponent<HexData>().MapCoords = mapCoords;//TODO временно
+        RenderedObjects[RenderedObjects.Count - 1].GetComponent<HexData>().Pos = pos;//TODO временно
+    }
+
+    public void HighlightHex(LocalPos pos, Sprite highlightHexSprite)
+    {
+        RenderedObjects.Add(Instantiate(InteractableHex, GetTransformPosFromMapPos(pos), Quaternion.Euler(0, 0, 90)) as GameObject);
+        RenderedObjects[RenderedObjects.Count - 1].GetComponent<SpriteRenderer>().sprite = highlightHexSprite;
+        RenderedObjects[RenderedObjects.Count - 1].GetComponent<SpriteRenderer>().sortingLayerName = "LandscapeHighlights";
+
+        RenderedObjects[RenderedObjects.Count - 1].GetComponent<HexData>().Pos = pos;//TODO временно
     }
 
     public byte[] GetTerrainsSpriteID()

@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using System.Collections;
 
 public class GameTime : MonoBehaviour
 {
@@ -7,7 +6,7 @@ public class GameTime : MonoBehaviour
     //TODO Ждём C# 6.0, когда введут инициализацию авто-свойств
     public static uint TimeInMinutes { get; private set; } //=0;
 
-    public static uint TimeInDays
+	public static uint TimeInDays//C#6.0 EBD
     {
         get
         {
@@ -19,7 +18,7 @@ public class GameTime : MonoBehaviour
         }
     }
 
-    public static uint HoursOfDay
+	public static uint HoursOfDay//C#6.0 EBD
     {
         get
         {
@@ -31,7 +30,7 @@ public class GameTime : MonoBehaviour
         }
     }
 
-    public static uint MinutesOfHour
+	public static uint MinutesOfHour//C#6.0 EBD
     {
         get
         {
@@ -43,7 +42,8 @@ public class GameTime : MonoBehaviour
         }
     }
 
-    byte Buffer = 0;
+    byte minBuffer = 0;
+	byte hourBuffer = 0;
 
     void OnEnable()
     {
@@ -60,18 +60,24 @@ public class GameTime : MonoBehaviour
         StartCoroutine(RunTimeCoroutine(count));
     }
 
-    IEnumerator RunTimeCoroutine(ushort count)
+	System.Collections.IEnumerator RunTimeCoroutine(ushort count)
     {
         ushort t = 0;
         while (t != count)
         {
             EventManager.OnMinutePass((float)t / count);
             t++;
-            Buffer++;
-            if (Buffer == 60)
+			minBuffer++;
+			if (minBuffer == 60)
             {
                 EventManager.OnHourPass();
-                Buffer = 0;
+				minBuffer = 0;
+				hourBuffer++;
+				if(hourBuffer==24)
+				{
+					EventManager.OnDayPass();
+					hourBuffer=0;
+				}
             }
             TimeInMinutes++;
             yield return new WaitForSeconds(GameMinToRealSec);//TODO Временно

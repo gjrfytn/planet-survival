@@ -1,33 +1,15 @@
 ﻿using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
 
-public class Creature : Entity
+public class Creature : LivingBeing
 {
     public enum AI_State : byte { STATE_IDLE, STATE_MOVE, STATE_ATTACK };
 
-    public float MoveAnimTime;
-    [Range(0, 255)]
-    public byte MaxHealth;
-    [Range(0, 255)]
-    public byte BaseDamage;
-    public const float DamageSpread = 0.1f;
-    [Range(0, 1)]
-    public float BaseAccuracy;
-    [Range(0, 1)]
-    public float BaseArmor;
-    public ushort Experience;
-
-    public byte Health { get; private set; }
-
-    protected bool Moving { get; private set; }
     World World;
-    Vector2 TargetCoords;
-    float MoveTime;
-    Vector2 PreviousCoords;
+    LocalPos TargetPos;
     AI_State State;
-    GameObject Target;
-    Stack<Vector2> Path;
+    LivingBeing Target;
+    Stack<LocalPos> Path;
 
     protected override void OnEnable()
     {
@@ -41,51 +23,32 @@ public class Creature : Entity
         EventManager.TurnMade -= MakeTurn;
     }
 
-    protected virtual void Start()
+    protected override void Start()
     {
-        Health = MaxHealth;
+        base.Start();
         World = GameObject.FindWithTag("World").GetComponent<WorldWrapper>().World;
     }
 
-    protected virtual void Update()
-    {
-        if (Moving)
-        {
-            if (MoveTime > 0)
-            {
-                float tstep = MoveTime / Time.deltaTime;
-                MoveTime -= Time.deltaTime;
-                //TODO Возможно стоит сохранять значение из GetTransformPosFromMapCoords(MapCoords,World.IsCurrentMapLocal())), так как это улучшит(?) производительность
-                float dstep = Vector2.Distance(transform.position, WorldVisualiser.GetTransformPosFromMapCoords(MapCoords, World.IsCurrentMapLocal())) / tstep; //TODO IsCurrentMapLocal - временно?
-                transform.position = Vector2.MoveTowards(transform.position, WorldVisualiser.GetTransformPosFromMapCoords(MapCoords, World.IsCurrentMapLocal()), dstep);
-            }
-            else
-                Moving = false;
-        }
-    }
-
-    public virtual void MoveToMapCoords(Vector2 mapCoords)
+    public void MoveTo(LocalPos pos)
     {
         State = AI_State.STATE_MOVE;
-        TargetCoords = mapCoords;
-        if (World.IsCurrentMapLocal())//TODO Временно?
-        {
-            List<Vector2> buf = Pathfinder.MakePath((World.CurrentMap as LocalMap).GetBlockMatrix(), MapCoords, TargetCoords);//TODO Тут?
-            buf.Reverse();
-            Path = new Stack<Vector2>(buf);
-            Path.Pop();
-        }
+        TargetPos = pos;
+
+        List<LocalPos> buf = Pathfinder.MakePath((World.CurrentMap as LocalMap).GetBlockMatrix(), Pos, TargetPos);//TODO Тут?
+        buf.Reverse();
+        Path = new Stack<LocalPos>(buf);
+        Path.Pop();
     }
 
-    public void Attack(GameObject target)
+    public void Attack(LivingBeing target)
     {
         State = AI_State.STATE_ATTACK;
         Target = target;
-        TargetCoords = Target.GetComponent<Creature>().MapCoords; //TODO Нужно?
+        TargetPos = Target.Pos;
         World = GameObject.FindWithTag("World").GetComponent<WorldWrapper>().World;//TODO Костыль
-        List<Vector2> buf = Pathfinder.MakePath((World.CurrentMap as LocalMap).GetBlockMatrix(), MapCoords, TargetCoords);//TODO Тут?
+        List<LocalPos> buf = Pathfinder.MakePath((World.CurrentMap as LocalMap).GetBlockMatrix(), Pos, TargetPos);//TODO Тут?
         buf.Reverse();
-        Path = new Stack<Vector2>(buf);
+        Path = new Stack<LocalPos>(buf);
         Path.Pop();
     }
 
@@ -98,61 +61,28 @@ public class Creature : Entity
 
     void Move()
     {
-        if (World.IsCurrentMapLocal())//TODO Временно?
+        LocalPos node = Path.Pop();
+        if (!World.IsHexFree(node))
         {
-            Vector2 node = Path.Pop();
-            if (!World.IsHexFree(node))
-            {
-                List<Vector2> buf = Pathfinder.MakePath((World.CurrentMap as LocalMap).GetBlockMatrix(), MapCoords, TargetCoords);//TODO Тут?
-                buf.Reverse();
-                Path = new Stack<Vector2>(buf);
-                Path.Pop();
-                node = Path.Pop();
-            }
-            Vector2 vBuf = MapCoords;
-            MapCoords = node;
-            EventManager.OnCreatureMove(vBuf, MapCoords); //TODO name?
+            List<LocalPos> buf = Pathfinder.MakePath((World.CurrentMap as LocalMap).GetBlockMatrix(), Pos, TargetPos);//TODO Тут?
+            buf.Reverse();
+            Path = new Stack<LocalPos>(buf);
+            Path.Pop();
+            node = Path.Pop();
         }
-        else
-        {
-            sbyte dx = (sbyte)(TargetCoords.x - MapCoords.x);
-            sbyte dy = (sbyte)(TargetCoords.y - MapCoords.y);
+        LocalPos vBuf = Pos;
+        Pos = node;
+        EventManager.OnCreatureMove(vBuf, Pos); //TODO name?
 
-            if (dx != 0)
-                dx = (sbyte)(dx > 0 ? 1 : -1);
-            if (dy != 0)
-                dy = (sbyte)(dy > 0 ? 1 : -1);
-
-            //Vector2 buf = MapCoords; TODO !!!
-            MapCoords.x += dx;
-            MapCoords.y += dy;
-            //EventManager.OnCreatureMove(buf, MapCoords); TODO !!!
-        }
-        MoveTime = MoveAnimTime;
-        Moving = true;
+        StartCoroutine(MoveHelper.Fly(gameObject, WorldVisualiser.GetTransformPosFromMapPos(Pos), MoveAnimTime));
     }
 
-    void PerformAttack()
+    void PerformAttack(LivingBeing target)
     {
         if (Random.value < BaseAccuracy)
-            Target.GetComponent<Creature>().TakeDamage((byte)(BaseDamage + Random.Range(-BaseDamage * DamageSpread, BaseDamage * DamageSpread)));
+            target.TakeDamage((byte)(BaseDamage + Random.Range(-BaseDamage * DamageSpread, BaseDamage * DamageSpread)), true);
         else
-            EventManager.OnAttackMiss(transform.position);
-    }
-
-    public void TakeDamage(byte damage)
-    {
-        Debug.Assert(damage >= 0);
-        EventManager.OnCreatureHit(gameObject, damage);
-        Health = (byte)((Health - damage * (1 - BaseArmor) > 0) ? Health - damage * (1 - BaseArmor) : 0);
-        if (Health == 0)
-            Destroy(gameObject);
-    }
-
-    public void TakeHeal(byte heal)
-    {
-        Debug.Assert(heal >= 0);
-        Health = (byte)Mathf.Clamp(Health + heal, 0, MaxHealth);
+            EventManager.OnAttackMiss(Pos);
     }
 
     void MakeTurn()
@@ -162,23 +92,23 @@ public class Creature : Entity
             case AI_State.STATE_IDLE:
                 break;
             case AI_State.STATE_MOVE:
-                if (TargetCoords == MapCoords)
+                if (TargetPos == Pos)
                     Idle();
                 else
                     Move();
                 break;
             case AI_State.STATE_ATTACK:
-                if (TargetCoords != Target.GetComponent<Creature>().MapCoords)//TODO Тут?
+                if (TargetPos != Target.Pos)//TODO Тут?
                 {
-                    TargetCoords = Target.GetComponent<Creature>().MapCoords;
-                    List<Vector2> buf = Pathfinder.MakePath((World.CurrentMap as LocalMap).GetBlockMatrix(), MapCoords, TargetCoords);//TODO Тут?
+                    TargetPos = Target.Pos;
+                    List<LocalPos> buf = Pathfinder.MakePath((World.CurrentMap as LocalMap).GetBlockMatrix(), Pos, TargetPos);//TODO Тут?
                     buf.Reverse();
-                    Path = new Stack<Vector2>(buf);
+                    Path = new Stack<LocalPos>(buf);
                     Path.Pop();
                 }
-                if (HexNavigHelper.IsMapCoordsAdjacent(TargetCoords, MapCoords, true))
+                if (HexNavigHelper.IsMapCoordsAdjacent(TargetPos, Pos, true))
                 {
-                    PerformAttack();
+                    PerformAttack(Target);
                 }
                 else
                 {

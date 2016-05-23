@@ -1,16 +1,16 @@
 ﻿using UnityEngine;
-using System.Collections;
 
 public class WorldWrapper : MonoBehaviour
 {
     public float LandscapeRoughness;
     public float ForestRoughness;
 
-    public RiversParameters RiverParam;
-    public ClustersParameters ClusterParam;
+    public WorldGenerator.RiversParameters RiverParam;
+    public WorldGenerator.ClustersParameters ClusterParam;
+    public WorldGenerator.RoadsParameters RoadParam;
 
     public ushort GlobalMapChunkSize;
-    public Vector2 LocalMapSize;
+    public LocalPos LocalMapSize;
 
     public byte ForestDensity;
     public byte TreeCountForForestTerrain;
@@ -25,6 +25,7 @@ public class WorldWrapper : MonoBehaviour
             LandscapeRoughness, ForestRoughness,
             RiverParam,
             ClusterParam,
+            RoadParam,
             GlobalMapChunkSize,
             LocalMapSize,
             ForestDensity,
@@ -33,7 +34,7 @@ public class WorldWrapper : MonoBehaviour
             );
     }
 
-    public void SwitchMap()
+    public void SwitchMap()//C#6.0 EBD
     {
         World.SwitchMap();
     }

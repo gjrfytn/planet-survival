@@ -1,6 +1,4 @@
-﻿using UnityEngine;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 
 public static class Pathfinder
@@ -8,21 +6,21 @@ public static class Pathfinder
     class DistCoordPair
     {
         public ushort Dist;
-        public Vector2 Coord;
+        public LocalPos Coord;
     }
 
-    public static List<Vector2> MakePath(bool[,] blockMatrix, Vector2 from, Vector2 to)
+    public static List<LocalPos> MakePath(bool[,] blockMatrix, LocalPos from, LocalPos to)
     {
-        Debug.Assert(from != to);
+        UnityEngine.Debug.Assert(from != to);
         ushort height = (ushort)blockMatrix.GetLength(0);
         ushort width = (ushort)blockMatrix.GetLength(1);
-        List<Vector2> path = new List<Vector2>();
+        List<LocalPos> path = new List<LocalPos>();
         List<DistCoordPair> queue = new List<DistCoordPair>();
         queue.Add(new DistCoordPair() { Dist = 1, Coord = from });
         do
         {
-            Vector2 cur = queue[0].Coord;
-            blockMatrix[(int)cur.y, (int)cur.x] = true;
+            LocalPos cur = queue[0].Coord;
+            blockMatrix[cur.Y, cur.X] = true;
             path.Add(cur);
             ushort dist = queue[0].Dist;
             if (dist == 0)
@@ -35,15 +33,15 @@ public static class Pathfinder
 
                 for (byte i = 0; i < 6; ++i)
                 {
-                    Vector2 node = HexNavigHelper.GetNeighborMapCoords(cur, (TurnedHexDirection)i);
-                    if (node.y >= 0 && node.y < height && node.x >= 0 && node.x < width && !blockMatrix[(int)node.y, (int)node.x]/*blocks[(int)node.y, (int)node.x]*/)
+                    GlobalPos node = HexNavigHelper.GetNeighborMapCoords(cur, (TurnedHexDirection)i);
+                    if (node.Y >= 0 && node.Y < height && node.X >= 0 && node.X < width && !blockMatrix[node.Y, node.X])
                     {
-                        queue.Add(new DistCoordPair() { Dist = (ushort)(Mathf.Abs(to.x - node.x) + Mathf.Abs(to.y - node.y)), Coord = node });
-                        blockMatrix[(int)node.y, (int)node.x] = true;
+                        queue.Add(new DistCoordPair() { Dist = (ushort)(UnityEngine.Mathf.Abs(to.X - node.X) + UnityEngine.Mathf.Abs(to.Y - node.Y)), Coord = (LocalPos)node });
+                        blockMatrix[node.Y, node.X] = true;
                     }
                     else if (node == to)//UNDONE
                     {
-                        Debug.Log("Incomplete path");
+                        UnityEngine.Debug.Log("Incomplete path");//TODO Разобраться, почему не выводиться
                         return path;
                     }
                 }
@@ -52,7 +50,7 @@ public static class Pathfinder
             }
         }
         while (queue.Count != 0);
-        Debug.Log("No path");
+        UnityEngine.Debug.Log("No path");
         return null;
     }
 }

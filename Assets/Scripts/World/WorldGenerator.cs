@@ -1,144 +1,202 @@
 ﻿using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
-
-[System.Serializable]
-public class RiversParameters
-{
-    public float Height; //Коэффициент высоты реки относительно средней высоты
-    public byte Count;
-    public ushort MinimumLength;
-    public byte Attempts; //Количество попыток построения реки из одного хекса
-    public float FlowHeightKoef; //Насколько реалистично река распространяется относительно высоты (1 - самое реалистичное)
-}
-
-[System.Serializable]
-public class ClustersParameters
-{
-    public byte Count;
-    public byte Size;
-}
 
 public static class WorldGenerator
 {
-    static Stack<Vector2> RiverStack = new Stack<Vector2>(); //Стек для постройки реки
-
-    /// <summary>
-    /// Создаёт карту высот. 
-    /// </summary>
-    /// <param name="matrix">[out] Карта высот.</param>
-    /// <param name="r">Шероховатость.</param>
-    /// Использует фрактальный алгоритм Diamond Square
-    public static void CreateHeightmap(float[,] matrix, float roughness, float topLeft, float topRight, float bottomLeft, float bottomRight)
+    [System.Serializable]
+    public class RiversParameters
     {
-        //Debug.Assert(topLeft >= 0 && topRight >= 0 && bottomLeft >= 0 && bottomRight >= 0);
+        public float Height; //Коэффициент высоты реки относительно средней высоты
+        public byte Count;
+        public ushort MinimumLength;
+        public byte Attempts; //Количество попыток построения реки из одного хекса
+        public float FlowHeightKoef; //Насколько реалистично река распространяется относительно высоты (1 - самое реалистичное)
+    }
+
+    [System.Serializable]
+    public class ClustersParameters
+    {
+        public byte Count;
+        public byte Size;
+    }
+
+    [System.Serializable]
+    public class RoadsParameters
+    {
+        public float RoadMergeMultiplier;
+        public float GoingAlongRiverMultiplier;
+    }
+
+    public class HeighmapNeighboring
+    {
+        public float[] Left;
+        public float[] Top;
+        public float[] Right;
+        public float[] Bottom;
+    }
+
+    static Stack<LocalPos> RiverStack; //Стек для постройки реки
+
+    public static void CreateHeightmap(ref float?[,] matrix, float roughness, HeighmapNeighboring hmNb)
+    {
         ushort height = (ushort)matrix.GetLength(0);
         ushort width = (ushort)matrix.GetLength(1);
 
+        //-- Assert
+        //TODO C# 6.0
+        Debug.Assert((hmNb.Left == null || hmNb.Left.Length == height) && (hmNb.Right == null || hmNb.Right.Length == height));
+        Debug.Assert((hmNb.Top == null || hmNb.Top.Length == width) && (hmNb.Bottom == null || hmNb.Bottom.Length == width));
+        //--
+
         //Задаём начальные значения по углам
-        matrix[0, 0] = topLeft;
-        matrix[0, width - 1] = topRight;
-        matrix[height - 1, 0] = bottomLeft;
-        matrix[height - 1, width - 1] = bottomRight;
-        bool end = false;
-        for (ushort stepY = (ushort)(height - 1), stepX = (ushort)(width - 1), halfY = (ushort)(stepY / 2), halfX = (ushort)(stepX / 2); !end; end = (halfY == 1 && halfX == 1), halfY -= (ushort)(halfY / 2), stepY = (ushort)(halfY * 2), halfX -= (ushort)(halfX / 2), stepX = (ushort)(halfX * 2))
+        //TODO C# 6.0
+        if (!matrix[0, 0].HasValue)
+            matrix[0, 0] = ((hmNb.Left == null ? Random.Range(-roughness, roughness) : hmNb.Left[0]) + (hmNb.Bottom == null ? Random.Range(-roughness, roughness) : hmNb.Bottom[0])) * 0.5f;
+        if (!matrix[0, width - 1].HasValue)
+            matrix[0, width - 1] = ((hmNb.Bottom == null ? Random.Range(-roughness, roughness) : hmNb.Bottom[width - 1]) + (hmNb.Right == null ? Random.Range(-roughness, roughness) : hmNb.Right[0])) * 0.5f;
+        if (!matrix[height - 1, 0].HasValue)
+            matrix[height - 1, 0] = ((hmNb.Top == null ? Random.Range(-roughness, roughness) : hmNb.Top[0]) + (hmNb.Left == null ? Random.Range(-roughness, roughness) : hmNb.Left[height - 1])) * 0.5f;
+        if (!matrix[height - 1, width - 1].HasValue)
+            matrix[height - 1, width - 1] = ((hmNb.Right == null ? Random.Range(-roughness, roughness) : hmNb.Right[height - 1]) + (hmNb.Top == null ? Random.Range(-roughness, roughness) : hmNb.Top[width - 1])) * 0.5f;
+
+        ushort len = (ushort)Mathf.Max(Mathf.NextPowerOfTwo(height), Mathf.NextPowerOfTwo(width));
+        ushort[] yOffsets = new ushort[len + 2];//////////////////////////////temp
+        ushort[] xOffsets = new ushort[len + 2];/////////////////////////////////temp
+        yOffsets[0] = (ushort)(height - 1);
+        xOffsets[0] = (ushort)(width - 1);
+        ushort[] yOffsetsBuf = new ushort[len + 2];
+        ushort[] xOffsetsBuf = new ushort[len + 2];
+
+        ushort count = 1;
+        float randRangeCoef = roughness / (height + width);
+        while (count != len)
         {
-            float randRange = (((halfY + halfX) / 2f) / ((height + width) / 2f)) * roughness;
-
-            for (ushort y = halfY; y < height; y += stepY)
-                for (ushort x = halfX; x < width; x += stepX)
-                    matrix[y, x] = (matrix[y - halfY, x - halfX] + matrix[y + halfY, x - halfX] + matrix[y - halfY, x + halfX] + matrix[y + halfY, x + halfX]) / 4 + Random.Range(-randRange, randRange);
-
-            for (ushort y = halfY; y < height; y += stepY)
+            System.Array.Copy(yOffsets, yOffsetsBuf, len + 2);//////////////////////////////temp +2
+            System.Array.Copy(xOffsets, xOffsetsBuf, len + 2);//////////////////////////////temp +2
+            for (ushort i = 0; i < count; ++i)
             {
-                matrix[y, 0] = (matrix[y - halfY, 0] + matrix[y + halfY, 0] + matrix[y, 0 + halfX]) / 3 + Random.Range(-randRange, randRange);
-                matrix[y, width - 1] = (matrix[y - halfY, width - 1] + matrix[y, width - 1 - halfX] + matrix[y + halfY, width - 1]) / 3 + Random.Range(-randRange, randRange);
+                ushort q = (ushort)(yOffsetsBuf[i] + 1 >> 1);
+                byte nr = (byte)((yOffsetsBuf[i] + 1) % 2 ^ 1);
+                yOffsets[i << 1] = q;
+                yOffsets[(i << 1) + 1] = (ushort)(q - nr);
+
+                q = (ushort)(xOffsetsBuf[i] + 1 >> 1);
+                nr = (byte)((xOffsetsBuf[i] + 1) % 2 ^ 1);
+                xOffsets[i << 1] = q;
+                xOffsets[(i << 1) + 1] = (ushort)(q - nr);
             }
 
-            for (ushort x = halfX; x < width; x += stepX)
+            count <<= 1;
+
+            //Центры
+            for (ushort y = 0, yPoint = yOffsets[0]; y < count; y += 2)
             {
-                matrix[0, x] = (matrix[0, x - halfX] + matrix[0 + halfY, x] + matrix[0, x + halfX]) / 3 + Random.Range(-randRange, randRange);
-                matrix[height - 1, x] = (matrix[height - 1 - halfY, x] + matrix[height - 1, x - halfX] + matrix[height - 1, x + halfX]) / 3 + Random.Range(-randRange, randRange);
+                for (ushort x = 0, xPoint = xOffsets[0]; x < count; x += 2)
+                {
+                    if (!matrix[yPoint, xPoint].HasValue)
+                    {
+                        float randRange = (yOffsets[y] + yOffsets[y + 1] + xOffsets[x] + xOffsets[x + 1]) * randRangeCoef;
+                        matrix[yPoint, xPoint] = (matrix[yPoint - yOffsets[y], xPoint - xOffsets[x]] + matrix[yPoint + yOffsets[y + 1], xPoint - xOffsets[x]] + matrix[yPoint - yOffsets[y], xPoint + xOffsets[x + 1]] + matrix[yPoint + yOffsets[y + 1], xPoint + xOffsets[x + 1]]) * 0.25f + Random.Range(-randRange, randRange);
+                    }
+                    xPoint += (ushort)(xOffsets[x + 1] + xOffsets[x + 2]);
+                }
+                yPoint += (ushort)(yOffsets[y + 1] + yOffsets[y + 2]);
             }
 
-            for (ushort y = halfY; y < height - 1; y += stepY)
-                for (ushort x = stepX; x < width - 1; x += stepX)
-                    matrix[y, x] = (matrix[y, x - halfX] + matrix[y - halfY, x] + matrix[y, x + halfX] + matrix[y + halfY, x]) / 4 + Random.Range(-randRange, randRange);
+            //Вертикальные границы
+            for (ushort y = 0, yPoint = yOffsets[0]; y < count; y += 2)
+            {
+                if (!matrix[yPoint, 0].HasValue)
+                {
+                    float randRange = (yOffsets[y] + yOffsets[y + 1] + (xOffsets[0] << 1)) * randRangeCoef;
+                    matrix[yPoint, 0] = (matrix[yPoint - yOffsets[y], 0] + matrix[yPoint + yOffsets[y + 1], 0] + (hmNb.Left == null ? matrix[yPoint, xOffsets[0]] : hmNb.Left[yPoint]) + matrix[yPoint, xOffsets[0]]) * 0.25f + Random.Range(-randRange, randRange);
+                }
+                if (!matrix[yPoint, width - 1].HasValue)
+                {
+                    float randRange = (yOffsets[y] + yOffsets[y + 1] + (xOffsets[count - 1] << 1)) * randRangeCoef;
+                    matrix[yPoint, width - 1] = (matrix[yPoint - yOffsets[y], width - 1] + matrix[yPoint + yOffsets[y + 1], width - 1] + (hmNb.Right == null ? matrix[yPoint, width - 1 - xOffsets[count - 1]] : hmNb.Right[yPoint]) + matrix[yPoint, width - 1 - xOffsets[count - 1]]) * 0.25f + Random.Range(-randRange, randRange);
+                }
+                yPoint += (ushort)(yOffsets[y + 1] + yOffsets[y + 2]);
+            }
 
-            for (ushort x = halfX; x < width - 1; x += stepX)
-                for (ushort y = stepY; y < height - 1; y += stepY)
-                    matrix[y, x] = (matrix[y, x - halfX] + matrix[y - halfY, x] + matrix[y, x + halfX] + matrix[y + halfY, x]) / 4 + Random.Range(-randRange, randRange);
+
+            //Горизонтальные границы
+            for (ushort x = 0, xPoint = xOffsets[0]; x < count; x += 2)
+            {
+                if (!matrix[0, xPoint].HasValue)
+                {
+                    float randRange = (xOffsets[x] + xOffsets[x + 1] + (yOffsets[0] << 1)) * randRangeCoef;
+                    matrix[0, xPoint] = (matrix[0, xPoint - xOffsets[x]] + matrix[0, xPoint + xOffsets[x + 1]] + (hmNb.Bottom == null ? matrix[yOffsets[0], xPoint] : hmNb.Bottom[xPoint]) + matrix[yOffsets[0], xPoint]) * 0.25f + Random.Range(-randRange, randRange);
+                }
+                if (!matrix[height - 1, xPoint].HasValue)
+                {
+                    float randRange = (xOffsets[x] + xOffsets[x + 1] + (yOffsets[count - 1] << 1)) * randRangeCoef;
+                    matrix[height - 1, xPoint] = (matrix[height - 1, xPoint - xOffsets[x]] + matrix[height - 1, xPoint + xOffsets[x + 1]] + (hmNb.Top == null ? matrix[height - 1 - yOffsets[count - 1], xPoint] : hmNb.Top[xPoint]) + matrix[height - 1 - yOffsets[count - 1], xPoint]) * 0.25f + Random.Range(-randRange, randRange);
+                }
+                xPoint += (ushort)(xOffsets[x + 1] + xOffsets[x + 2]);
+            }
+
+            //Первый столбец
+            for (ushort y = 0, yPoint = yOffsets[0]; y < count - 2; y += 2)
+            {
+                if (!matrix[yPoint + yOffsets[y + 1], xOffsets[0]].HasValue)
+                {
+                    float randRange = (yOffsets[y + 1] + yOffsets[y + 2] + xOffsets[0] + xOffsets[1]) * randRangeCoef;
+                    matrix[yPoint + yOffsets[y + 1], xOffsets[0]] = (matrix[yPoint, xOffsets[0]] + matrix[yPoint + yOffsets[y + 1] + yOffsets[y + 2], xOffsets[0]] + matrix[yPoint + yOffsets[y + 1], 0] + matrix[yPoint + yOffsets[y + 1], xOffsets[0] + xOffsets[1]]) * 0.25f + Random.Range(-randRange, randRange);
+                }
+                yPoint += (ushort)(yOffsets[y + 1] + yOffsets[y + 2]);
+            }
+
+            //Первая строка
+            for (ushort x = 0, xPoint = xOffsets[0]; x < count - 2; x += 2)
+            {
+                if (!matrix[yOffsets[0], xPoint + xOffsets[x + 1]].HasValue)
+                {
+                    float randRange = (xOffsets[x + 1] + xOffsets[x + 2] + yOffsets[0] + yOffsets[1]) * randRangeCoef;
+                    matrix[yOffsets[0], xPoint + xOffsets[x + 1]] = (matrix[yOffsets[0], xPoint] + matrix[yOffsets[0], xPoint + xOffsets[x + 1] + xOffsets[x + 2]] + matrix[0, xPoint + xOffsets[x + 1]] + matrix[yOffsets[0] + yOffsets[1], xPoint + xOffsets[x + 1]]) * 0.25f + Random.Range(-randRange, randRange);
+                }
+                xPoint += (ushort)(xOffsets[x + 1] + xOffsets[x + 2]);
+            }
+
+            //Остальное
+            for (ushort y = 1, yPoint = (ushort)(yOffsets[0] + yOffsets[1]); y < count - 2; y += 2)// -1 ?
+            {
+                for (ushort x = 1, xPoint = (ushort)(xOffsets[0] + xOffsets[1]); x < count - 2; x += 2)// -1 ?
+                {
+                    if (!matrix[yPoint + yOffsets[y + 1], xPoint].HasValue)
+                    {
+                        float randRange = (yOffsets[y + 1] + yOffsets[y + 2] + xOffsets[x] + xOffsets[x + 1]) * randRangeCoef;
+                        matrix[yPoint + yOffsets[y + 1], xPoint] = (matrix[yPoint + yOffsets[y + 1], xPoint - xOffsets[x]] + matrix[yPoint, xPoint] + matrix[yPoint + yOffsets[y + 1], xPoint + xOffsets[x + 1]] + matrix[yPoint + yOffsets[y + 1] + yOffsets[y + 2], xPoint]) * 0.25f + Random.Range(-randRange, randRange);
+                    }
+                    if (!matrix[yPoint, xPoint + xOffsets[x + 1]].HasValue)
+                    {
+                        float randRange = (yOffsets[y] + yOffsets[y + 1] + xOffsets[x + 1] + xOffsets[x + 2]) * randRangeCoef;
+                        matrix[yPoint, xPoint + xOffsets[x + 1]] = (matrix[yPoint - yOffsets[y], xPoint + xOffsets[x + 1]] + matrix[yPoint, xPoint] + matrix[yPoint, xPoint + xOffsets[x + 1] + xOffsets[x + 2]] + matrix[yPoint + yOffsets[y + 1], xPoint + xOffsets[x + 1]]) * 0.25f + Random.Range(-randRange, randRange);
+                    }
+                    xPoint += (ushort)(xOffsets[x + 1] + xOffsets[x + 2]);
+                }
+                yPoint += (ushort)(yOffsets[y + 1] + yOffsets[y + 2]);
+            }
         }
     }
 
-    public static void CreateHeightmap(float?[,] matrix, float roughness, float topLeft, float topRight, float bottomLeft, float bottomRight)
+    public static void MakeEqualHeightLine(float[,] matrix, LocalPos[] vertices, float height)
     {
-        //Debug.Assert(topLeft >= 0 && topRight >= 0 && bottomLeft >= 0 && bottomRight >= 0);
-
-        ushort height = (ushort)matrix.GetLength(0);
-        ushort width = (ushort)matrix.GetLength(1);
-
-        //Задаём начальные значения по углам
-        matrix[0, 0] = topLeft;
-        matrix[0, width - 1] = topRight;
-        matrix[height - 1, 0] = bottomLeft;
-        matrix[height - 1, width - 1] = bottomRight;
-
-        bool end = false;
-        for (ushort stepY = (ushort)(height - 1), stepX = (ushort)(width - 1), halfY = (ushort)(stepY / 2), halfX = (ushort)(stepX / 2); !end; end = (halfY == 1 && halfX == 1), halfY -= (ushort)(halfY / 2), stepY = (ushort)(halfY * 2), halfX -= (ushort)(halfX / 2), stepX = (ushort)(halfX * 2))
-        {
-            float randRange = (((halfY + halfX) / 2f) / ((height + width) / 2f)) * roughness;
-
-            for (ushort y = halfY; y < height; y += stepY)
-                for (ushort x = halfX; x < width; x += stepX)
-                    if (!matrix[y, x].HasValue)
-                        matrix[y, x] = (matrix[y - halfY, x - halfX] + matrix[y + halfY, x - halfX] + matrix[y - halfY, x + halfX] + matrix[y + halfY, x + halfX]) / 4 + Random.Range(-randRange, randRange);
-
-            for (ushort y = halfY; y < height; y += stepY)
-            {
-                if (!matrix[y, 0].HasValue)
-                    matrix[y, 0] = (matrix[y - halfY, 0] + matrix[y + halfY, 0] + matrix[y, 0 + halfX]) / 3 + Random.Range(-randRange, randRange);
-                if (!matrix[y, width - 1].HasValue)
-                    matrix[y, width - 1] = (matrix[y - halfY, width - 1] + matrix[y, width - 1 - halfX] + matrix[y + halfY, width - 1]) / 3 + Random.Range(-randRange, randRange);
-            }
-
-            for (ushort x = halfX; x < width; x += stepX)
-            {
-                if (!matrix[0, x].HasValue)
-                    matrix[0, x] = (matrix[0, x - halfX] + matrix[0 + halfY, x] + matrix[0, x + halfX]) / 3 + Random.Range(-randRange, randRange);
-                if (!matrix[height - 1, x].HasValue)
-                    matrix[height - 1, x] = (matrix[height - 1 - halfY, x] + matrix[height - 1, x - halfX] + matrix[height - 1, x + halfX]) / 3 + Random.Range(-randRange, randRange);
-            }
-
-            for (ushort y = halfY; y < height - 1; y += stepY)
-                for (ushort x = stepX; x < width - 1; x += stepX)
-                    if (!matrix[y, x].HasValue)
-                        matrix[y, x] = (matrix[y, x - halfX] + matrix[y - halfY, x] + matrix[y, x + halfX] + matrix[y + halfY, x]) / 4 + Random.Range(-randRange, randRange);
-
-            for (ushort x = halfX; x < width - 1; x += stepX)
-                for (ushort y = stepY; y < height - 1; y += stepY)
-                    if (!matrix[y, x].HasValue)
-                        matrix[y, x] = (matrix[y, x - halfX] + matrix[y - halfY, x] + matrix[y, x + halfX] + matrix[y + halfY, x]) / 4 + Random.Range(-randRange, randRange);
-        }
-    }
-
-    public static void MakeEqualHeightLine(float[,] matrix, Vector2[] vertices, float height)
-    {
-        foreach (Vector2 v in vertices)
-            if (v.x < 0 || v.x >= matrix.GetLength(1) || v.y < 0 || v.y >= matrix.GetLength(0))
+        foreach (LocalPos v in vertices)
+            if (v.X < 0 || v.X >= matrix.GetLength(1) || v.Y < 0 || v.Y >= matrix.GetLength(0))
                 throw new System.ArgumentOutOfRangeException("vertices", v.ToString(), "Vector is out of matrix length.");
 
         for (byte i = 0; i < vertices.Length - 1; ++i)
         {
-            Vector2 v = vertices[i];
+            GlobalPos v = vertices[i];
             while (v != vertices[i + 1])
             {
-                matrix[(int)v.y, (int)v.x] = height;
-                v.y += Mathf.Clamp(vertices[i + 1].y - v.y, -1, 1);
-                v.x += Mathf.Clamp(vertices[i + 1].x - v.x, -1, 1);
+                matrix[v.Y, v.X] = height;
+                v.Y += Mathf.Clamp(vertices[i + 1].Y - v.Y, -1, 1);
+                v.X += Mathf.Clamp(vertices[i + 1].X - v.X, -1, 1);
             }
         }
-        matrix[(int)vertices[vertices.Length - 1].y, (int)vertices[vertices.Length - 1].x] = height;
+        matrix[vertices[vertices.Length - 1].Y, vertices[vertices.Length - 1].X] = height;
     }
 
     /// <summary>
@@ -147,8 +205,10 @@ public static class WorldGenerator
     /// <returns>Список рек.</returns>
     /// <param name="heightMatrix">Карта высот.</param>
     /// <param name="riverMatrix">[out] Карта рек.</param>
-    public static List<List<Vector2>> CreateRivers(float[,] heightMap, bool[,] riverMap, RiversParameters riversParam)
+    public static List<List<LocalPos>> CreateRivers(float[,] heightMap, bool[,] riverMap, RiversParameters riversParam)
     {
+        RiverStack = new Stack<LocalPos>();
+
         ushort height = (ushort)riverMap.GetLength(0);
         ushort width = (ushort)riverMap.GetLength(1);
 
@@ -158,28 +218,29 @@ public static class WorldGenerator
         avg /= height * width;
         float minRiverHeight = (float)avg * riversParam.Height;
 
-        List<List<Vector2>> rivers = new List<List<Vector2>>();
+        List<List<LocalPos>> rivers = new List<List<LocalPos>>();
 
         for (byte i = 0; i < riversParam.Count; ++i)
         {
             bool riverCreated = false;
             for (ushort y = 1; y < height - 1 && !riverCreated; ++y) //TODO
                 for (ushort x = 1; x < width - 1 && !riverCreated; ++x) //TODO
-                    if (heightMap[y, x] > minRiverHeight && !riverMap[y, x] && RiverNeighbours(y, x, riverMap) == 0) //Проверяем, можно ли нам начать создание реки с этого хекса
+                    if (heightMap[y, x] > minRiverHeight && !riverMap[y, x] && RiverNeighbours(new LocalPos(x, y), riverMap) == 0) //Проверяем, можно ли нам начать создание реки с этого хекса
                         for (byte k = 0; k < riversParam.Attempts && !riverCreated; ++k)
                         {
-                            DirectRiver(y, x, heightMap, riverMap, riversParam.FlowHeightKoef); //Запускаем рекурсию
+                            DirectRiver(new LocalPos(x, y), heightMap, riverMap, riversParam.FlowHeightKoef); //Запускаем рекурсию
                             if (RiverStack.Count >= riversParam.MinimumLength)
                             { //Если река получилась больше необходим длины, то помечаем ячейки матрицы, иначе пробуем ещё раз 
-                                foreach (Vector2 hex in RiverStack)
-                                    riverMap[(int)hex.y, (int)hex.x] = true;
+                                foreach (LocalPos hex in RiverStack)
+                                    riverMap[hex.Y, hex.X] = true;
                                 riverCreated = true;
-                                rivers.Add(new List<Vector2>(RiverStack));
+                                rivers.Add(new List<LocalPos>(RiverStack));
                                 rivers[rivers.Count - 1].Reverse();
                             }
                             RiverStack.Clear();
                         }
         }
+        RiverStack = null;
         return rivers;
     }
 
@@ -190,67 +251,67 @@ public static class WorldGenerator
     /// <param name="x">x координата.</param>
     /// <param name="heightMatrix">Карта высот.</param>
     /// <param name="matrix">Карта рек.</param>
-    static void DirectRiver(ushort y, ushort x, float[,] heightMatrix, bool[,] riverMatrix, float flowHeightKoef)
+    static void DirectRiver(LocalPos pos, float[,] heightMatrix, bool[,] riverMatrix, float flowHeightKoef)
     {
         ushort height = (ushort)riverMatrix.GetLength(0);
         ushort width = (ushort)riverMatrix.GetLength(1);
 
-        RiverStack.Push(new Vector2(x, y));
+        RiverStack.Push(pos);
 
-        if (y > 0 && y < height - 1 && x > 0 && x < width - 1)
+        if (pos.Y > 0 && pos.Y < height - 1 && pos.X > 0 && pos.X < width - 1)
         {
             byte limiter = 0; //Переменная, контролирующая проверку всех направлений и выход из цикла, если ни одно не подходит
             bool dirFound = false;
 
-            byte k = (byte)((x % 2) != 0 ? 1 : 0); //Учитываем чётность/нечётность ряда хексов
+            byte k = (byte)(pos.X % 2); //Учитываем чётность/нечётность ряда хексов
             do //TODO Провести рефакторинг.
             {
                 switch (Random.Range(0, 7))//Выбираем случайное направление
                 {
                     case (int)HexDirection.BOTTOM_LEFT:
-                        if ((limiter & 1) == 0 && !RiverStack.Contains(new Vector2(x - 1, y - 1 + k)) && heightMatrix[y - 1 + k, x - 1] * flowHeightKoef <= heightMatrix[y, x] && !riverMatrix[y - 1 + k, x - 1] && RiverNeighbours((ushort)(y - 1 + k), (ushort)(x - 1), riverMatrix) < 2)
+                        if ((limiter & 1) == 0 && !RiverStack.Contains(new LocalPos((ushort)(pos.X - 1), (ushort)(pos.Y - 1 + k))) && heightMatrix[pos.Y - 1 + k, pos.X - 1] * flowHeightKoef <= heightMatrix[pos.Y, pos.X] && !riverMatrix[pos.Y - 1 + k, pos.X - 1] && RiverNeighbours(new LocalPos((ushort)(pos.X - 1), (ushort)(pos.Y - 1 + k)), riverMatrix) < 2)
                         {
-                            DirectRiver((ushort)(y - 1 + k), (ushort)(x - 1), heightMatrix, riverMatrix, flowHeightKoef);
+                            DirectRiver(new LocalPos((ushort)(pos.X - 1), (ushort)(pos.Y - 1 + k)), heightMatrix, riverMatrix, flowHeightKoef);
                             dirFound = true;
                         }
                         limiter |= 1;
                         break;
                     case (int)HexDirection.TOP_LEFT:
-                        if ((limiter & 2) == 0 && !RiverStack.Contains(new Vector2(x - 1, y + k)) && heightMatrix[y + k, x - 1] * flowHeightKoef <= heightMatrix[y, x] && !riverMatrix[y + k, x - 1] && RiverNeighbours((ushort)(y + k), (ushort)(x - 1), riverMatrix) < 2)
+                        if ((limiter & 2) == 0 && !RiverStack.Contains(new LocalPos((ushort)(pos.X - 1), (ushort)(pos.Y + k))) && heightMatrix[pos.Y + k, pos.X - 1] * flowHeightKoef <= heightMatrix[pos.Y, pos.X] && !riverMatrix[pos.Y + k, pos.X - 1] && RiverNeighbours(new LocalPos((ushort)(pos.X - 1), (ushort)(pos.Y + k)), riverMatrix) < 2)
                         {
-                            DirectRiver((ushort)(y + k), (ushort)(x - 1), heightMatrix, riverMatrix, flowHeightKoef);
+                            DirectRiver(new LocalPos((ushort)(pos.X - 1), (ushort)(pos.Y + k)), heightMatrix, riverMatrix, flowHeightKoef);
                             dirFound = true;
                         }
                         limiter |= 2;
                         break;
                     case (int)HexDirection.BOTTOM:
-                        if ((limiter & 4) == 0 && !RiverStack.Contains(new Vector2(x, y - 1)) && heightMatrix[y - 1, x] * flowHeightKoef <= heightMatrix[y, x] && !riverMatrix[y - 1, x] && RiverNeighbours((ushort)(y - 1), x, riverMatrix) < 2)
+                        if ((limiter & 4) == 0 && !RiverStack.Contains(new LocalPos(pos.X, (ushort)(pos.Y - 1))) && heightMatrix[pos.Y - 1, pos.X] * flowHeightKoef <= heightMatrix[pos.Y, pos.X] && !riverMatrix[pos.Y - 1, pos.X] && RiverNeighbours(new LocalPos(pos.X, (ushort)(pos.Y - 1)), riverMatrix) < 2)
                         {
-                            DirectRiver((ushort)(y - 1), x, heightMatrix, riverMatrix, flowHeightKoef);
+                            DirectRiver(new LocalPos(pos.X, (ushort)(pos.Y - 1)), heightMatrix, riverMatrix, flowHeightKoef);
                             dirFound = true;
                         }
                         limiter |= 4;
                         break;
                     case (int)HexDirection.TOP:
-                        if ((limiter & 8) == 0 && !RiverStack.Contains(new Vector2(x, y + 1)) && heightMatrix[y + 1, x] * flowHeightKoef <= heightMatrix[y, x] && !riverMatrix[y + 1, x] && RiverNeighbours((ushort)(y + 1), x, riverMatrix) < 2)
+                        if ((limiter & 8) == 0 && !RiverStack.Contains(new LocalPos((ushort)pos.X, (ushort)(pos.Y + 1))) && heightMatrix[pos.Y + 1, pos.X] * flowHeightKoef <= heightMatrix[pos.Y, pos.X] && !riverMatrix[pos.Y + 1, pos.X] && RiverNeighbours(new LocalPos(pos.X, (ushort)(pos.Y + 1)), riverMatrix) < 2)
                         {
-                            DirectRiver((ushort)(y + 1), x, heightMatrix, riverMatrix, flowHeightKoef);
+                            DirectRiver(new LocalPos(pos.X, (ushort)(pos.Y + 1)), heightMatrix, riverMatrix, flowHeightKoef);
                             dirFound = true;
                         }
                         limiter |= 8;
                         break;
                     case (int)HexDirection.BOTTOM_RIGHT:
-                        if ((limiter & 16) == 0 && !RiverStack.Contains(new Vector2(x + 1, y - 1 + k)) && heightMatrix[y - 1 + k, x + 1] * flowHeightKoef <= heightMatrix[y, x] && !riverMatrix[y - 1 + k, x + 1] && RiverNeighbours((ushort)(y - 1 + k), (ushort)(x + 1), riverMatrix) < 2)
+                        if ((limiter & 16) == 0 && !RiverStack.Contains(new LocalPos((ushort)(pos.X + 1), (ushort)(pos.Y - 1 + k))) && heightMatrix[pos.Y - 1 + k, pos.X + 1] * flowHeightKoef <= heightMatrix[pos.Y, pos.X] && !riverMatrix[pos.Y - 1 + k, pos.X + 1] && RiverNeighbours(new LocalPos((ushort)(pos.X + 1), (ushort)(pos.Y - 1 + k)), riverMatrix) < 2)
                         {
-                            DirectRiver((ushort)(y - 1 + k), (ushort)(x + 1), heightMatrix, riverMatrix, flowHeightKoef);
+                            DirectRiver(new LocalPos((ushort)(pos.X + 1), (ushort)(pos.Y - 1 + k)), heightMatrix, riverMatrix, flowHeightKoef);
                             dirFound = true;
                         }
                         limiter |= 16;
                         break;
                     case (int)HexDirection.TOP_RIGHT:
-                        if ((limiter & 32) == 0 && !RiverStack.Contains(new Vector2(x + 1, y + k)) && heightMatrix[y + k, x + 1] * flowHeightKoef <= heightMatrix[y, x] && !riverMatrix[y + k, x + 1] && RiverNeighbours((ushort)(y + k), (ushort)(x + 1), riverMatrix) < 2)
+                        if ((limiter & 32) == 0 && !RiverStack.Contains(new LocalPos((ushort)(pos.X + 1), (ushort)(pos.Y + k))) && heightMatrix[pos.Y + k, pos.X + 1] * flowHeightKoef <= heightMatrix[pos.Y, pos.X] && !riverMatrix[pos.Y + k, pos.X + 1] && RiverNeighbours(new LocalPos((ushort)(pos.X + 1), (ushort)(pos.Y + k)), riverMatrix) < 2)
                         {
-                            DirectRiver((ushort)(y + k), (ushort)(x + 1), heightMatrix, riverMatrix, flowHeightKoef);
+                            DirectRiver(new LocalPos((ushort)(pos.X + 1), (ushort)(pos.Y + k)), heightMatrix, riverMatrix, flowHeightKoef);
                             dirFound = true;
                         }
                         limiter |= 32;
@@ -270,46 +331,47 @@ public static class WorldGenerator
     /// <param name="matrix">Карта рек.</param>
     /// Функция подсчитывает количство соседних клеток, помеченных как "Река" или находящихся в "стеке реки"
     /// TODO Проверить работу стека реки
-    static byte RiverNeighbours(ushort y, ushort x, bool[,] riverMatrix)
+    static byte RiverNeighbours(LocalPos pos, bool[,] riverMatrix)
     {
         ushort height = (ushort)riverMatrix.GetLength(0);
         ushort width = (ushort)riverMatrix.GetLength(1);
 
-        byte k = (byte)((x % 2) != 0 ? 1 : 0); //TODO Провести рефакторинг.
+        byte k = (byte)(pos.X % 2); //TODO Провести рефакторинг.
 
         byte riversCount = 0;
-        if (y > 0 && x > 0 && (riverMatrix[y - 1 + k, x - 1] || RiverStack.Contains(new Vector2(x - 1, y - 1 + k))))
+        if (pos.Y > 0 && pos.X > 0 && (riverMatrix[pos.Y - 1 + k, pos.X - 1] || RiverStack.Contains(new LocalPos((ushort)(pos.X - 1), (ushort)(pos.Y - 1 + k)))))
             riversCount++;
-        if (x > 0 && y < height - 1 && (riverMatrix[y + k, x - 1] || RiverStack.Contains(new Vector2(x - 1, y + k))))
+        if (pos.X > 0 && pos.Y < height - 1 && (riverMatrix[pos.Y + k, pos.X - 1] || RiverStack.Contains(new LocalPos((ushort)(pos.X - 1), (ushort)(pos.Y + k)))))
             riversCount++;
-        if (y > 0 && (riverMatrix[y - 1, x] || RiverStack.Contains(new Vector2(x, y - 1))))
+        if (pos.Y > 0 && (riverMatrix[pos.Y - 1, pos.X] || RiverStack.Contains(new LocalPos(pos.X, (ushort)(pos.Y - 1)))))
             riversCount++;
-        if (y < height - 1 && (riverMatrix[y + 1, x] || RiverStack.Contains(new Vector2(x, y + 1))))
+        if (pos.Y < height - 1 && (riverMatrix[pos.Y + 1, pos.X] || RiverStack.Contains(new LocalPos(pos.X, (ushort)(pos.Y + 1)))))
             riversCount++;
-        if (y > 0 && x < width - 1 && (riverMatrix[y - 1 + k, x + 1] || RiverStack.Contains(new Vector2(x + 1, y - 1 + k))))
+        if (pos.Y > 0 && pos.X < width - 1 && (riverMatrix[pos.Y - 1 + k, pos.X + 1] || RiverStack.Contains(new LocalPos((ushort)(pos.X + 1), (ushort)(pos.Y - 1 + k)))))
             riversCount++;
-        if (x < width - 1 && y < height - 1 && (riverMatrix[y + k, x + 1] || RiverStack.Contains(new Vector2(x + 1, y + k))))
+        if (pos.X < width - 1 && pos.Y < height - 1 && (riverMatrix[pos.Y + k, pos.X + 1] || RiverStack.Contains(new LocalPos((ushort)(pos.X + 1), (ushort)(pos.Y + k)))))
             riversCount++;
 
         return riversCount;
     }
 
     //UNDONE
-    public static List<List<Vector2>> CreateClusters(GlobalMap map, ClustersParameters clustersParam)
+    public static List<List<LocalPos>> CreateClusters(Chunk map, ClustersParameters clustersParam)
     {
         ushort height = map.Height;
         ushort width = map.Width;
 
-        List<List<Vector2>> clusters = new List<List<Vector2>>(clustersParam.Count);
+        List<List<LocalPos>> clusters = new List<List<LocalPos>>(clustersParam.Count);
 
         for (byte i = 0; i < clustersParam.Count; ++i)
         {
-            ushort x = (ushort)Random.Range(1, width - 1);
-            ushort y = (ushort)Random.Range(1, height - 1);
-            if (!map.RiverMatrix[y, x])
+            LocalPos pos;
+            pos.X = (ushort)Random.Range(1, width - 1);
+            pos.Y = (ushort)Random.Range(1, height - 1);
+            if (!map.RiverMatrix[pos.Y, pos.X])
             {
-                clusters.Add(new List<Vector2>());
-                SpreadCluster(map, y, x, clustersParam.Size, clusters[i]);
+                clusters.Add(new List<LocalPos>());
+                SpreadCluster(map, pos, clustersParam.Size, clusters[i]);
             }
             else
                 --i;
@@ -317,82 +379,81 @@ public static class WorldGenerator
         return clusters;
     }
 
-    static void SpreadCluster(GlobalMap map, ushort y, ushort x, byte remainingSize, List<Vector2> cluster)
+    static void SpreadCluster(Chunk map, LocalPos pos, byte remainingSize, List<LocalPos> cluster)
     {
         ushort height = map.Height;
         ushort width = map.Width;
 
-        cluster.Add(new Vector2(x, y));
-        map.ClusterMatrix[y, x] = true;
+        cluster.Add(pos);
+        map.ClusterMatrix[pos.Y, pos.X] = true;
 
-        if (y > 0 && y < height - 1 && x > 0 && x < width - 1 && remainingSize != 0)
+        if (pos.Y > 0 && pos.Y < height - 1 && pos.X > 0 && pos.X < width - 1 && remainingSize != 0)
         {
-            byte k = (byte)((x % 2) != 0 ? 1 : 0); //TODO Провести рефакторинг.
+            byte k = (byte)(pos.X % 2); //TODO Провести рефакторинг.
 
-            if (!map.RiverMatrix[y - 1 + k, x - 1] && !map.ClusterMatrix[y - 1 + k, x - 1])
-                SpreadCluster(map, (ushort)(y - 1 + k), (ushort)(x - 1), (byte)(remainingSize - 1), cluster);
-            if (!map.RiverMatrix[y + k, x - 1] && !map.ClusterMatrix[y + k, x - 1])
-                SpreadCluster(map, (ushort)(y + k), (ushort)(x - 1), (byte)(remainingSize - 1), cluster);
-            if (!map.RiverMatrix[y - 1, x] && !map.ClusterMatrix[y - 1, x])
-                SpreadCluster(map, (ushort)(y - 1), x, (byte)(remainingSize - 1), cluster);
-            if (!map.RiverMatrix[y + 1, x] && !map.ClusterMatrix[y + 1, x])
-                SpreadCluster(map, (ushort)(y + 1), x, (byte)(remainingSize - 1), cluster);
-            if (!map.RiverMatrix[y - 1 + k, x + 1] && !map.ClusterMatrix[y - 1 + k, x + 1])
-                SpreadCluster(map, (ushort)(y - 1 + k), (ushort)(x + 1), (byte)(remainingSize - 1), cluster);
-            if (!map.RiverMatrix[y + k, x + 1] && !map.ClusterMatrix[y + k, x + 1])
-                SpreadCluster(map, (ushort)(y + k), (ushort)(x + 1), (byte)(remainingSize - 1), cluster);
+            if (!map.RiverMatrix[pos.Y - 1 + k, pos.X - 1] && !map.ClusterMatrix[pos.Y - 1 + k, pos.X - 1])
+                SpreadCluster(map, new LocalPos((ushort)(pos.X - 1), (ushort)(pos.Y - 1 + k)), (byte)(remainingSize - 1), cluster);
+            if (!map.RiverMatrix[pos.Y + k, pos.X - 1] && !map.ClusterMatrix[pos.Y + k, pos.X - 1])
+                SpreadCluster(map, new LocalPos((ushort)(pos.X - 1), (ushort)(pos.Y + k)), (byte)(remainingSize - 1), cluster);
+            if (!map.RiverMatrix[pos.Y - 1, pos.X] && !map.ClusterMatrix[pos.Y - 1, pos.X])
+                SpreadCluster(map, new LocalPos(pos.X, (ushort)(pos.Y - 1)), (byte)(remainingSize - 1), cluster);
+            if (!map.RiverMatrix[pos.Y + 1, pos.X] && !map.ClusterMatrix[pos.Y + 1, pos.X])
+                SpreadCluster(map, new LocalPos(pos.X, (ushort)(pos.Y + 1)), (byte)(remainingSize - 1), cluster);
+            if (!map.RiverMatrix[pos.Y - 1 + k, pos.X + 1] && !map.ClusterMatrix[pos.Y - 1 + k, pos.X + 1])
+                SpreadCluster(map, new LocalPos((ushort)(pos.X + 1), (ushort)(pos.Y - 1 + k)), (byte)(remainingSize - 1), cluster);
+            if (!map.RiverMatrix[pos.Y + k, pos.X + 1] && !map.ClusterMatrix[pos.Y + k, pos.X + 1])
+                SpreadCluster(map, new LocalPos((ushort)(pos.X + 1), (ushort)(pos.Y + k)), (byte)(remainingSize - 1), cluster);
         }
     }
 
-    public static List<List<Vector2>> CreateRoads(float[,] heightMap, bool[,] roadMap, List<List<Vector2>> clusters)
+    public static List<List<LocalPos>> CreateRoads(float[,] heightMap, bool[,] riverMap, bool[,] roadMap, List<List<LocalPos>> clusters, RoadsParameters roadsParam)
     {
-        List<List<Vector2>> roads = new List<List<Vector2>>();
-
-        for (byte i = 0; i < clusters.Count / 2; ++i)
+        List<List<LocalPos>> roads = new List<List<LocalPos>>();
+        for (byte i = 0; i < clusters.Count >> 1; ++i)
         {
-            roads.Add(new List<Vector2>());
-            DirectRoad(heightMap, roadMap, (ushort)clusters[i][0].y, (ushort)clusters[i][0].x, clusters[clusters.Count / 2 + i][0], roads[i]);
+            roads.Add(new List<LocalPos>());
+            DirectRoad(heightMap, riverMap, roadMap, clusters[i][0], clusters[(clusters.Count >> 1) + i][0], roads[i], roadsParam);
         }
         return roads;
     }
 
-    static void DirectRoad(float[,] heightMatrix, bool[,] roadMatrix, ushort y, ushort x, Vector2 destination, List<Vector2> road)
+    static void DirectRoad(float[,] heightMatrix, bool[,] riverMatrix, bool[,] roadMatrix, LocalPos pos, LocalPos destination, List<LocalPos> road, RoadsParameters roadsParam)
     {
         ushort height = (ushort)roadMatrix.GetLength(0);
         ushort width = (ushort)roadMatrix.GetLength(1);
 
-        road.Add(new Vector2(x, y));
-        roadMatrix[y, x] = true;
+        road.Add(pos);
+        roadMatrix[pos.Y, pos.X] = true;
 
-        if (y > 0 && y < height - 1 && x > 0 && x < width - 1 && !(destination.x == x && destination.y == y))
+        if (pos.Y > 0 && pos.Y < height - 1 && pos.X > 0 && pos.X < width - 1 && !(destination.X == pos.X && destination.Y == pos.Y))
         {
-            byte k = (byte)((x % 2) != 0 ? 1 : 0); //TODO Провести рефакторинг.
+            byte k = (byte)(pos.X % 2); //TODO Провести рефакторинг.
 
-            float max = heightMatrix[y + k, x - 1], avg = 0;
-            float cur = heightMatrix[y + k, x - 1];
+            float max = heightMatrix[pos.Y + k, pos.X - 1], avg = 0;
+            float cur = heightMatrix[pos.Y + k, pos.X - 1];
             avg += cur;
 
-            cur = heightMatrix[y + 1, x];
+            cur = heightMatrix[pos.Y + 1, pos.X];
             if (max < cur)
                 max = cur;
             avg += cur;
 
-            cur = heightMatrix[y + k, x + 1];
+            cur = heightMatrix[pos.Y + k, pos.X + 1];
             if (max < cur)
                 max = cur;
             avg += cur;
 
-            cur = heightMatrix[y - 1 + k, x + 1];
+            cur = heightMatrix[pos.Y - 1 + k, pos.X + 1];
             if (max < cur)
                 max = cur;
             avg += cur;
 
-            cur = heightMatrix[y - 1, x];
+            cur = heightMatrix[pos.Y - 1, pos.X];
             if (max < cur)
                 max = cur;
             avg += cur;
 
-            cur = heightMatrix[y - 1 + k, x - 1];
+            cur = heightMatrix[pos.Y - 1 + k, pos.X - 1];
             if (max < cur)
                 max = cur;
             avg += cur;
@@ -402,37 +463,38 @@ public static class WorldGenerator
 
             float weight = 0, buf;
             sbyte dx = 0, dy = 0;
-            if (!road.Contains(new Vector2(x - 1, y + k)) && ((buf = (Mathf.Abs(destination.x - x) - Mathf.Abs(destination.x - (x - 1)) + Mathf.Abs(destination.y - y) - Mathf.Abs(destination.y - (y + k)) + 3) * (max - Mathf.Abs(heightMatrix[y + k, x - 1] - avg))) > weight))
+
+            if (!road.Contains(new LocalPos((ushort)(pos.X - 1), (ushort)(pos.Y + k))) && ((buf = (Mathf.Abs(destination.X - pos.X) - Mathf.Abs(destination.X - (pos.X - 1)) + Mathf.Abs(destination.Y - pos.Y) - Mathf.Abs(destination.Y - (pos.Y + k)) + 3) * (max - Mathf.Abs(heightMatrix[pos.Y + k, pos.X - 1] - avg))) * (roadMatrix[pos.Y + k, pos.X - 1] ? roadsParam.RoadMergeMultiplier : 1) * ((riverMatrix[pos.Y, pos.X] && riverMatrix[pos.Y + k, pos.X - 1]) ? roadsParam.GoingAlongRiverMultiplier : 1) > weight))
             {
                 weight = buf;
                 dx = -1;
                 dy = (sbyte)k;
             }
-            if (!road.Contains(new Vector2(x + 1, y + k)) && ((buf = (Mathf.Abs(destination.x - x) - Mathf.Abs(destination.x - (x + 1)) + Mathf.Abs(destination.y - y) - Mathf.Abs(destination.y - (y + k)) + 3) * (max - Mathf.Abs(heightMatrix[y + k, x + 1] - avg))) > weight))
+            if (!road.Contains(new LocalPos((ushort)(pos.X + 1), (ushort)(pos.Y + k))) && ((buf = (Mathf.Abs(destination.X - pos.X) - Mathf.Abs(destination.X - (pos.X + 1)) + Mathf.Abs(destination.Y - pos.Y) - Mathf.Abs(destination.Y - (pos.Y + k)) + 3) * (max - Mathf.Abs(heightMatrix[pos.Y + k, pos.X + 1] - avg))) * (roadMatrix[pos.Y + k, pos.X + 1] ? roadsParam.RoadMergeMultiplier : 1) * ((riverMatrix[pos.Y, pos.X] && riverMatrix[pos.Y + k, pos.X + 1]) ? roadsParam.GoingAlongRiverMultiplier : 1) > weight))
             {
                 weight = buf;
                 dx = 1;
                 dy = (sbyte)k;
             }
-            if (!road.Contains(new Vector2(x, y + 1)) && ((buf = (Mathf.Abs(destination.y - y) - Mathf.Abs(destination.y - (y + 1)) + 3) * (max - Mathf.Abs(heightMatrix[y + 1, x] - avg))) > weight))//!После диагонали
+            if (!road.Contains(new LocalPos(pos.X, (ushort)(pos.Y + 1))) && ((buf = (Mathf.Abs(destination.Y - pos.Y) - Mathf.Abs(destination.Y - (pos.Y + 1)) + 3) * (max - Mathf.Abs(heightMatrix[pos.Y + 1, pos.X] - avg))) * (roadMatrix[pos.Y + 1, pos.X] ? roadsParam.RoadMergeMultiplier : 1) * ((riverMatrix[pos.Y, pos.X] && riverMatrix[pos.Y + 1, pos.X]) ? roadsParam.GoingAlongRiverMultiplier : 1) > weight))//!После диагонали
             {
                 weight = buf;
                 dx = 0;
                 dy = 1;
             }
-            if (!road.Contains(new Vector2(x + 1, y - 1 + k)) && ((buf = (Mathf.Abs(destination.x - x) - Mathf.Abs(destination.x - (x + 1)) + Mathf.Abs(destination.y - y) - Mathf.Abs(destination.y - (y - 1 + k)) + 3) * (max - Mathf.Abs(heightMatrix[y - 1 + k, x + 1] - avg))) > weight))
+            if (!road.Contains(new LocalPos((ushort)(pos.X + 1), (ushort)(pos.Y - 1 + k))) && ((buf = (Mathf.Abs(destination.X - pos.X) - Mathf.Abs(destination.X - (pos.X + 1)) + Mathf.Abs(destination.Y - pos.Y) - Mathf.Abs(destination.Y - (pos.Y - 1 + k)) + 3) * (max - Mathf.Abs(heightMatrix[pos.Y - 1 + k, pos.X + 1] - avg))) * (roadMatrix[pos.Y - 1 + k, pos.X + 1] ? roadsParam.RoadMergeMultiplier : 1) * ((riverMatrix[pos.Y, pos.X] && riverMatrix[pos.Y - 1 + k, pos.X + 1]) ? roadsParam.GoingAlongRiverMultiplier : 1) > weight))
             {
                 weight = buf;
                 dx = 1;
                 dy = (sbyte)(-1 + k);
             }
-            if (!road.Contains(new Vector2(x - 1, y - 1 + k)) && ((buf = (Mathf.Abs(destination.x - x) - Mathf.Abs(destination.x - (x - 1)) + Mathf.Abs(destination.y - y) - Mathf.Abs(destination.y - (y - 1 + k)) + 3) * (max - Mathf.Abs(heightMatrix[y - 1 + k, x - 1] - avg))) > weight))
+            if (!road.Contains(new LocalPos((ushort)(pos.X - 1), (ushort)(pos.Y - 1 + k))) && ((buf = (Mathf.Abs(destination.X - pos.X) - Mathf.Abs(destination.X - (pos.X - 1)) + Mathf.Abs(destination.Y - pos.Y) - Mathf.Abs(destination.Y - (pos.Y - 1 + k)) + 3) * (max - Mathf.Abs(heightMatrix[pos.Y - 1 + k, pos.X - 1] - avg))) * (roadMatrix[pos.Y - 1 + k, pos.X - 1] ? roadsParam.RoadMergeMultiplier : 1) * ((riverMatrix[pos.Y, pos.X] && riverMatrix[pos.Y - 1 + k, pos.X - 1]) ? roadsParam.GoingAlongRiverMultiplier : 1) > weight))
             {
                 weight = buf;
                 dx = -1;
                 dy = (sbyte)(-1 + k);
             }
-            if (!road.Contains(new Vector2(x, y - 1)) && ((buf = (Mathf.Abs(destination.y - y) - Mathf.Abs(destination.y - (y - 1)) + 3) * (max - Mathf.Abs(heightMatrix[y - 1, x] - avg))) > weight))//!После диагонали
+            if (!road.Contains(new LocalPos(pos.X, (ushort)(pos.Y - 1))) && ((buf = (Mathf.Abs(destination.Y - pos.Y) - Mathf.Abs(destination.Y - (pos.Y - 1)) + 3) * (max - Mathf.Abs(heightMatrix[pos.Y - 1, pos.X] - avg))) * (roadMatrix[pos.Y - 1, pos.X] ? roadsParam.RoadMergeMultiplier : 1) * ((riverMatrix[pos.Y, pos.X] && riverMatrix[pos.Y - 1, pos.X]) ? roadsParam.GoingAlongRiverMultiplier : 1) > weight))//!После диагонали
             {
                 weight = buf;
                 dx = 0;
@@ -440,9 +502,9 @@ public static class WorldGenerator
             }
 
             if (dx == 0 && dy == 0)
-                throw new System.Exception("Infinite recursion detected. Check heightmap values.");
+                throw new System.Exception("Infinite recursion detected. Try to check heightmap values.");
 
-            DirectRoad(heightMatrix, roadMatrix, (ushort)(y + dy), (ushort)(x + dx), destination, road);
+            DirectRoad(heightMatrix, riverMatrix, roadMatrix, new LocalPos((ushort)(pos.X + dx), (ushort)(pos.Y + dy)), destination, road, roadsParam);
         }
     }
 }

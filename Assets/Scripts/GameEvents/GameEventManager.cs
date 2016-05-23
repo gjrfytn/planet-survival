@@ -1,13 +1,10 @@
 using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine.UI;
-using System.Linq;
 
 public class GameEventManager : MonoBehaviour
 {
-    public GameObject GameEventTimer;
     public GameObject EventPanel;
     public GameObject ReactionButtonPanel;
     public GameObject Btn;
@@ -34,9 +31,9 @@ public class GameEventManager : MonoBehaviour
     void CallEvent()
     {
         //CollectFactors();
-        TerrainType terrain = (GameObject.FindWithTag("World").GetComponent<WorldWrapper>().World.GetHexTerrain(GameObject.FindWithTag("Player").GetComponent<Player>().MapCoords));
+        TerrainType terrain = GameObject.FindWithTag("World").GetComponent<WorldWrapper>().World.GetHexTerrain(GameObject.FindWithTag("Player").GetComponent<Player>().Pos);
 
-        List<GameEvent> possibleEvents = Events.Where(e => true == true).ToList(); //TODO Фильтрация
+        List<GameEvent> possibleEvents = new List<GameEvent>(Events);//List<GameEvent> possibleEvents = Events.Where(e => true == true).ToList(); //TODO Фильтрация
         short weight = -100; //TODO
         GameEvent evnt = null;
         foreach (GameEvent e in possibleEvents)

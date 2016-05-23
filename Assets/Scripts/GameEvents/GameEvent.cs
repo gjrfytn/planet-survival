@@ -69,11 +69,12 @@ public class GameEvent //UNDONE
     {
         Name = name;
         Description = description;
-        Probability = probability;
+        BaseProbability = probability;
         StoryEvent = storyEvent;
         TerrainWeights = terrainWeights;
         TimeWeight = timeWeight;
         StateWeight = stateWeight;
         Reactions = reactions;
     }
+
 }

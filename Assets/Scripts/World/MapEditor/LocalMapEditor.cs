@@ -2,6 +2,7 @@
 using UnityEngine.UI;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 
 public class LocalMapEditor : MonoBehaviour {
 
@@ -23,20 +24,6 @@ public class LocalMapEditor : MonoBehaviour {
 
 		InputFieldX.text = X.ToString();
 		InputFieldY.text = Y.ToString();
-
-		/*LocalMap map = new LocalMap(X, Y);
-		for(ushort i = 0; i < map.Width; ++i)
-		{
-			for(ushort j = 0; j < map.Height; ++j)
-			{
-				map.HeightMatrix[j, i] = TerrainHeight;
-			}
-		}
-		WorldGenerator.CreateHeightmap(map.HeightMatrix,5,0.5f,0.5f,0.5f,0.5f);
-		GameObject.FindWithTag("World").GetComponent<WorldVisualiser>().RenderWholeMap(map);
-		//GameObject.FindWithTag("World").GetComponent<WorldVisualiser>().DestroyAllHexes();
-		*/
-
 	}
 	
 	// Update is called once per frame
@@ -59,6 +46,7 @@ public class LocalMapEditor : MonoBehaviour {
 			DestroyMap();
 
 			LocalMap map = new LocalMap(X, Y);
+
 			for(ushort i = 0; i < map.Width; ++i)
 			{
 				for(ushort j = 0; j < map.Height; ++j)

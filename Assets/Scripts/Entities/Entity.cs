@@ -1,24 +1,23 @@
 ﻿using UnityEngine;
-using System.Collections;
 using System.IO;
 
 public class Entity : MonoBehaviour, IBinaryReadableWriteable
 {
     [HideInInspector]
-    public Vector2 MapCoords;
+    public LocalPos Pos;
     public bool Blocking; //TODO private set?
 
     public virtual void Write(BinaryWriter writer)
     {
-        writer.Write(MapCoords.x);
-        writer.Write(MapCoords.y);
+        writer.Write(Pos.X);
+        writer.Write(Pos.Y);
         writer.Write(Blocking);
     }
 
     public virtual void Read(BinaryReader reader)
     {
-        MapCoords.x = reader.ReadSingle();
-        MapCoords.y = reader.ReadSingle();
+        Pos.X = reader.ReadUInt16();
+        Pos.Y = reader.ReadUInt16();
         Blocking = reader.ReadBoolean();
     }
 
@@ -32,7 +31,7 @@ public class Entity : MonoBehaviour, IBinaryReadableWriteable
         EventManager.LocalMapLeft -= Destroy;
     }
 
-    protected void Destroy()
+    protected void Destroy()//C#6.0 EBD
     {
         Destroy(gameObject);
     }

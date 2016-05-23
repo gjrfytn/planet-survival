@@ -1,19 +1,17 @@
 ﻿using UnityEngine;
-using System.Collections;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 
 public class World
 {
     public readonly float LandscapeRoughness;
     public readonly float ForestRoughness;
 
-    public readonly RiversParameters RiverParam;
-    public readonly ClustersParameters ClusterParam;
+    public readonly WorldGenerator.RiversParameters RiverParam;
+    public readonly WorldGenerator.ClustersParameters ClusterParam;
+    public readonly WorldGenerator.RoadsParameters RoadParam;
 
-    public readonly ushort GlobalMapChunkSize; //Должен быть 2 в n-ой степени
-    public readonly Vector2 LocalMapSize; //Должен быть 2 в n-ой степени
+    public readonly ushort ChunkSize;
+    public readonly LocalPos LocalMapSize;
 
     public readonly byte ForestDensity;
     public readonly byte TreeCountForForestTerrain;
@@ -22,38 +20,30 @@ public class World
 
     public Map CurrentMap { get; private set; } //TODO Возможно, можно будет убрать. Карта, на которой находится игрок.
 
-    GlobalMap[,] CashedGlobalMapChunks = new GlobalMap[3, 3];
+    Chunk[,] CashedChunks = new Chunk[3, 3];
     LocalMap[,] LocalMaps;
 
     WorldVisualiser Visualiser; //Временно
 
-    Vector2 GlobalMapCoords;
+    GlobalPos GlobalMapPos;
     GameObject Player;
     int ChunkX, ChunkY;
     const string ChunksDirectoryName = "chunks";
     string ChunksDirectoryPath;
 
-    public World(float landscapeRoughness, float forestRoughness, RiversParameters riverParam, ClustersParameters clusterParam, ushort globalMapChunkSize, Vector2 localMapSize, byte forestDensity, byte treeCountForForestTerrain, GameObject[] enemies)
+    public World(float landscapeRoughness, float forestRoughness, WorldGenerator.RiversParameters riverParam, WorldGenerator.ClustersParameters clusterParam, WorldGenerator.RoadsParameters roadParam, ushort globalMapChunkSize, LocalPos localMapSize, byte forestDensity, byte treeCountForForestTerrain, GameObject[] enemies)
     {
         LandscapeRoughness = landscapeRoughness;
         ForestRoughness = forestRoughness;
         RiverParam = riverParam;
         ClusterParam = clusterParam;
-        GlobalMapChunkSize = globalMapChunkSize;
+        RoadParam = roadParam;
+        ChunkSize = globalMapChunkSize;
         LocalMapSize = localMapSize;
         ForestDensity = forestDensity;
         TreeCountForForestTerrain = treeCountForForestTerrain;
         Enemies = enemies;
-        //--
-        Debug.Assert(Mathf.IsPowerOfTwo(GlobalMapChunkSize));
-        Debug.Assert(Mathf.IsPowerOfTwo((int)LocalMapSize.x));
-        Debug.Assert(Mathf.IsPowerOfTwo((int)LocalMapSize.y));
 
-        GlobalMapChunkSize++; //TODO !!!
-        LocalMapSize.x++; //TODO !!!
-        LocalMapSize.y++; //TODO !!!
-
-        //--
         ChunksDirectoryPath = Path.Combine(Application.streamingAssetsPath, ChunksDirectoryName); //UNDONE Не будет работать на Android?
 
         if (Directory.Exists(ChunksDirectoryPath))
@@ -65,29 +55,28 @@ public class World
         //--
         ChunkX = ChunkY = 0;
 
-        CashedGlobalMapChunks[1, 1] = AllocAndGenerateChunk(CashedGlobalMapChunks[2, 1], CashedGlobalMapChunks[1, 2], CashedGlobalMapChunks[0, 1], CashedGlobalMapChunks[1, 0]);
-        CashedGlobalMapChunks[0, 0] = AllocAndGenerateChunk(CashedGlobalMapChunks[1, 0], CashedGlobalMapChunks[0, 1], null, null);
-        CashedGlobalMapChunks[0, 1] = AllocAndGenerateChunk(CashedGlobalMapChunks[1, 1], CashedGlobalMapChunks[0, 2], null, CashedGlobalMapChunks[0, 0]);
-        CashedGlobalMapChunks[0, 2] = AllocAndGenerateChunk(CashedGlobalMapChunks[1, 2], null, null, CashedGlobalMapChunks[0, 1]);
-        CashedGlobalMapChunks[1, 0] = AllocAndGenerateChunk(CashedGlobalMapChunks[2, 0], CashedGlobalMapChunks[0, 0], CashedGlobalMapChunks[0, 1], null);
-        CashedGlobalMapChunks[1, 2] = AllocAndGenerateChunk(CashedGlobalMapChunks[2, 2], null, CashedGlobalMapChunks[0, 2], CashedGlobalMapChunks[1, 1]);
-        CashedGlobalMapChunks[2, 0] = AllocAndGenerateChunk(null, CashedGlobalMapChunks[2, 1], CashedGlobalMapChunks[1, 0], null);
-        CashedGlobalMapChunks[2, 1] = AllocAndGenerateChunk(null, CashedGlobalMapChunks[2, 2], CashedGlobalMapChunks[1, 1], CashedGlobalMapChunks[2, 0]);
-        CashedGlobalMapChunks[2, 2] = AllocAndGenerateChunk(null, null, CashedGlobalMapChunks[1, 2], CashedGlobalMapChunks[2, 1]);
+        CashedChunks[1, 1] = AllocAndGenerateChunk(CashedChunks[2, 1], CashedChunks[1, 2], CashedChunks[0, 1], CashedChunks[1, 0]);
+        CashedChunks[1, 0] = AllocAndGenerateChunk(CashedChunks[2, 0], CashedChunks[0, 0], CashedChunks[0, 1], null);
+        CashedChunks[2, 1] = AllocAndGenerateChunk(null, CashedChunks[2, 2], CashedChunks[1, 1], CashedChunks[2, 0]);
+        CashedChunks[1, 2] = AllocAndGenerateChunk(CashedChunks[2, 2], null, CashedChunks[0, 2], CashedChunks[1, 1]);
+        CashedChunks[0, 1] = AllocAndGenerateChunk(CashedChunks[1, 1], CashedChunks[0, 2], null, CashedChunks[0, 0]);
+        CashedChunks[0, 0] = AllocAndGenerateChunk(CashedChunks[1, 0], CashedChunks[0, 1], null, null);
+        CashedChunks[0, 2] = AllocAndGenerateChunk(CashedChunks[1, 2], null, null, CashedChunks[0, 1]);
+        CashedChunks[2, 0] = AllocAndGenerateChunk(null, CashedChunks[2, 1], CashedChunks[1, 0], null);
+        CashedChunks[2, 2] = AllocAndGenerateChunk(null, null, CashedChunks[1, 2], CashedChunks[2, 1]);
 
-        LocalMaps = new LocalMap[GlobalMapChunkSize, GlobalMapChunkSize];
+        LocalMaps = new LocalMap[ChunkSize, ChunkSize];
 
-        CurrentMap = CashedGlobalMapChunks[1, 1];
+        CurrentMap = CashedChunks[1, 1];
 
         Player = GameObject.FindWithTag("Player");
-        Player.GetComponent<Player>().MapCoords = new Vector2(5, 5);
-        Player.transform.position = WorldVisualiser.GetTransformPosFromMapCoords(Player.GetComponent<Player>().MapCoords, false);
+        Player.GetComponent<Player>().GlobalPos.X = 5;
+        Player.GetComponent<Player>().GlobalPos.Y = 5;
+        Player.transform.position = WorldVisualiser.GetTransformPosFromMapPos(Player.GetComponent<Player>().GlobalPos);
         Camera.main.transform.position = new Vector3(Player.transform.position.x, Player.transform.position.y + Camera.main.transform.position.z * (Mathf.Tan((360 - Camera.main.transform.rotation.eulerAngles.x) / 57.3f)), Camera.main.transform.position.z);
-        Visualiser.RenderVisibleHexes(Player.GetComponent<Player>().MapCoords, Player.GetComponent<Player>().ViewDistance, CashedGlobalMapChunks, ChunkY, ChunkX);
+        Visualiser.RenderVisibleHexes(Player.GetComponent<Player>().GlobalPos, Player.GetComponent<Player>().ViewDistance, CashedChunks, ChunkY, ChunkX);
         for (byte i = 0; i < 6; ++i)
-        {
-            Visualiser.HighlightHex(HexNavigHelper.GetNeighborMapCoords(Player.GetComponent<Player>().MapCoords, (HexDirection)i), Visualiser.BlueHexSprite, false);
-        }
+            Visualiser.HighlightHex(HexNavigHelper.GetNeighborMapCoords(Player.GetComponent<Player>().GlobalPos, (HexDirection)i), Visualiser.BlueHexSprite);
         //--
 
         EventManager.PlayerMoved += OnPlayerGotoHex;
@@ -102,59 +91,61 @@ public class World
     /// Определяет, является ли текущая карта локальной.
     /// </summary>
     /// <returns><c>true</c> если является, иначе <c>false</c>.</returns>
-    public bool IsCurrentMapLocal()
+    public bool IsCurrentMapLocal() //C#6.0 EBD
     {
-        return CurrentMap == CashedGlobalMapChunks[1, 1] ? false : true;
+        return CurrentMap == CashedChunks[1, 1] ? false : true;
     }
 
     /// <summary>
     /// Необходимо вызывать, когда игрок переходит на другой хекс.
     /// </summary>
-    void OnPlayerGotoHex(Vector2 mapCoords)
+    void OnPlayerGotoHex(GlobalPos pos)
     {
         if (!IsCurrentMapLocal())
         {
-            int chunkX = Mathf.FloorToInt(mapCoords.x / GlobalMapChunkSize), chunkY = Mathf.FloorToInt(mapCoords.y / GlobalMapChunkSize);
+            int chunkX = Mathf.FloorToInt((float)pos.X / ChunkSize), chunkY = Mathf.FloorToInt((float)pos.Y / ChunkSize);
 
             if (chunkX != ChunkX || chunkY != ChunkY)
             {
                 Debug.Log("Cashing chunks.");
-                SaveCurrentChunkLocalMaps();
-                if (!TryLoadFiledChunkLocalMaps(chunkY, chunkX))
-                {
-                    for (ushort y = 0; y < GlobalMapChunkSize; ++y)
-                        for (ushort x = 0; x < GlobalMapChunkSize; ++x)
-                            LocalMaps[y, x] = null;
-                }
 
-                GlobalMap[,] bufCashe = new GlobalMap[3, 3];
+                sbyte dx = (sbyte)(ChunkX - chunkX), dy = (sbyte)(ChunkY - chunkY);
+                if (dx != 0)
+                    for (sbyte y = -1; y < 2; ++y)
+                        SaveChunk(ChunkY + y, ChunkX + dx, CashedChunks[y + 1, dx + 1]);
+                if (dy != 0)
+                    for (sbyte x = -1; x < 2; ++x)
+                        SaveChunk(ChunkY + dy, ChunkX + x, CashedChunks[dy + 1, x + 1]);
+                SaveCurrentChunkLocalMaps();
+
+                Chunk[,] bufCashe = new Chunk[3, 3];
                 for (sbyte y = -1; y < 2; ++y)
                     for (sbyte x = -1; x < 2; ++x)
-                        bufCashe[1 + y, 1 + x] = GetChunk(chunkY - y, chunkX - x);
+                        bufCashe[y + 1, x + 1] = GetChunk(chunkY + y, chunkX + x);
+                if (!TryLoadFiledChunkLocalMaps(chunkY, chunkX))
+                    for (ushort y = 0; y < ChunkSize; ++y)
+                        for (ushort x = 0; x < ChunkSize; ++x)
+                            LocalMaps[y, x] = null;
 
-                CashedGlobalMapChunks = bufCashe;
+                CashedChunks = bufCashe;
 
                 ChunkY = chunkY;
                 ChunkX = chunkX;
 
-                CurrentMap = CashedGlobalMapChunks[1, 1];
+                CurrentMap = CashedChunks[1, 1];
             }
 
-            Visualiser.RenderVisibleHexes(mapCoords, Player.GetComponent<Player>().ViewDistance, CashedGlobalMapChunks, ChunkY, ChunkX);
+            Visualiser.RenderVisibleHexes(pos, Player.GetComponent<Player>().ViewDistance, CashedChunks, ChunkY, ChunkX);
             Visualiser.DestroyAllObjects();//TODO Временно
             for (byte i = 0; i < 6; ++i)
-            {
-                Visualiser.HighlightHex(HexNavigHelper.GetNeighborMapCoords(mapCoords, (HexDirection)i), Visualiser.BlueHexSprite, false);
-            }
+                Visualiser.HighlightHex(HexNavigHelper.GetNeighborMapCoords(pos, (HexDirection)i), Visualiser.BlueHexSprite);
         }
         else
         {
             Visualiser.DestroyAllObjects();//TODO Временно
             for (byte i = 0; i < 6; ++i)
-            {
-                if (IsHexFree(HexNavigHelper.GetNeighborMapCoords(mapCoords, (TurnedHexDirection)i)))
-                    Visualiser.HighlightHex(HexNavigHelper.GetNeighborMapCoords(mapCoords, (TurnedHexDirection)i), Visualiser.BlueHexSprite, true);
-            }
+                if (IsHexFree((LocalPos)HexNavigHelper.GetNeighborMapCoords(pos, (TurnedHexDirection)i)))
+                    Visualiser.HighlightHex((LocalPos)HexNavigHelper.GetNeighborMapCoords(pos, (TurnedHexDirection)i), Visualiser.BlueHexSprite);
         }
     }
 
@@ -168,13 +159,13 @@ public class World
         {
             GotoLocalMap();
             SpawnRandomEnemy();
-            Player.transform.position = WorldVisualiser.GetTransformPosFromMapCoords(Player.GetComponent<Player>().MapCoords, true);
+            Player.transform.position = WorldVisualiser.GetTransformPosFromMapPos((LocalPos)Player.GetComponent<Player>().GlobalPos);
         }
         else
         {
             GotoGlobalMap();
             EventManager.OnLocalMapLeave();
-            Player.transform.position = WorldVisualiser.GetTransformPosFromMapCoords(Player.GetComponent<Player>().MapCoords, false);
+            Player.transform.position = WorldVisualiser.GetTransformPosFromMapPos(Player.GetComponent<Player>().GlobalPos);
         }
         EventManager.OnPlayerObjectMoved();
     }
@@ -184,15 +175,17 @@ public class World
     /// </summary>
     void GotoLocalMap()
     {
-        GlobalMapCoords = Player.GetComponent<Player>().MapCoords;
-        Vector2 mapCoords = new Vector2(GlobalMapCoords.x - ChunkX * GlobalMapChunkSize, GlobalMapCoords.y - ChunkY * GlobalMapChunkSize);
-        if (LocalMaps[(int)mapCoords.y, (int)mapCoords.x] == null)
-            LocalMaps[(int)mapCoords.y, (int)mapCoords.x] = CreateLocalMap(CashedGlobalMapChunks[1, 1].GetHeight(mapCoords), CashedGlobalMapChunks[1, 1].GetForest(mapCoords), CashedGlobalMapChunks[1, 1].HasRiver(mapCoords), CashedGlobalMapChunks[1, 1].HasRoad(mapCoords), CashedGlobalMapChunks[1, 1].HasCluster(mapCoords));
-        CurrentMap = LocalMaps[(int)mapCoords.y, (int)mapCoords.x];
+        GlobalMapPos = Player.GetComponent<Player>().GlobalPos;
+        LocalPos pos = new LocalPos((ushort)(GlobalMapPos.X - ChunkX * ChunkSize), (ushort)(GlobalMapPos.Y - ChunkY * ChunkSize)); //TODO new?
+        if (LocalMaps[pos.Y, pos.X] == null)
+            LocalMaps[pos.Y, pos.X] = CreateLocalMap(CashedChunks[1, 1].HeightMatrix[pos.Y, pos.X], CashedChunks[1, 1].ForestMatrix[pos.Y, pos.X], CashedChunks[1, 1].RiverMatrix[pos.Y, pos.X], CashedChunks[1, 1].RoadMatrix[pos.Y, pos.X], CashedChunks[1, 1].ClusterMatrix[pos.Y, pos.X]);
+        CurrentMap = LocalMaps[pos.Y, pos.X];
 
         //TEMP
-        Player.GetComponent<Player>().MapCoords.x = (ushort)LocalMapSize.x / 2;
-        Player.GetComponent<Player>().MapCoords.y = (ushort)LocalMapSize.y / 2;
+        Player.GetComponent<Player>().Pos.X = (ushort)(LocalMapSize.X >> 1); //TODO Временно приведение
+        Player.GetComponent<Player>().Pos.Y = (ushort)(LocalMapSize.Y >> 1);
+        Player.GetComponent<Player>().GlobalPos.X = (ushort)(LocalMapSize.X >> 1);
+        Player.GetComponent<Player>().GlobalPos.Y = (ushort)(LocalMapSize.Y >> 1);
         //
         (CurrentMap as LocalMap).AddObject(Player.GetComponent<Entity>());
 
@@ -200,9 +193,7 @@ public class World
         Visualiser.RenderWholeMap(CurrentMap as LocalMap);
 
         for (byte i = 0; i < 6; ++i)
-        {
-            Visualiser.HighlightHex(HexNavigHelper.GetNeighborMapCoords(Player.GetComponent<Player>().MapCoords, (TurnedHexDirection)i), Visualiser.BlueHexSprite, true);
-        }
+            Visualiser.HighlightHex((LocalPos)HexNavigHelper.GetNeighborMapCoords(Player.GetComponent<Player>().Pos, (TurnedHexDirection)i), Visualiser.BlueHexSprite);
     }
 
     /// <summary>
@@ -210,15 +201,13 @@ public class World
     /// </summary>
     void GotoGlobalMap()
     {
-        CurrentMap = CashedGlobalMapChunks[1, 1];
-        Player.GetComponent<Player>().MapCoords = GlobalMapCoords;
-        Visualiser.RenderVisibleHexes(Player.GetComponent<Player>().MapCoords, Player.GetComponent<Player>().ViewDistance, CashedGlobalMapChunks, ChunkY, ChunkX);
+        CurrentMap = CashedChunks[1, 1];
+        Player.GetComponent<Player>().GlobalPos = GlobalMapPos;
+        Visualiser.RenderVisibleHexes(Player.GetComponent<Player>().GlobalPos, Player.GetComponent<Player>().ViewDistance, CashedChunks, ChunkY, ChunkX);
 
         Visualiser.DestroyAllObjects();
         for (byte i = 0; i < 6; ++i)
-        {
-            Visualiser.HighlightHex(HexNavigHelper.GetNeighborMapCoords(Player.GetComponent<Player>().MapCoords, (HexDirection)i), Visualiser.BlueHexSprite, false);
-        }
+            Visualiser.HighlightHex(HexNavigHelper.GetNeighborMapCoords(Player.GetComponent<Player>().GlobalPos, (HexDirection)i), Visualiser.BlueHexSprite);
     }
 
     /// <summary>
@@ -227,21 +216,46 @@ public class World
     /// <param name="coords">Координаты новой карты на глобальной.</param>
     LocalMap CreateLocalMap(float height, float forest, bool river, bool road, bool ruins)
     {
-        LocalMap map = new LocalMap((ushort)LocalMapSize.x, (ushort)LocalMapSize.y);
+        LocalMap map = new LocalMap(LocalMapSize.X, LocalMapSize.Y);
 
-        Vector2[] riverPath = new Vector2[] { new Vector2(0, (ushort)LocalMapSize.y / 2), new Vector2(LocalMapSize.x - 1, (ushort)LocalMapSize.y / 2) }; //UNDONE
         if (river)
+        {
+            LocalPos[] riverPath = new LocalPos[] { new LocalPos(0, (ushort)(LocalMapSize.Y >> 1)), new LocalPos((ushort)(LocalMapSize.X - 1), (ushort)(LocalMapSize.Y >> 1)) }; //UNDONE			
             WorldGenerator.MakeEqualHeightLine(map.HeightMatrix, riverPath, Visualiser.LocalMapParam.Terrains[0].StartingHeight - 0.0001f);
-        float?[,] buf = new float?[(ushort)LocalMapSize.y, (ushort)LocalMapSize.x];
-        for (ushort y = 0; y < LocalMapSize.y; ++y)
-            for (ushort x = 0; x < LocalMapSize.x; ++x)
+        }
+        float?[,] buf = new float?[LocalMapSize.Y, LocalMapSize.X];
+        for (ushort y = 0; y < LocalMapSize.Y; ++y)
+            for (ushort x = 0; x < LocalMapSize.X; ++x)
                 if (map.HeightMatrix[y, x] != 0)
                     buf[y, x] = map.HeightMatrix[y, x];
-        WorldGenerator.CreateHeightmap(buf, LandscapeRoughness, height, height, height, height);
-        for (ushort y = 0; y < LocalMapSize.y; ++y)
-            for (ushort x = 0; x < LocalMapSize.x; ++x)
+
+        WorldGenerator.HeighmapNeighboring hmNb = new WorldGenerator.HeighmapNeighboring();
+        hmNb.Left = new float[LocalMapSize.Y];
+        hmNb.Top = new float[LocalMapSize.X];
+        hmNb.Right = new float[LocalMapSize.Y];
+        hmNb.Bottom = new float[LocalMapSize.X];
+        for (ushort i = 0; i < LocalMapSize.Y; ++i)
+            hmNb.Right[i] = hmNb.Left[i] = height;
+        for (ushort i = 0; i < LocalMapSize.X; ++i)
+            hmNb.Bottom[i] = hmNb.Top[i] = height;
+        WorldGenerator.CreateHeightmap(ref buf, LandscapeRoughness, hmNb);
+
+        for (ushort y = 0; y < LocalMapSize.Y; ++y)
+            for (ushort x = 0; x < LocalMapSize.X; ++x)
+            {
                 map.HeightMatrix[y, x] = buf[y, x].Value;
-        WorldGenerator.CreateHeightmap(map.ForestMatrix, ForestRoughness, forest, forest, forest, forest);
+                buf[y, x] = null;
+            }
+
+        for (ushort i = 0; i < LocalMapSize.Y; ++i)
+            hmNb.Right[i] = hmNb.Left[i] = forest;
+        for (ushort i = 0; i < LocalMapSize.X; ++i)
+            hmNb.Bottom[i] = hmNb.Top[i] = forest;
+        WorldGenerator.CreateHeightmap(ref buf, ForestRoughness, hmNb);
+
+        for (ushort y = 0; y < LocalMapSize.Y; ++y)
+            for (ushort x = 0; x < LocalMapSize.X; ++x)
+                map.ForestMatrix[y, x] = buf[y, x].Value;
 
         return map;
     }
@@ -251,21 +265,19 @@ public class World
     /// </summary>
     /// <returns>Чанк.</returns>
     /// <param name="chunkY">Координата по y.</param>
-    /// <param name="chunkX">Координата по x.</param>
-    GlobalMap GetChunk(int chunkY, int chunkX)
+    /// <param name="chunkX">Координата по pos.X.</param>
+    Chunk GetChunk(int chunkY, int chunkX)
     {
-        GlobalMap chunk;
+        Chunk chunk;
         if (TryGetChunk(chunkY, chunkX, out chunk))
             return chunk;
-        else
-        {
-            GlobalMap top, right, bottom, left;
-            TryGetChunk(chunkY + 1, chunkX, out top);
-            TryGetChunk(chunkY, chunkX + 1, out right);
-            TryGetChunk(chunkY - 1, chunkX, out bottom);
-            TryGetChunk(chunkY, chunkX - 1, out left);
-            return AllocAndGenerateChunk(top, right, bottom, left);
-        }
+
+        Chunk top, right, bottom, left;
+        TryGetChunk(chunkY + 1, chunkX, out top);
+        TryGetChunk(chunkY, chunkX + 1, out right);
+        TryGetChunk(chunkY - 1, chunkX, out bottom);
+        TryGetChunk(chunkY, chunkX - 1, out left);
+        return AllocAndGenerateChunk(top, right, bottom, left);
     }
 
     /// <summary>
@@ -273,9 +285,9 @@ public class World
     /// </summary>
     /// <returns><c>true</c>, если чанк загружен, иначе <c>false</c>.</returns>
     /// <param name="chunkY">Координата по y.</param>
-    /// <param name="chunkX">Координата по x.</param>
+    /// <param name="chunkX">Координата по pos.X.</param>
     /// <param name="chunk">[out] Чанк.</param>
-    bool TryGetChunk(int chunkY, int chunkX, out GlobalMap chunk)
+    bool TryGetChunk(int chunkY, int chunkX, out Chunk chunk)
     {
         if (Mathf.Abs(chunkY - ChunkY) <= 1 && Mathf.Abs(chunkX - ChunkX) <= 1)
         {
@@ -283,7 +295,7 @@ public class World
                 for (sbyte x = -1; x < 2; ++x)
                     if (chunkY == ChunkY + y && chunkX == ChunkX + x)
                     {
-                        chunk = CashedGlobalMapChunks[y + 1, x + 1];
+                        chunk = CashedChunks[y + 1, x + 1];
                         return true;
                     }
             throw new System.Exception("This code line should not be reached!");
@@ -302,14 +314,14 @@ public class World
     /// </summary>
     /// <returns><c>true</c>, если чанк загружен, иначе <c>false</c>.</returns>
     /// <param name="chunkY">Координата по y.</param>
-    /// <param name="chunkX">Координата по x.</param>
+    /// <param name="chunkX">Координата по pos.X.</param>
     /// <param name="chunk">[out] Чанк.</param>
-    bool TryLoadFiledChunk(int chunkY, int chunkX, out GlobalMap chunk)
+    bool TryLoadFiledChunk(int chunkY, int chunkX, out Chunk chunk)
     {
         string filePath = Path.Combine(ChunksDirectoryPath, chunkY + "_" + chunkX);
         if (File.Exists(filePath))
         {
-            chunk = new GlobalMap(GlobalMapChunkSize, GlobalMapChunkSize);
+            chunk = new Chunk(ChunkSize, ChunkSize);
             using (BinaryReader reader = new BinaryReader(File.Open(filePath, FileMode.Open)))
             {
                 chunk.Read(reader);
@@ -324,9 +336,9 @@ public class World
     /// Сохраняет чанк в файл.
     /// </summary>
     /// <param name="chunkY">Координата по y.</param>
-    /// <param name="chunkX">Координата по x.</param>
+    /// <param name="chunkX">Координата по pos.X.</param>
     /// <param name="chunk">Чанк.</param>
-    void SaveChunk(int chunkY, int chunkX, GlobalMap chunk)
+    void SaveChunk(int chunkY, int chunkX, Chunk chunk)
     {
         Directory.CreateDirectory(ChunksDirectoryPath);
         using (BinaryWriter writer = new BinaryWriter(File.Open(Path.Combine(ChunksDirectoryPath, chunkY + "_" + chunkX), FileMode.Create)))
@@ -340,7 +352,7 @@ public class World
     /// </summary>
     /// <returns><c>true</c>, если карты загружены, иначе <c>false</c>.</returns>
     /// <param name="chunkY">Координата по y.</param>
-    /// <param name="chunkX">Координата по x.</param>
+    /// <param name="chunkX">Координата по pos.X.</param>
     bool TryLoadFiledChunkLocalMaps(int chunkY, int chunkX)
     {
         string filePath = Path.Combine(ChunksDirectoryPath, chunkY + "_" + chunkX + "lm");
@@ -348,16 +360,12 @@ public class World
         {
             using (BinaryReader reader = new BinaryReader(File.Open(filePath, FileMode.Open)))
             {
-                for (ushort y = 0; y < GlobalMapChunkSize; ++y)
-                    for (ushort x = 0; x < GlobalMapChunkSize; ++x)
-                    {
+                for (ushort y = 0; y < ChunkSize; ++y)
+                    for (ushort x = 0; x < ChunkSize; ++x)
                         if (reader.ReadString() == "null")
                             LocalMaps[y, x] = null;
                         else
                             LocalMaps[y, x].Read(reader);
-                        //...
-
-                    }
             }
             return true;
         }
@@ -372,9 +380,8 @@ public class World
         Directory.CreateDirectory(ChunksDirectoryPath);
         using (BinaryWriter writer = new BinaryWriter(File.Open(Path.Combine(ChunksDirectoryPath, ChunkY + "_" + ChunkX + "lm"), FileMode.Create)))
         {
-            for (ushort y = 0; y < GlobalMapChunkSize; ++y)
-                for (ushort x = 0; x < GlobalMapChunkSize; ++x)
-                {
+            for (ushort y = 0; y < ChunkSize; ++y)
+                for (ushort x = 0; x < ChunkSize; ++x)
                     if (LocalMaps[y, x] == null)
                         writer.Write("null");
                     else
@@ -382,74 +389,111 @@ public class World
                         writer.Write("notnull");
                         LocalMaps[y, x].Write(writer);
                     }
-
-                    //...
-                }
         }
     }
 
     void SpawnRandomEnemy()
     {
-        Vector2 mapCoords = new Vector2(Random.Range(0, (int)LocalMapSize.x), Random.Range(0, (int)LocalMapSize.y));
-        GameObject enemy = MonoBehaviour.Instantiate(Enemies[Random.Range(0, Enemies.Length)], WorldVisualiser.GetTransformPosFromMapCoords(mapCoords, true), Quaternion.identity) as GameObject;
-        enemy.GetComponent<Creature>().MapCoords = mapCoords;
-        enemy.GetComponent<Creature>().Attack(Player);
+        LocalPos pos = new LocalPos((ushort)Random.Range(0, LocalMapSize.X), (ushort)Random.Range(0, LocalMapSize.Y));
+        GameObject enemy = MonoBehaviour.Instantiate(Enemies[Random.Range(0, Enemies.Length)], WorldVisualiser.GetTransformPosFromMapPos(pos), Quaternion.identity) as GameObject;
+        enemy.GetComponent<Creature>().Pos = pos;
+        enemy.GetComponent<Creature>().Attack(Player.GetComponent<Player>());
         (CurrentMap as LocalMap).AddObject(enemy.GetComponent<Entity>());
     }
 
-    public bool IsHexFree(Vector2 mapCoords)
+    public bool IsHexFree(LocalPos pos)
     {
         if (IsCurrentMapLocal())//Временно
-        {
-            if (mapCoords.x >= 0 && mapCoords.x < LocalMapSize.x && mapCoords.y >= 0 && mapCoords.y < LocalMapSize.y)
-                return !(CurrentMap as LocalMap).IsBlocked(mapCoords);
-            return false;
-        }
+            return (CurrentMap as LocalMap).Contains(pos) && !(CurrentMap as LocalMap).IsBlocked(pos);
         return true;
     }
 
-    GlobalMap AllocAndGenerateChunk(GlobalMap topChunk, GlobalMap rightChunk, GlobalMap bottomChunk, GlobalMap leftChunk)
+    Chunk AllocAndGenerateChunk(Chunk topChunk, Chunk rightChunk, Chunk bottomChunk, Chunk leftChunk)
     {
         // TODO Ждём MonoDevelop 6.0 ( ?., ?[ ):
-        GlobalMap chunk = new GlobalMap(GlobalMapChunkSize, GlobalMapChunkSize);
-        WorldGenerator.CreateHeightmap(chunk.HeightMatrix, LandscapeRoughness, ((leftChunk != null ? leftChunk.HeightMatrix[GlobalMapChunkSize - 1, GlobalMapChunkSize - 1] : Random.value) + (topChunk != null ? topChunk.HeightMatrix[0, 0] : Random.value)) / 2f, ((topChunk != null ? topChunk.HeightMatrix[0, GlobalMapChunkSize - 1] : Random.value) + (rightChunk != null ? rightChunk.HeightMatrix[GlobalMapChunkSize - 1, 0] : Random.value)) / 2f, ((leftChunk != null ? leftChunk.HeightMatrix[0, GlobalMapChunkSize - 1] : Random.value) + (bottomChunk != null ? bottomChunk.HeightMatrix[GlobalMapChunkSize - 1, 0] : Random.value)) / 2f, ((bottomChunk != null ? bottomChunk.HeightMatrix[GlobalMapChunkSize - 1, GlobalMapChunkSize - 1] : Random.value) + (rightChunk != null ? rightChunk.HeightMatrix[0, 0] : Random.value)) / 2f);
-        for (ushort y = 0; y < GlobalMapChunkSize; ++y)
-            for (ushort x = 0; x < GlobalMapChunkSize; ++x)
-                chunk.HeightMatrix[y, x] = Mathf.Clamp(chunk.HeightMatrix[y, x], 0, Mathf.Abs(chunk.HeightMatrix[y, x]));
-        WorldGenerator.CreateHeightmap(chunk.ForestMatrix, ForestRoughness, ((leftChunk != null ? leftChunk.ForestMatrix[GlobalMapChunkSize - 1, GlobalMapChunkSize - 1] : Random.value) + (topChunk != null ? topChunk.ForestMatrix[0, 0] : Random.value)) / 2f, ((topChunk != null ? topChunk.ForestMatrix[0, GlobalMapChunkSize - 1] : Random.value) + (rightChunk != null ? rightChunk.ForestMatrix[GlobalMapChunkSize - 1, 0] : Random.value)) / 2f, ((leftChunk != null ? leftChunk.ForestMatrix[0, GlobalMapChunkSize - 1] : Random.value) + (bottomChunk != null ? bottomChunk.ForestMatrix[GlobalMapChunkSize - 1, 0] : Random.value)) / 2f, ((bottomChunk != null ? bottomChunk.ForestMatrix[GlobalMapChunkSize - 1, GlobalMapChunkSize - 1] : Random.value) + (rightChunk != null ? rightChunk.ForestMatrix[0, 0] : Random.value)) / 2f);
-        for (ushort y = 0; y < GlobalMapChunkSize; ++y)
-            for (ushort x = 0; x < GlobalMapChunkSize; ++x)
+        WorldGenerator.HeighmapNeighboring hmNb = new WorldGenerator.HeighmapNeighboring();
+        if (leftChunk != null)
+        {
+            hmNb.Left = new float[ChunkSize];
+            for (ushort i = 0; i < ChunkSize; ++i)
+                hmNb.Left[i] = leftChunk.HeightMatrix[i, ChunkSize - 1];
+        }
+        if (topChunk != null)
+        {
+            hmNb.Top = new float[ChunkSize];
+            for (ushort i = 0; i < ChunkSize; ++i)
+                hmNb.Top[i] = topChunk.HeightMatrix[0, i];
+        }
+        if (rightChunk != null)
+        {
+            hmNb.Right = new float[ChunkSize];
+            for (ushort i = 0; i < ChunkSize; ++i)
+                hmNb.Right[i] = rightChunk.HeightMatrix[i, 0];
+        }
+        if (bottomChunk != null)
+        {
+            hmNb.Bottom = new float[ChunkSize];
+            for (ushort i = 0; i < ChunkSize; ++i)
+                hmNb.Bottom[i] = bottomChunk.HeightMatrix[ChunkSize - 1, i];
+        }
+
+        float?[,] buf = new float?[ChunkSize, ChunkSize];
+        WorldGenerator.CreateHeightmap(ref buf, LandscapeRoughness, hmNb);
+        Chunk chunk = new Chunk(ChunkSize, ChunkSize);
+        for (ushort y = 0; y < ChunkSize; ++y)
+            for (ushort x = 0; x < ChunkSize; ++x)
             {
-                chunk.ForestMatrix[y, x] *= ForestDensity;
-                chunk.ForestMatrix[y, x] = Mathf.Clamp(chunk.ForestMatrix[y, x], 0, Mathf.Abs(chunk.ForestMatrix[y, x]));
+                chunk.HeightMatrix[y, x] = Mathf.Clamp(buf[y, x].Value, 0, Mathf.Abs(buf[y, x].Value));
+                buf[y, x] = null;
+            }
+
+        if (leftChunk != null)
+            for (ushort i = 0; i < ChunkSize; ++i)
+                hmNb.Left[i] = leftChunk.ForestMatrix[i, ChunkSize - 1];
+        if (topChunk != null)
+            for (ushort i = 0; i < ChunkSize; ++i)
+                hmNb.Top[i] = topChunk.ForestMatrix[0, i];
+        if (rightChunk != null)
+            for (ushort i = 0; i < ChunkSize; ++i)
+                hmNb.Right[i] = rightChunk.ForestMatrix[i, 0];
+        if (bottomChunk != null)
+            for (ushort i = 0; i < ChunkSize; ++i)
+                hmNb.Bottom[i] = bottomChunk.ForestMatrix[ChunkSize - 1, i];
+
+        WorldGenerator.CreateHeightmap(ref buf, ForestRoughness, hmNb);
+        for (ushort y = 0; y < ChunkSize; ++y)
+            for (ushort x = 0; x < ChunkSize; ++x)
+            {
+                buf[y, x] = buf[y, x].Value * ForestDensity;
+                chunk.ForestMatrix[y, x] = Mathf.Clamp(buf[y, x].Value, 0, Mathf.Abs(buf[y, x].Value));
             }
         chunk.Rivers = WorldGenerator.CreateRivers(chunk.HeightMatrix, chunk.RiverMatrix, RiverParam);
         chunk.Clusters = WorldGenerator.CreateClusters(chunk, ClusterParam);
-        chunk.Roads = WorldGenerator.CreateRoads(chunk.HeightMatrix, chunk.RoadMatrix, chunk.Clusters);
+        chunk.Roads = WorldGenerator.CreateRoads(chunk.HeightMatrix, chunk.RiverMatrix, chunk.RoadMatrix, chunk.Clusters, RoadParam);
         CalculateChunkTerrains(chunk);
         return chunk;
     }
 
-    void CalculateChunkTerrains(GlobalMap chunk)
+    void CalculateChunkTerrains(Chunk chunk)
     {
-        for (ushort y = 0; y < GlobalMapChunkSize; ++y)
-            for (ushort x = 0; x < GlobalMapChunkSize; ++x)
+        for (ushort y = 0; y < ChunkSize; ++y)
+            for (ushort x = 0; x < ChunkSize; ++x)
                 chunk.TerrainMatrix[y, x] = MakeTerrainFromHeight(chunk.HeightMatrix[y, x]) | (chunk.ForestMatrix[y, x] > TreeCountForForestTerrain ? TerrainType.FOREST : TerrainType.NONE) | (chunk.RiverMatrix[y, x] ? TerrainType.RIVER : TerrainType.NONE);
     }
 
-    TerrainType MakeTerrainFromHeight(float height)
+    TerrainType MakeTerrainFromHeight(float height)//C#6.0 EBD
     {
         return TerrainType.MEADOW; //UNDONE
     }
 
     //TEST
-    public void EnemyAttack()
+    public void EnemyAttack()//C#6.0 EBD
     {
         SwitchMap();
     }
 
-    public TerrainType GetHexTerrain(Vector2 hexCoords)
+    public TerrainType GetHexTerrain(GlobalPos pos)//C#6.0 EBD
     {
-        return (CurrentMap as GlobalMap).GetTerrainType(new Vector2(hexCoords.x - ChunkX * GlobalMapChunkSize, hexCoords.y - ChunkY * GlobalMapChunkSize));
+        return (CurrentMap as Chunk).TerrainMatrix[pos.Y - ChunkY * ChunkSize, pos.X - ChunkX * ChunkSize];
     }
 }
