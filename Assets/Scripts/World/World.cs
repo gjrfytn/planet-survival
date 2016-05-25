@@ -182,10 +182,8 @@ public class World
         CurrentMap = LocalMaps[pos.Y, pos.X];
 
         //TEMP
-        Player.GetComponent<Player>().Pos.X = (ushort)(LocalMapSize.X >> 1); //TODO Временно приведение
-        Player.GetComponent<Player>().Pos.Y = (ushort)(LocalMapSize.Y >> 1);
-        Player.GetComponent<Player>().GlobalPos.X = (ushort)(LocalMapSize.X >> 1);
-        Player.GetComponent<Player>().GlobalPos.Y = (ushort)(LocalMapSize.Y >> 1);
+        Player.GetComponent<Player>().GlobalPos.X = (LocalMapSize.X >> 1);
+        Player.GetComponent<Player>().GlobalPos.Y = (LocalMapSize.Y >> 1);
         //
         (CurrentMap as LocalMap).AddObject(Player.GetComponent<Entity>());
 

@@ -9,6 +9,7 @@ public static class EventManager
     public delegate void Uint16Delegate(ushort s);
 	public delegate void TwoLocalPosDelegate(LocalPos p1, LocalPos p2);
 	public delegate void LivBeAndByteDelegate(LivingBeing lb, byte b);
+	public delegate void EntityDelegate(Entity e);
 
     public static event VoidDelegate UIShowed = delegate { };
     public static event VoidDelegate UIHided = delegate { };
@@ -102,4 +103,11 @@ public static class EventManager
     {
         ActionEnded();
     }
+
+	public static event EntityDelegate EntityDestroyed= delegate {};
+
+	public static void OnEntityDestroy(Entity e)
+	{
+		EntityDestroyed(e);
+	}
 }

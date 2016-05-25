@@ -5,6 +5,19 @@ using System.Linq;
 public sealed class Player : LivingBeing
 {
     public GlobalPos GlobalPos;
+    public override LocalPos Pos
+    {
+        get
+        {
+            if (GlobalPos.X < 0 || GlobalPos.Y < 0 || GlobalPos.X > ushort.MaxValue || GlobalPos.Y > ushort.MaxValue)
+                throw new System.InvalidOperationException("Cannot access \"Pos\" while Player is on global map.");
+            return (LocalPos)GlobalPos;
+        }
+        set
+        {
+            GlobalPos = value;
+        }
+    }
 
     [Header("Основные характеристики")]
     [Range(0, 255)]

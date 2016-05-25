@@ -25,7 +25,7 @@ public class PopupButtons : MonoBehaviour
         if (ButtonsShowed)
         {
             ButtonsShowed = false;
-            Buttons.ForEach(b => Destroy(b));
+            Buttons.ForEach(Destroy);
             Buttons.Clear();
         }
         else
@@ -60,7 +60,7 @@ public class PopupButtons : MonoBehaviour
     public void ButtonClick(GameObject btn)
     {
         Buttons.Remove(btn);
-        Buttons.ForEach(b => Destroy(b));
+        Buttons.ForEach(Destroy);
         Buttons.Clear();
         btn.GetComponent<UnityEngine.UI.Button>().transition = UnityEngine.UI.Selectable.Transition.None;///
         btn.GetComponent<UnityEngine.UI.Button>().interactable = false;///

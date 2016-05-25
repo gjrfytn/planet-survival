@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 
 public static class Pathfinder
 {
@@ -46,7 +45,7 @@ public static class Pathfinder
                     }
                 }
 
-                queue = queue.OrderBy(a => a.Dist).ToList(); //TODO Заменить на Sort (убрать system.linq)
+                queue.Sort((a, b) => a.Dist - b.Dist);
             }
         }
         while (queue.Count != 0);

@@ -73,11 +73,13 @@ public sealed class LocalMap : Map
                 ObjectMatrix[y, x] = new Dictionary<ushort, Entity>();
 
         EventManager.CreatureMoved += MoveObject;
+        EventManager.EntityDestroyed += RemoveObject;
     }
 
     ~LocalMap()
     {
         EventManager.CreatureMoved -= MoveObject;
+        EventManager.EntityDestroyed -= RemoveObject;
     }
 
     public override void Write(BinaryWriter writer)
@@ -107,11 +109,12 @@ public sealed class LocalMap : Map
                 ObjectMatrix[y, x] = new Dictionary<ushort, Entity>(objCount);
                 for (byte i = 0; i < objCount; ++i)
                 {
-                    UnityEngine.GameObject buf = new UnityEngine.GameObject(); //TODO
-                    buf.AddComponent<Entity>().Read(reader);
+                    UnityEngine.GameObject entBuf = new UnityEngine.GameObject(); //TODO
+                    ushort idBuf = reader.ReadUInt16();
+                    entBuf.AddComponent<Entity>().Read(reader);
                     ObjectMatrix[y, x].Add(
-                        reader.ReadUInt16(),
-                        buf.GetComponent<Entity>()
+                        idBuf,
+                        entBuf.GetComponent<Entity>()
                     );
                 }
             }
@@ -144,7 +147,11 @@ public sealed class LocalMap : Map
         ObjectMatrix[from.Y, from.X].Remove(obj.Key);
     }
 
-    //TODO remove
+    void RemoveObject(Entity e)
+    {
+        KeyValuePair<ushort, Entity> obj = ObjectMatrix[e.Pos.Y, e.Pos.X].Single(o => o.Value == e);
+        ObjectMatrix[e.Pos.Y, e.Pos.X].Remove(obj.Key);
+    }
 }
 
 public sealed class Chunk : Map

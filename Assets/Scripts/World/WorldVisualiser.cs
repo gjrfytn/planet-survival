@@ -86,8 +86,9 @@ public class WorldVisualiser : MonoBehaviour
     void Awake()
     {
         AllGlobalHexSprites.AddRange(GlobalMapParam.BottommostTerrainSprites);
-        foreach (Terrain ts in GlobalMapParam.Terrains)
-            AllGlobalHexSprites.AddRange(ts.Sprites);
+        System.Array.ForEach(GlobalMapParam.Terrains, ts => AllGlobalHexSprites.AddRange(ts.Sprites));
+        //foreach (Terrain ts in GlobalMapParam.Terrains)
+        //AllGlobalHexSprites.AddRange(ts.Sprites);
 
         AllRiverSprites.AddRange(GlobalMapParam.RiverStartSprites);
         AllRiverSprites.AddRange(GlobalMapParam.RiverStraightSprites);
@@ -100,8 +101,9 @@ public class WorldVisualiser : MonoBehaviour
         AllRoadSprites.AddRange(GlobalMapParam.RoadTurnBridgeSprites);
 
         AllLocalHexSprites.AddRange(LocalMapParam.WaterSprites);
-        foreach (Terrain ts in LocalMapParam.Terrains)
-            AllLocalHexSprites.AddRange(ts.Sprites);
+        System.Array.ForEach(LocalMapParam.Terrains, ts => AllLocalHexSprites.AddRange(ts.Sprites));
+        //foreach (Terrain ts in LocalMapParam.Terrains)
+        //AllLocalHexSprites.AddRange(ts.Sprites);
 
         //Assert
         for (byte i = 1; i < GlobalMapParam.Terrains.Length; ++i)
@@ -123,20 +125,20 @@ public class WorldVisualiser : MonoBehaviour
     /// </summary>
     public void DestroyAllHexes()
     {
-        RenderedHexes.ForEach(hex =>
+        foreach (ListType hex in RenderedHexes)
         {
-            hex.Trees.ForEach(tree => Destroy(tree));
+            hex.Trees.ForEach(Destroy);
             //Destroy(hex.RiverSprite);
             //Destroy(hex.ClusterSprite);
-            hex.LandscapeObj.ForEach(obj => Destroy(obj));
+            hex.LandscapeObj.ForEach(Destroy);
             Destroy(hex.Hex);
-        });
+        }
         RenderedHexes.Clear();
     }
 
     public void DestroyAllObjects()
     {
-        RenderedObjects.ForEach(obj => Destroy(obj));
+        RenderedObjects.ForEach(Destroy);
         RenderedObjects.Clear();
     }
 
