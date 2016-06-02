@@ -2,7 +2,7 @@
 
 public abstract class LivingBeing : Entity
 {
-    public float MoveAnimTime;
+    public float MoveAnimTime;//TODO Вынести?
     [Range(0, 255)]
     public byte MaxHealth;
     [Range(0, 255)]

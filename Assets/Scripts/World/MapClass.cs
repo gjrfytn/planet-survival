@@ -60,6 +60,7 @@ public abstract class Map : IBinaryReadableWriteable
 
 public sealed class LocalMap : Map
 {
+    bool Active;
     ushort freeID;
     Dictionary<ushort, Entity>[,] ObjectMatrix;
 
@@ -71,15 +72,12 @@ public sealed class LocalMap : Map
         for (ushort y = 0; y < height; ++y)
             for (ushort x = 0; x < width; ++x)
                 ObjectMatrix[y, x] = new Dictionary<ushort, Entity>();
-
-        EventManager.CreatureMoved += MoveObject;
-        EventManager.EntityDestroyed += RemoveObject;
     }
 
     ~LocalMap()
     {
-        EventManager.CreatureMoved -= MoveObject;
-        EventManager.EntityDestroyed -= RemoveObject;
+        if (Active)
+            Deactivate();
     }
 
     public override void Write(BinaryWriter writer)
@@ -118,6 +116,20 @@ public sealed class LocalMap : Map
                     );
                 }
             }
+    }
+
+    public void Activate()
+    {
+        EventManager.CreatureMoved += MoveObject;
+        EventManager.EntityDestroyed += RemoveObject;
+        Active = true;
+    }
+
+    public void Deactivate()
+    {
+        EventManager.CreatureMoved -= MoveObject;
+        EventManager.EntityDestroyed -= RemoveObject;
+        Active = false;
     }
 
     public bool IsBlocked(LocalPos coords)//C#6.0 EBD

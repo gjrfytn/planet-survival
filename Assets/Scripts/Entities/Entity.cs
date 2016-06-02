@@ -3,7 +3,7 @@ using System.IO;
 
 public class Entity : MonoBehaviour, IBinaryReadableWriteable
 {
-	public virtual LocalPos Pos{get;set;}
+    public virtual LocalPos Pos { get; set; }
     public bool Blocking; //TODO private set?
 
     public virtual void Write(BinaryWriter writer)
@@ -15,11 +15,11 @@ public class Entity : MonoBehaviour, IBinaryReadableWriteable
 
     public virtual void Read(BinaryReader reader)
     {
-		LocalPos buf=new LocalPos(
-			reader.ReadUInt16(),
-			reader.ReadUInt16()
-		);
-		Pos=buf;
+        LocalPos buf = new LocalPos(
+            reader.ReadUInt16(),
+            reader.ReadUInt16()
+        );
+        Pos = buf;
         Blocking = reader.ReadBoolean();
     }
 
@@ -33,9 +33,9 @@ public class Entity : MonoBehaviour, IBinaryReadableWriteable
         EventManager.LocalMapLeft -= Destroy;
     }
 
-	public void Destroy()
+    public void Destroy()
     {
-		EventManager.OnEntityDestroy(this);
+        EventManager.OnEntityDestroy(this);
         Destroy(gameObject);
     }
 }

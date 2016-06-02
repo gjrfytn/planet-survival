@@ -80,11 +80,13 @@ public class World
         //--
 
         EventManager.PlayerMoved += OnPlayerGotoHex;
+        EventManager.EntityDestroyed += RenderBlueHexesOnLocal;
     }
 
     ~World()
     {
         EventManager.PlayerMoved -= OnPlayerGotoHex;
+        EventManager.EntityDestroyed -= RenderBlueHexesOnLocal;
     }
 
     /// <summary>
@@ -142,10 +144,10 @@ public class World
         }
         else
         {
-            Visualiser.DestroyAllObjects();//TODO Временно
+            Visualiser.DestroyAllObjects();
             for (byte i = 0; i < 6; ++i)
-                if (IsHexFree((LocalPos)HexNavigHelper.GetNeighborMapCoords(pos, (TurnedHexDirection)i)))
-                    Visualiser.HighlightHex((LocalPos)HexNavigHelper.GetNeighborMapCoords(pos, (TurnedHexDirection)i), Visualiser.BlueHexSprite);
+                if (IsHexFree((LocalPos)HexNavigHelper.GetNeighborMapCoords(Player.GetComponent<Player>().Pos, (TurnedHexDirection)i)))
+                    Visualiser.HighlightHex((LocalPos)HexNavigHelper.GetNeighborMapCoords(Player.GetComponent<Player>().Pos, (TurnedHexDirection)i), Visualiser.BlueHexSprite);
         }
     }
 
@@ -159,7 +161,7 @@ public class World
         {
             GotoLocalMap();
             SpawnRandomEnemy();
-            Player.transform.position = WorldVisualiser.GetTransformPosFromMapPos((LocalPos)Player.GetComponent<Player>().GlobalPos);
+            Player.transform.position = WorldVisualiser.GetTransformPosFromMapPos(Player.GetComponent<Player>().Pos);
         }
         else
         {
@@ -180,6 +182,7 @@ public class World
         if (LocalMaps[pos.Y, pos.X] == null)
             LocalMaps[pos.Y, pos.X] = CreateLocalMap(CashedChunks[1, 1].HeightMatrix[pos.Y, pos.X], CashedChunks[1, 1].ForestMatrix[pos.Y, pos.X], CashedChunks[1, 1].RiverMatrix[pos.Y, pos.X], CashedChunks[1, 1].RoadMatrix[pos.Y, pos.X], CashedChunks[1, 1].ClusterMatrix[pos.Y, pos.X]);
         CurrentMap = LocalMaps[pos.Y, pos.X];
+        (CurrentMap as LocalMap).Activate();
 
         //TEMP
         Player.GetComponent<Player>().GlobalPos.X = (LocalMapSize.X >> 1);
@@ -187,11 +190,11 @@ public class World
         //
         (CurrentMap as LocalMap).AddObject(Player.GetComponent<Entity>());
 
-        Visualiser.DestroyAllObjects();
         Visualiser.RenderWholeMap(CurrentMap as LocalMap);
-
+        Visualiser.DestroyAllObjects();
         for (byte i = 0; i < 6; ++i)
-            Visualiser.HighlightHex((LocalPos)HexNavigHelper.GetNeighborMapCoords(Player.GetComponent<Player>().Pos, (TurnedHexDirection)i), Visualiser.BlueHexSprite);
+            if (IsHexFree((LocalPos)HexNavigHelper.GetNeighborMapCoords(Player.GetComponent<Player>().Pos, (TurnedHexDirection)i)))
+                Visualiser.HighlightHex((LocalPos)HexNavigHelper.GetNeighborMapCoords(Player.GetComponent<Player>().Pos, (TurnedHexDirection)i), Visualiser.BlueHexSprite);
     }
 
     /// <summary>
@@ -199,6 +202,7 @@ public class World
     /// </summary>
     void GotoGlobalMap()
     {
+        (CurrentMap as LocalMap).Deactivate();
         CurrentMap = CashedChunks[1, 1];
         Player.GetComponent<Player>().GlobalPos = GlobalMapPos;
         Visualiser.RenderVisibleHexes(Player.GetComponent<Player>().GlobalPos, Player.GetComponent<Player>().ViewDistance, CashedChunks, ChunkY, ChunkX);
@@ -395,8 +399,8 @@ public class World
         LocalPos pos = new LocalPos((ushort)Random.Range(0, LocalMapSize.X), (ushort)Random.Range(0, LocalMapSize.Y));
         GameObject enemy = MonoBehaviour.Instantiate(Enemies[Random.Range(0, Enemies.Length)], WorldVisualiser.GetTransformPosFromMapPos(pos), Quaternion.identity) as GameObject;
         enemy.GetComponent<Creature>().Pos = pos;
-        enemy.GetComponent<Creature>().Attack(Player.GetComponent<Player>());
         (CurrentMap as LocalMap).AddObject(enemy.GetComponent<Entity>());
+        enemy.GetComponent<Creature>().Attack(Player.GetComponent<Player>());
     }
 
     public bool IsHexFree(LocalPos pos)
@@ -493,5 +497,11 @@ public class World
     public TerrainType GetHexTerrain(GlobalPos pos)//C#6.0 EBD
     {
         return (CurrentMap as Chunk).TerrainMatrix[pos.Y - ChunkY * ChunkSize, pos.X - ChunkX * ChunkSize];
+    }
+
+    void RenderBlueHexesOnLocal(Entity e)
+    {
+        if (HexNavigHelper.IsMapCoordsAdjacent(e.Pos, Player.GetComponent<Player>().Pos, true))
+            Visualiser.HighlightHex(e.Pos, Visualiser.BlueHexSprite);
     }
 }

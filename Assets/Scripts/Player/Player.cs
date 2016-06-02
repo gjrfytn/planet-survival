@@ -131,9 +131,8 @@ public sealed class Player : LivingBeing
 
     byte Level;
 
-    bool Moving;
     float MoveTime;
-    Stack<LocalPos> Path = new Stack<LocalPos>();
+    Stack<LocalPos> Path = new Stack<LocalPos>();//TODO В LivingBeing?
 
     protected override void OnEnable()
     {
@@ -162,70 +161,60 @@ public sealed class Player : LivingBeing
 
     void Update()
     {
-        if (Moving)
+        if (MoveTime > 0)
         {
-            if (MoveTime > 0)
+            float tstep = MoveTime / Time.deltaTime;
+            MoveTime -= Time.deltaTime;
+            //TODO Возможно стоит сохранять значение из GetTransformPosFromMapPos(MapCoords,World.IsCurrentMapLocal())), так как это улучшит(?) производительность
+            if (GameObject.FindWithTag("World").GetComponent<WorldWrapper>().World.IsCurrentMapLocal())
             {
-                float tstep = MoveTime / Time.deltaTime;
-                MoveTime -= Time.deltaTime;
-                //TODO Возможно стоит сохранять значение из GetTransformPosFromMapPos(MapCoords,World.IsCurrentMapLocal())), так как это улучшит(?) производительность
-                if (GameObject.FindWithTag("World").GetComponent<WorldWrapper>().World.IsCurrentMapLocal())
-                {
-                    float dstep = Vector2.Distance(transform.position, WorldVisualiser.GetTransformPosFromMapPos(Pos)) / tstep;
-                    transform.position = Vector2.MoveTowards(transform.position, WorldVisualiser.GetTransformPosFromMapPos(Pos), dstep);
-
-                }
-                else
-                {
-                    float dstep = Vector2.Distance(transform.position, WorldVisualiser.GetTransformPosFromMapPos(GlobalPos)) / tstep;
-                    transform.position = Vector2.MoveTowards(transform.position, WorldVisualiser.GetTransformPosFromMapPos(GlobalPos), dstep);
-
-                }
-
-                EventManager.OnPlayerObjectMoved();
+                float dstep = Vector2.Distance(transform.position, WorldVisualiser.GetTransformPosFromMapPos(Pos)) / tstep;
+                transform.position = Vector2.MoveTowards(transform.position, WorldVisualiser.GetTransformPosFromMapPos(Pos), dstep);
             }
-            else if (Path.Count == 0)
-                Moving = false;
             else
             {
-                LocalPos node = Path.Pop();
-                LocalPos vBuf = (LocalPos)Pos;
-                Pos = node;
-                EventManager.OnCreatureMove(vBuf, (LocalPos)Pos); //TODO name?
-
-                MoveTime = MoveAnimTime;
+                float dstep = Vector2.Distance(transform.position, WorldVisualiser.GetTransformPosFromMapPos(GlobalPos)) / tstep;
+                transform.position = Vector2.MoveTowards(transform.position, WorldVisualiser.GetTransformPosFromMapPos(GlobalPos), dstep);
             }
+
+            EventManager.OnPlayerObjectMoved();
+        }
+        else if (Path.Count != 0)
+        {
+            LocalPos buf = Pos;
+            Pos = Path.Pop();
+            EventManager.OnCreatureMove(buf, Pos); //TODO name?
+
+            MoveTime = MoveAnimTime;
         }
     }
 
     public void MoveTo(LocalPos pos, bool inBattle)
     {
+        LocalPos pBuf = Pos;
         if (inBattle)
         {
             MoveTime = MoveAnimTime;
             GlobalPos = Pos = pos;
-            Moving = true;
-            EventManager.OnTurn();
         }
         else
         {
-            List<LocalPos> buf = Pathfinder.MakePath((GameObject.FindWithTag("World").GetComponent<WorldWrapper>().World.CurrentMap as LocalMap).GetBlockMatrix(), (LocalPos)Pos, pos);//TODO Тут?
+            List<LocalPos> buf = Pathfinder.MakePath((GameObject.FindWithTag("World").GetComponent<WorldWrapper>().World.CurrentMap as LocalMap).GetBlockMatrix(), Pos, pos);//TODO Тут?
             buf.Reverse();
             Path = new Stack<LocalPos>(buf);
             Path.Pop();
-            MoveTime = MoveAnimTime;
-            Pos = Path.Pop();
-            Moving = true;
         }
 
-        EventManager.OnPlayerMove(pos); //TODO Временно
+        //TODO Тут всё очень плохо, надо пересматривать:
+        EventManager.OnCreatureMove(pBuf, pos);
+        EventManager.OnTurn();
+        EventManager.OnPlayerMove(pos);
     }
 
     public void MoveTo(GlobalPos pos, float moveAnimTime)
     {
         MoveTime = moveAnimTime;
         GlobalPos = pos;
-        Moving = true;
         //EventManager.OnPlayerMove(mapCoords); //TODO Временно //Временно закоммент. см. HexInteraction 21
     }
 
@@ -234,7 +223,7 @@ public sealed class Player : LivingBeing
         if (Random.value < BaseAccuracy)
             target.TakeDamage((byte)(BaseDamage + Random.Range(-BaseDamage * DamageSpread, BaseDamage * DamageSpread)), true);
         else
-            EventManager.OnAttackMiss((LocalPos)Pos);
+            EventManager.OnAttackMiss(Pos);
     }
 
     void UpdateState()
