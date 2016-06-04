@@ -47,17 +47,17 @@ public class GameTime : MonoBehaviour
 
     void OnEnable()
     {
-        EventManager.ActionStarted += RunForMinutes;
+		EventManager.ActionStarted += Run;
     }
 
     void OnDisable()
     {
-        EventManager.ActionStarted -= RunForMinutes;
+		EventManager.ActionStarted -= Run;
     }
 
-    void RunForMinutes(ushort count)
+	void Run(TimedAction action)
     {
-        StartCoroutine(RunTimeCoroutine(count));
+		StartCoroutine(RunTimeCoroutine(action.Duration));
     }
 
 	System.Collections.IEnumerator RunTimeCoroutine(ushort count)

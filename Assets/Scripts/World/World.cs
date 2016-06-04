@@ -26,7 +26,7 @@ public class World
     WorldVisualiser Visualiser; //Временно
 
     GlobalPos GlobalMapPos;
-    GameObject Player;
+    Player Player;
     int ChunkX, ChunkY;
     const string ChunksDirectoryName = "chunks";
     string ChunksDirectoryPath;
@@ -69,24 +69,24 @@ public class World
 
         CurrentMap = CashedChunks[1, 1];
 
-        Player = GameObject.FindWithTag("Player");
-        Player.GetComponent<Player>().GlobalPos.X = 5;
-        Player.GetComponent<Player>().GlobalPos.Y = 5;
-        Player.transform.position = WorldVisualiser.GetTransformPosFromMapPos(Player.GetComponent<Player>().GlobalPos);
+        Player = GameObject.FindWithTag("Player").GetComponent<Player>();
+        Player.GlobalPos.X = 5;
+        Player.GlobalPos.Y = 5;
+        Player.transform.position = WorldVisualiser.GetTransformPosFromMapPos(Player.GlobalPos);
         Camera.main.transform.position = new Vector3(Player.transform.position.x, Player.transform.position.y + Camera.main.transform.position.z * (Mathf.Tan((360 - Camera.main.transform.rotation.eulerAngles.x) / 57.3f)), Camera.main.transform.position.z);
-        Visualiser.RenderVisibleHexes(Player.GetComponent<Player>().GlobalPos, Player.GetComponent<Player>().ViewDistance, CashedChunks, ChunkY, ChunkX);
+        Visualiser.RenderVisibleHexes(Player.GlobalPos, Player.ViewDistance, CashedChunks, ChunkY, ChunkX);
         for (byte i = 0; i < 6; ++i)
-            Visualiser.HighlightHex(HexNavigHelper.GetNeighborMapCoords(Player.GetComponent<Player>().GlobalPos, (HexDirection)i), Visualiser.BlueHexSprite);
+            Visualiser.HighlightHex(HexNavigHelper.GetNeighborMapCoords(Player.GlobalPos, (HexDirection)i), Visualiser.BlueHexSprite);
         //--
 
         EventManager.PlayerMoved += OnPlayerGotoHex;
-        EventManager.EntityDestroyed += RenderBlueHexesOnLocal;
+        EventManager.MapChanged += RerenderBlueHexes;
     }
 
     ~World()
     {
         EventManager.PlayerMoved -= OnPlayerGotoHex;
-        EventManager.EntityDestroyed -= RenderBlueHexesOnLocal;
+        EventManager.MapChanged -= RerenderBlueHexes;
     }
 
     /// <summary>
@@ -137,18 +137,13 @@ public class World
                 CurrentMap = CashedChunks[1, 1];
             }
 
-            Visualiser.RenderVisibleHexes(pos, Player.GetComponent<Player>().ViewDistance, CashedChunks, ChunkY, ChunkX);
+            Visualiser.RenderVisibleHexes(pos, Player.ViewDistance, CashedChunks, ChunkY, ChunkX);
             Visualiser.DestroyAllObjects();//TODO Временно
             for (byte i = 0; i < 6; ++i)
                 Visualiser.HighlightHex(HexNavigHelper.GetNeighborMapCoords(pos, (HexDirection)i), Visualiser.BlueHexSprite);
         }
         else
-        {
-            Visualiser.DestroyAllObjects();
-            for (byte i = 0; i < 6; ++i)
-                if (IsHexFree((LocalPos)HexNavigHelper.GetNeighborMapCoords(Player.GetComponent<Player>().Pos, (TurnedHexDirection)i)))
-                    Visualiser.HighlightHex((LocalPos)HexNavigHelper.GetNeighborMapCoords(Player.GetComponent<Player>().Pos, (TurnedHexDirection)i), Visualiser.BlueHexSprite);
-        }
+            RerenderBlueHexes();
     }
 
     /// <summary>
@@ -161,13 +156,13 @@ public class World
         {
             GotoLocalMap();
             SpawnRandomEnemy();
-            Player.transform.position = WorldVisualiser.GetTransformPosFromMapPos(Player.GetComponent<Player>().Pos);
+            Player.transform.position = WorldVisualiser.GetTransformPosFromMapPos(Player.Pos);
         }
         else
         {
             GotoGlobalMap();
             EventManager.OnLocalMapLeave();
-            Player.transform.position = WorldVisualiser.GetTransformPosFromMapPos(Player.GetComponent<Player>().GlobalPos);
+            Player.transform.position = WorldVisualiser.GetTransformPosFromMapPos(Player.GlobalPos);
         }
         EventManager.OnPlayerObjectMoved();
     }
@@ -177,7 +172,7 @@ public class World
     /// </summary>
     void GotoLocalMap()
     {
-        GlobalMapPos = Player.GetComponent<Player>().GlobalPos;
+        GlobalMapPos = Player.GlobalPos;
         LocalPos pos = new LocalPos((ushort)(GlobalMapPos.X - ChunkX * ChunkSize), (ushort)(GlobalMapPos.Y - ChunkY * ChunkSize)); //TODO new?
         if (LocalMaps[pos.Y, pos.X] == null)
             LocalMaps[pos.Y, pos.X] = CreateLocalMap(CashedChunks[1, 1].HeightMatrix[pos.Y, pos.X], CashedChunks[1, 1].ForestMatrix[pos.Y, pos.X], CashedChunks[1, 1].RiverMatrix[pos.Y, pos.X], CashedChunks[1, 1].RoadMatrix[pos.Y, pos.X], CashedChunks[1, 1].ClusterMatrix[pos.Y, pos.X]);
@@ -185,16 +180,13 @@ public class World
         (CurrentMap as LocalMap).Activate();
 
         //TEMP
-        Player.GetComponent<Player>().GlobalPos.X = (LocalMapSize.X >> 1);
-        Player.GetComponent<Player>().GlobalPos.Y = (LocalMapSize.Y >> 1);
+        Player.GlobalPos.X = (LocalMapSize.X >> 1);
+        Player.GlobalPos.Y = (LocalMapSize.Y >> 1);
         //
-        (CurrentMap as LocalMap).AddObject(Player.GetComponent<Entity>());
+        EventManager.OnEntitySpawn(Player);
 
         Visualiser.RenderWholeMap(CurrentMap as LocalMap);
-        Visualiser.DestroyAllObjects();
-        for (byte i = 0; i < 6; ++i)
-            if (IsHexFree((LocalPos)HexNavigHelper.GetNeighborMapCoords(Player.GetComponent<Player>().Pos, (TurnedHexDirection)i)))
-                Visualiser.HighlightHex((LocalPos)HexNavigHelper.GetNeighborMapCoords(Player.GetComponent<Player>().Pos, (TurnedHexDirection)i), Visualiser.BlueHexSprite);
+        RerenderBlueHexes();
     }
 
     /// <summary>
@@ -204,12 +196,12 @@ public class World
     {
         (CurrentMap as LocalMap).Deactivate();
         CurrentMap = CashedChunks[1, 1];
-        Player.GetComponent<Player>().GlobalPos = GlobalMapPos;
-        Visualiser.RenderVisibleHexes(Player.GetComponent<Player>().GlobalPos, Player.GetComponent<Player>().ViewDistance, CashedChunks, ChunkY, ChunkX);
+        Player.GlobalPos = GlobalMapPos;
+        Visualiser.RenderVisibleHexes(Player.GlobalPos, Player.ViewDistance, CashedChunks, ChunkY, ChunkX);
 
         Visualiser.DestroyAllObjects();
         for (byte i = 0; i < 6; ++i)
-            Visualiser.HighlightHex(HexNavigHelper.GetNeighborMapCoords(Player.GetComponent<Player>().GlobalPos, (HexDirection)i), Visualiser.BlueHexSprite);
+            Visualiser.HighlightHex(HexNavigHelper.GetNeighborMapCoords(Player.GlobalPos, (HexDirection)i), Visualiser.BlueHexSprite);
     }
 
     /// <summary>
@@ -397,10 +389,10 @@ public class World
     void SpawnRandomEnemy()
     {
         LocalPos pos = new LocalPos((ushort)Random.Range(0, LocalMapSize.X), (ushort)Random.Range(0, LocalMapSize.Y));
-        GameObject enemy = MonoBehaviour.Instantiate(Enemies[Random.Range(0, Enemies.Length)], WorldVisualiser.GetTransformPosFromMapPos(pos), Quaternion.identity) as GameObject;
-        enemy.GetComponent<Creature>().Pos = pos;
-        (CurrentMap as LocalMap).AddObject(enemy.GetComponent<Entity>());
-        enemy.GetComponent<Creature>().Attack(Player.GetComponent<Player>());
+        Creature enemy = (MonoBehaviour.Instantiate(Enemies[Random.Range(0, Enemies.Length)], WorldVisualiser.GetTransformPosFromMapPos(pos), Quaternion.identity) as GameObject).GetComponent<Creature>();
+        enemy.Pos = pos;
+        EventManager.OnEntitySpawn(enemy);
+        enemy.GetComponent<Creature>().Attack(Player);
     }
 
     public bool IsHexFree(LocalPos pos)
@@ -499,9 +491,11 @@ public class World
         return (CurrentMap as Chunk).TerrainMatrix[pos.Y - ChunkY * ChunkSize, pos.X - ChunkX * ChunkSize];
     }
 
-    void RenderBlueHexesOnLocal(Entity e)
+    void RerenderBlueHexes()
     {
-        if (HexNavigHelper.IsMapCoordsAdjacent(e.Pos, Player.GetComponent<Player>().Pos, true))
-            Visualiser.HighlightHex(e.Pos, Visualiser.BlueHexSprite);
+        Visualiser.DestroyAllObjects();
+        for (byte i = 0; i < 6; ++i)
+            if (IsHexFree((LocalPos)HexNavigHelper.GetNeighborMapCoords(Player.Pos, (TurnedHexDirection)i)))
+                Visualiser.HighlightHex((LocalPos)HexNavigHelper.GetNeighborMapCoords(Player.Pos, (TurnedHexDirection)i), Visualiser.BlueHexSprite);
     }
 }

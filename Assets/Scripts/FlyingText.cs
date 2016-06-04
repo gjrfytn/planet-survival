@@ -9,7 +9,7 @@ public class FlyingText : MonoBehaviour
 	public float FlyTime;
 	public float FadeTime;
 	
-	GameObject CameraCanvas;
+	Transform CameraCanvas;
 	
 	void OnEnable()
 	{
@@ -25,7 +25,7 @@ public class FlyingText : MonoBehaviour
 	
 	void Start()
 	{
-		CameraCanvas = GameObject.Find("CameraCanvas");
+		CameraCanvas = GameObject.Find("CameraCanvas").transform;
 	}
 	
 	void ShowDamageText(LivingBeing obj, byte damage)
@@ -33,22 +33,22 @@ public class FlyingText : MonoBehaviour
 		GameObject textObj = Instantiate(Text);
 		textObj.GetComponent<Text>().text = damage.ToString();
 		textObj.GetComponent<Text>().color = new Color(1, 1 - damage / obj.MaxHealth, 0);
-		textObj.transform.SetParent(CameraCanvas.transform);
+		textObj.transform.SetParent(CameraCanvas);
 		textObj.transform.localScale = Vector3.one;
 		textObj.transform.position=new Vector2(obj.transform.position.x,obj.transform.position.y + Offset);
 		StartCoroutine(MoveHelper.Fly(textObj, new Vector2(obj.transform.position.x, obj.transform.position.y + FlyHeight), FlyTime));
 		textObj.AddComponent<Fader>().FadeAndDestroyObject(FadeTime);
 	}
 	
-	void ShowMissText(LocalPos pos)
+	void ShowMissText(Vector2 pos)
 	{
 		GameObject textObj = Instantiate(Text);
 		textObj.GetComponent<Text>().text = "Miss";
 		textObj.GetComponent<Text>().color = Color.red;
-		textObj.transform.SetParent(CameraCanvas.transform);
+		textObj.transform.SetParent(CameraCanvas);
 		textObj.transform.localScale = Vector3.one;
-		textObj.transform.position=new Vector2(pos.X, pos.Y + Offset);
-		StartCoroutine(MoveHelper.Fly(textObj, new Vector2(pos.X, pos.Y + FlyHeight), FlyTime));
+		textObj.transform.position=new Vector2(pos.x, pos.y + Offset);
+		StartCoroutine(MoveHelper.Fly(textObj, new Vector2(pos.x, pos.y + FlyHeight), FlyTime));
 		textObj.AddComponent<Fader>().FadeAndDestroyObject(FadeTime);
 	}
 }

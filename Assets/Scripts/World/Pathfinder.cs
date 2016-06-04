@@ -40,7 +40,7 @@ public static class Pathfinder
                     }
                     else if (node == to)//UNDONE
                     {
-                        UnityEngine.Debug.Log("Incomplete path");//TODO Разобраться, почему не выводиться
+                        //TODO Решить
                         return path;
                     }
                 }

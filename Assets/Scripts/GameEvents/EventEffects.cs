@@ -3,53 +3,6 @@ using System.Collections.Generic;
 
 public class EventEffects : MonoBehaviour
 {
-    class EffectApplier
-    {
-        public delegate void VoidDelegate();
-        VoidDelegate Applier;
-        public EffectApplier(VoidDelegate applier)
-        {
-            Applier = applier;
-        }
-
-        public void Execute()//C#6.0 EBD
-        {
-            Applier();
-        }
-    }
-
-    sealed class ByteEffectApplier : EffectApplier
-    {
-        public delegate void ByteDelegate(byte f);
-        ByteDelegate Applier;
-        public ByteEffectApplier(ByteDelegate applier)
-            : base(delegate { })
-        {
-            Applier = applier;
-        }
-
-        public void Execute(byte f)//C#6.0 EBD
-        {
-            Applier(f);
-        }
-    }
-
-    sealed class ByteAndBoolEffectApplier : EffectApplier
-    {
-        public delegate void ByteAndBoolDelegate(byte f, bool b);
-        ByteAndBoolDelegate Applier;
-        public ByteAndBoolEffectApplier(ByteAndBoolDelegate applier)
-            : base(delegate { })
-        {
-            Applier = applier;
-        }
-
-        public void Execute(byte f, bool b)//C#6.0 EBD
-        {
-            Applier(f, b);
-        }
-    }
-
     static Dictionary<string, EffectApplier> Effects;
 
     void Start()
@@ -60,7 +13,7 @@ public class EventEffects : MonoBehaviour
 		{
 			{"enemy",new EffectApplier(world.EnemyAttack)},
 			{"damage",new ByteAndBoolEffectApplier(player.TakeDamage)},
-			{"heal",new ByteEffectApplier(player.TakeHeal)},
+			{"heal",new ByteEffectApplier(player.TakeHeal)}
 		};
     }
 

@@ -33,7 +33,7 @@ public class Entity : MonoBehaviour, IBinaryReadableWriteable
         EventManager.LocalMapLeft -= Destroy;
     }
 
-    public void Destroy()
+    public virtual void Destroy()
     {
         EventManager.OnEntityDestroy(this);
         Destroy(gameObject);

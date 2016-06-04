@@ -7,10 +7,7 @@ public class Terrains : MonoBehaviour
     public class TerrainProperties
     {
         public TerrainType Terrain;
-        public ushort TravelTime;
-        public float WaterConsumption;
-        public float FoodConsumption;
-        public float EnergyConsumption;
+        public TimedAction Travel;
     }
 
     public TerrainProperties[] TerrainsArray;
@@ -23,7 +20,7 @@ public class Terrains : MonoBehaviour
                 throw new System.Exception("You should not initialize TerrainType.NONE.");
             for (byte j = 0; j < TerrainsArray.Length; ++j)
                 if (TerrainsArray[i].Terrain == TerrainsArray[j].Terrain && i != j)
-                    throw new System.Exception("Duplicatated terrain types in TerrainsList.");
+                    throw new System.Exception("Duplicatated terrain types in TerrainsArray.");
         }
     }
 

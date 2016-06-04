@@ -5,14 +5,12 @@ public abstract class LivingBeing : Entity
     public float MoveAnimTime;//TODO Вынести?
     [Range(0, 255)]
     public byte MaxHealth;
-    [Range(0, 255)]
-    public byte BaseDamage;
-    public const float DamageSpread = 0.1f;
-    [Range(0, 1)]
-    public float BaseAccuracy;
+    public TempWeapon BaseWeapon;
     [Range(0, 1)]
     public float BaseArmor;
     public ushort Experience;
+
+    public GameObject Corpse;
 
     protected byte Health_;
     public virtual byte Health
@@ -31,20 +29,30 @@ public abstract class LivingBeing : Entity
 
     protected virtual void Start()
     {
+        Debug.Assert(Corpse.GetComponent<Container>() != null);
         Health = MaxHealth; //TODO C# 6.0 инициализаторы свойств
     }
 
     public void TakeDamage(byte damage, bool applyArmor)
     {
         //Debug.Assert(damage >= 0);
-        EventManager.OnCreatureHit(this, damage);
         float buf = Health - damage * (1 - BaseArmor);
         Health = (byte)(buf > 0 ? buf : 0);//TODO Если Health не float
+        EventManager.OnCreatureHit(this, damage);
     }
 
     public void TakeHeal(byte heal)//C#6.0 EBD
     {
         //Debug.Assert(heal >= 0);
         Health = (byte)Mathf.Clamp(Health + heal, 0, MaxHealth);
+        EventManager.OnCreatureHealed(this, heal);
+    }
+
+    public override void Destroy()
+    {
+        base.Destroy();
+        Entity corpse = (Instantiate(Corpse, transform.position, Quaternion.identity) as GameObject).GetComponent<Entity>();
+        corpse.Pos = Pos;
+        EventManager.OnEntitySpawn(corpse);
     }
 }

@@ -123,6 +123,8 @@ public sealed class Player : LivingBeing
     public MentalPenalty HighMentalPenalty;
     public MentalPenalty InsaneMentalPenalty;
 
+    TimedAction CurrentAction;
+
     public bool CanDualWield;
 
     [Header("Дальность обзора")]
@@ -137,14 +139,19 @@ public sealed class Player : LivingBeing
     protected override void OnEnable()
     {
         base.OnEnable();
+        EventManager.ActionStarted += StartAction;
         EventManager.HourPassed += UpdateState;
+        EventManager.ActionEnded += EndAction;
+
         EventManager.LocalMapLeft -= Destroy; //TODO Временно?
     }
 
     protected override void OnDisable()
     {
         base.OnDisable();
+        EventManager.ActionStarted -= StartAction;
         EventManager.HourPassed -= UpdateState;
+        EventManager.ActionEnded -= EndAction;
     }
 
     protected override void Start()
@@ -218,12 +225,17 @@ public sealed class Player : LivingBeing
         //EventManager.OnPlayerMove(mapCoords); //TODO Временно //Временно закоммент. см. HexInteraction 21
     }
 
-    public void Attack(LivingBeing target/*,weapon*/)//C#6.0 EBD
+    public void Attack(LivingBeing target, float damage, float accuracy)//C#6.0 EBD
     {
-        if (Random.value < BaseAccuracy)
-            target.TakeDamage((byte)(BaseDamage + Random.Range(-BaseDamage * DamageSpread, BaseDamage * DamageSpread)), true);
+        if (Random.value < accuracy)
+            target.TakeDamage((byte)damage, true);
         else
-            EventManager.OnAttackMiss(Pos);
+            EventManager.OnAttackMiss(transform.position);
+    }
+
+    void StartAction(TimedAction action)
+    {
+        CurrentAction = action;
     }
 
     void UpdateState()
@@ -231,9 +243,14 @@ public sealed class Player : LivingBeing
         List<Terrains.TerrainProperties> terrains = GameObject.FindWithTag("World").GetComponent<Terrains>().GetTerrainProperties(GameObject.FindWithTag("World").GetComponent<WorldWrapper>().World.GetHexTerrain(Pos));
         float mentalPercent = Mental / MaxMental;
         MentalPenalty curPenalty = mentalPercent < InsaneMentalPenalty.TopPercent ? InsaneMentalPenalty : (mentalPercent < HighMentalPenalty.TopPercent ? HighMentalPenalty : (mentalPercent < MediumMentalPenalty.TopPercent ? MediumMentalPenalty : (mentalPercent < LowMentalPenalty.TopPercent ? LowMentalPenalty : new MentalPenalty() { Water = 0, Food = 0, Energy = 0 })));
-        Water = Water - WaterConsumption - terrains.Sum(t => t.WaterConsumption) - curPenalty.Water;
-        Food = Food - FoodConsumption - terrains.Sum(t => t.FoodConsumption) - curPenalty.Food;
-        Energy = Energy - EnergyConsumption - terrains.Sum(t => t.EnergyConsumption) - curPenalty.Energy;
+        Water = Water - WaterConsumption - terrains.Sum(t => t.Travel.WaterConsumption) - curPenalty.Water - (CurrentAction != null ? CurrentAction.WaterConsumption : 0);//C#6.0
+        Food = Food - FoodConsumption - terrains.Sum(t => t.Travel.FoodConsumption) - curPenalty.Food - (CurrentAction != null ? CurrentAction.FoodConsumption : 0);//C#6.0
+        Energy = Energy - EnergyConsumption - terrains.Sum(t => t.Travel.EnergyConsumption) - curPenalty.Energy - (CurrentAction != null ? CurrentAction.EnergyConsumption : 0);//C#6.0
+    }
+
+    void EndAction()
+    {
+        CurrentAction = null;
     }
 
     public void Drink(float value)//C#6.0 EBD
@@ -252,5 +269,10 @@ public sealed class Player : LivingBeing
     {
         Debug.Assert(value >= 0);
         Energy = Mathf.Clamp(Energy + value, 0, MaxEnergy);
+    }
+
+    public TempWeapon GetWeapon()
+    {
+        return BaseWeapon;
     }
 }

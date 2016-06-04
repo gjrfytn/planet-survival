@@ -14,7 +14,7 @@ public class DuringActionDisabler : MonoBehaviour
         EventManager.ActionEnded -= Enable;
     }
 
-    void Disable(ushort unused = 0)
+	void Disable(Action unused = null)
     {
         //foreach(Behaviour b in GetComponents<Behaviour>())
         //	b.enabled=false;

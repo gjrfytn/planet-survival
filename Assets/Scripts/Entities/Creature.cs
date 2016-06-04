@@ -4,6 +4,7 @@ using System.Collections.Generic;
 public class Creature : LivingBeing
 {
     public enum AI_State : byte { STATE_IDLE, STATE_MOVE, STATE_ATTACK };
+    public bool AttackingPlayer { get; private set; }
 
     LocalMap Map;
     LocalPos TargetPos;
@@ -59,6 +60,9 @@ public class Creature : LivingBeing
         Target = target;
         TargetPos = Target.Pos;
 
+        if (target is Player)
+            AttackingPlayer = true;
+
         Animator.SetBool("Agressive", true);
     }
 
@@ -94,24 +98,24 @@ public class Creature : LivingBeing
         MoveTime = MoveAnimTime;
 
         Animator.SetBool("Moving", true);
-        if (WorldVisualiser.GetTransformPosFromMapPos(pBuf).x - WorldVisualiser.GetTransformPosFromMapPos(Pos).x > 0)
-            gameObject.transform.rotation = new Quaternion(0, 180, 0, 0);
+        if (transform.position.x - WorldVisualiser.GetTransformPosFromMapPos(Pos).x > 0)
+            transform.rotation = new Quaternion(0, 180, 0, 0);
         else
-            gameObject.transform.rotation = Quaternion.identity;
+            transform.rotation = Quaternion.identity;
     }
 
-    void PerformAttack(LivingBeing target)
+    void PerformAttack(LivingBeing target, float damage, float accuracy)
     {
-        if (Random.value < BaseAccuracy)
-            target.TakeDamage((byte)(BaseDamage + Random.Range(-BaseDamage * DamageSpread, BaseDamage * DamageSpread)), true);
+        if (Random.value < accuracy)
+            target.TakeDamage((byte)damage, true);
         else
-            EventManager.OnAttackMiss(Pos);
+            EventManager.OnAttackMiss(transform.position);
 
         Animator.SetTrigger("Attack");
-        if (WorldVisualiser.GetTransformPosFromMapPos(Pos).x - WorldVisualiser.GetTransformPosFromMapPos(target.Pos).x > 0)
-            gameObject.transform.rotation = new Quaternion(0, 180, 0, 0);
+        if (transform.position.x - WorldVisualiser.GetTransformPosFromMapPos(target.Pos).x > 0)
+            transform.rotation = new Quaternion(0, 180, 0, 0);
         else
-            gameObject.transform.rotation = Quaternion.identity;
+            transform.rotation = Quaternion.identity;
     }
 
     void MakeTurn()
@@ -135,7 +139,7 @@ public class Creature : LivingBeing
                 if (HexNavigHelper.IsMapCoordsAdjacent(TargetPos, Pos, true))
                 {
                     Path.Clear();
-                    PerformAttack(Target);
+                    PerformAttack(Target, BaseWeapon.NormalHitDamage, 0.75f);//TODO Временно normal, 0.85f
                 }
                 else
                 {
