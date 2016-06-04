@@ -6,7 +6,7 @@ public class PopupButtonsController : MonoBehaviour
 {
     public GameObject Button;
 
-    const float Radius = 1;
+    const float Radius = 1.5f;
     const float Angle = 15 * Mathf.Deg2Rad;
     const float FadeInTime = 0.7f;
     const float FlyTime = 0.5f;

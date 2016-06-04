@@ -25,7 +25,7 @@ public sealed class Player : LivingBeing
     [Range(0, 255)]
     public byte MaxFood = 100;
     [Range(0, 255)]
-    public byte MaxEnergy = 100;
+    public byte MaxStamina = 100;
     [Range(0, 255)]
     public byte MaxMental = 100;
     [Range(0, 255)]
@@ -75,17 +75,17 @@ public sealed class Player : LivingBeing
         }
     }
 
-    float Energy_;
-    public float Energy
+    float Stamina_;
+    public float Stamina
     {
         get
         {
-            return Energy_;
+            return Stamina_;
         }
         private set
         {
-            Energy_ = value;
-            if (Energy_ <= 0)
+            Stamina_ = value;
+            if (Stamina_ <= 0)
                 Debug.Log("Персонаж умер от усталости.");
         }
     }
@@ -107,7 +107,7 @@ public sealed class Player : LivingBeing
 
     public float WaterConsumption;
     public float FoodConsumption;
-    public float EnergyConsumption;
+    public float StaminaConsumption;
 
     [System.Serializable]
     public class MentalPenalty
@@ -115,7 +115,7 @@ public sealed class Player : LivingBeing
         public float TopPercent;
         public float Water;
         public float Food;
-        public float Energy;
+        public float Stamina;
     }
 
     public MentalPenalty LowMentalPenalty;
@@ -162,7 +162,7 @@ public sealed class Player : LivingBeing
         //TODO C# 6.0 инициализаторы свойств:
         Water = MaxWater;
         Food = MaxFood;
-        Energy = MaxEnergy;
+        Stamina = MaxStamina;
         Mental = MaxMental;
     }
 
@@ -242,10 +242,10 @@ public sealed class Player : LivingBeing
     {
         List<Terrains.TerrainProperties> terrains = GameObject.FindWithTag("World").GetComponent<Terrains>().GetTerrainProperties(GameObject.FindWithTag("World").GetComponent<WorldWrapper>().World.GetHexTerrain(Pos));
         float mentalPercent = Mental / MaxMental;
-        MentalPenalty curPenalty = mentalPercent < InsaneMentalPenalty.TopPercent ? InsaneMentalPenalty : (mentalPercent < HighMentalPenalty.TopPercent ? HighMentalPenalty : (mentalPercent < MediumMentalPenalty.TopPercent ? MediumMentalPenalty : (mentalPercent < LowMentalPenalty.TopPercent ? LowMentalPenalty : new MentalPenalty() { Water = 0, Food = 0, Energy = 0 })));
+        MentalPenalty curPenalty = mentalPercent < InsaneMentalPenalty.TopPercent ? InsaneMentalPenalty : (mentalPercent < HighMentalPenalty.TopPercent ? HighMentalPenalty : (mentalPercent < MediumMentalPenalty.TopPercent ? MediumMentalPenalty : (mentalPercent < LowMentalPenalty.TopPercent ? LowMentalPenalty : new MentalPenalty() { Water = 0, Food = 0, Stamina = 0 })));
         Water = Water - WaterConsumption - terrains.Sum(t => t.Travel.WaterConsumption) - curPenalty.Water - (CurrentAction != null ? CurrentAction.WaterConsumption : 0);//C#6.0
         Food = Food - FoodConsumption - terrains.Sum(t => t.Travel.FoodConsumption) - curPenalty.Food - (CurrentAction != null ? CurrentAction.FoodConsumption : 0);//C#6.0
-        Energy = Energy - EnergyConsumption - terrains.Sum(t => t.Travel.EnergyConsumption) - curPenalty.Energy - (CurrentAction != null ? CurrentAction.EnergyConsumption : 0);//C#6.0
+        Stamina = Stamina - StaminaConsumption - terrains.Sum(t => t.Travel.StaminaConsumption) - curPenalty.Stamina - (CurrentAction != null ? CurrentAction.StaminaConsumption : 0);//C#6.0
     }
 
     void EndAction()
@@ -268,11 +268,13 @@ public sealed class Player : LivingBeing
     public void RestoreEnergy(float value)//C#6.0 EBD
     {
         Debug.Assert(value >= 0);
-        Energy = Mathf.Clamp(Energy + value, 0, MaxEnergy);
+        Stamina = Mathf.Clamp(Stamina + value, 0, MaxStamina);
     }
+
+    public TempWeapon Weapon;
 
     public TempWeapon GetWeapon()
     {
-        return BaseWeapon;
+        return Weapon == null ? BaseWeapon : Weapon;
     }
 }

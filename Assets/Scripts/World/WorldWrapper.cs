@@ -15,7 +15,7 @@ public class WorldWrapper : MonoBehaviour
     public byte ForestDensity;
     public byte TreeCountForForestTerrain;
 
-    public GameObject[] Enemies;
+    public LivingBeing[] Enemies;
 
     public World World { get; private set; }
 

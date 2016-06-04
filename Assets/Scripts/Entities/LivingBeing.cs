@@ -10,7 +10,7 @@ public abstract class LivingBeing : Entity
     public float BaseArmor;
     public ushort Experience;
 
-    public GameObject Corpse;
+    public Container Corpse;
 
     protected byte Health_;
     public virtual byte Health
@@ -51,7 +51,7 @@ public abstract class LivingBeing : Entity
     public override void Destroy()
     {
         base.Destroy();
-        Entity corpse = (Instantiate(Corpse, transform.position, Quaternion.identity) as GameObject).GetComponent<Entity>();
+        Entity corpse = (Instantiate(Corpse, transform.position, Quaternion.identity) as Entity);
         corpse.Pos = Pos;
         EventManager.OnEntitySpawn(corpse);
     }

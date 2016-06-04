@@ -16,7 +16,7 @@ public class World
     public readonly byte ForestDensity;
     public readonly byte TreeCountForForestTerrain;
 
-    public readonly GameObject[] Enemies;
+    public readonly LivingBeing[] Enemies;
 
     public Map CurrentMap { get; private set; } //TODO Возможно, можно будет убрать. Карта, на которой находится игрок.
 
@@ -31,7 +31,7 @@ public class World
     const string ChunksDirectoryName = "chunks";
     string ChunksDirectoryPath;
 
-    public World(float landscapeRoughness, float forestRoughness, WorldGenerator.RiversParameters riverParam, WorldGenerator.ClustersParameters clusterParam, WorldGenerator.RoadsParameters roadParam, ushort globalMapChunkSize, LocalPos localMapSize, byte forestDensity, byte treeCountForForestTerrain, GameObject[] enemies)
+    public World(float landscapeRoughness, float forestRoughness, WorldGenerator.RiversParameters riverParam, WorldGenerator.ClustersParameters clusterParam, WorldGenerator.RoadsParameters roadParam, ushort globalMapChunkSize, LocalPos localMapSize, byte forestDensity, byte treeCountForForestTerrain, LivingBeing[] enemies)
     {
         LandscapeRoughness = landscapeRoughness;
         ForestRoughness = forestRoughness;
@@ -389,7 +389,7 @@ public class World
     void SpawnRandomEnemy()
     {
         LocalPos pos = new LocalPos((ushort)Random.Range(0, LocalMapSize.X), (ushort)Random.Range(0, LocalMapSize.Y));
-        Creature enemy = (MonoBehaviour.Instantiate(Enemies[Random.Range(0, Enemies.Length)], WorldVisualiser.GetTransformPosFromMapPos(pos), Quaternion.identity) as GameObject).GetComponent<Creature>();
+        Creature enemy = (MonoBehaviour.Instantiate(Enemies[Random.Range(0, Enemies.Length)], WorldVisualiser.GetTransformPosFromMapPos(pos), Quaternion.identity) as Creature);
         enemy.Pos = pos;
         EventManager.OnEntitySpawn(enemy);
         enemy.GetComponent<Creature>().Attack(Player);

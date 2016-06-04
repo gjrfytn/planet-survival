@@ -5,7 +5,7 @@ public class CharacteristicsPanel : MonoBehaviour
 {
     public Text Water;
     public Text Food;
-    public Text Energy;
+    public Text Stamina;
     public Text Mental;
 
     void OnEnable()
@@ -14,7 +14,7 @@ public class CharacteristicsPanel : MonoBehaviour
         //Пока всё без форматирования
         Water.text = player.Water.ToString() + "/" + player.MaxWater.ToString();
         Food.text = player.Food.ToString() + "/" + player.MaxFood.ToString();
-        Energy.text = player.Energy.ToString() + "/" + player.MaxEnergy.ToString();
+        Stamina.text = player.Stamina.ToString() + "/" + player.MaxStamina.ToString();
         Mental.text = player.Mental.ToString() + "/" + player.MaxMental.ToString();
     }
 }

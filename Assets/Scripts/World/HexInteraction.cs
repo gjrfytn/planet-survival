@@ -23,7 +23,7 @@ public class HexInteraction : MonoBehaviour
                     travel.Duration += p.Travel.Duration;
                     travel.WaterConsumption += p.Travel.WaterConsumption;
                     travel.FoodConsumption += p.Travel.FoodConsumption;
-                    travel.EnergyConsumption += p.Travel.EnergyConsumption;
+                    travel.StaminaConsumption += p.Travel.StaminaConsumption;
                 }
             GameObject.FindWithTag("Player").GetComponent<Player>().MoveTo(GetComponent<HexData>().Pos, travel.Duration * GameTime.GameMinToRealSec);
             EventManager.OnActionStart(travel);
