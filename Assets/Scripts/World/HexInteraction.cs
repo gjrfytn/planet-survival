@@ -6,7 +6,7 @@ public class HexInteraction : MonoBehaviour
 
     void Start()
     {
-        World = GameObject.FindWithTag("World").GetComponent<WorldWrapper>().World;
+        World = GameObject.FindWithTag("World").GetComponent<World>();
     }
 
     public void OnMouseUpAsButton()

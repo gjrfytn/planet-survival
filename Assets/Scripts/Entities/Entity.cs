@@ -23,16 +23,6 @@ public class Entity : MonoBehaviour, IBinaryReadableWriteable
         Blocking = reader.ReadBoolean();
     }
 
-    protected virtual void OnEnable()
-    {
-        EventManager.LocalMapLeft += Destroy;
-    }
-
-    protected virtual void OnDisable()
-    {
-        EventManager.LocalMapLeft -= Destroy;
-    }
-
     public virtual void Destroy()
     {
         EventManager.OnEntityDestroy(this);

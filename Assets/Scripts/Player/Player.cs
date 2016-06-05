@@ -136,19 +136,15 @@ public sealed class Player : LivingBeing
     float MoveTime;
     Stack<LocalPos> Path = new Stack<LocalPos>();//TODO В LivingBeing?
 
-    protected override void OnEnable()
+    void OnEnable()
     {
-        base.OnEnable();
         EventManager.ActionStarted += StartAction;
         EventManager.HourPassed += UpdateState;
         EventManager.ActionEnded += EndAction;
-
-        EventManager.LocalMapLeft -= Destroy; //TODO Временно?
     }
 
-    protected override void OnDisable()
+    void OnDisable()
     {
-        base.OnDisable();
         EventManager.ActionStarted -= StartAction;
         EventManager.HourPassed -= UpdateState;
         EventManager.ActionEnded -= EndAction;
@@ -173,7 +169,7 @@ public sealed class Player : LivingBeing
             float tstep = MoveTime / Time.deltaTime;
             MoveTime -= Time.deltaTime;
             //TODO Возможно стоит сохранять значение из GetTransformPosFromMapPos(MapCoords,World.IsCurrentMapLocal())), так как это улучшит(?) производительность
-            if (GameObject.FindWithTag("World").GetComponent<WorldWrapper>().World.IsCurrentMapLocal())
+            if (GameObject.FindWithTag("World").GetComponent<World>().IsCurrentMapLocal())
             {
                 float dstep = Vector2.Distance(transform.position, WorldVisualiser.GetTransformPosFromMapPos(Pos)) / tstep;
                 transform.position = Vector2.MoveTowards(transform.position, WorldVisualiser.GetTransformPosFromMapPos(Pos), dstep);
@@ -206,7 +202,7 @@ public sealed class Player : LivingBeing
         }
         else
         {
-            List<LocalPos> buf = Pathfinder.MakePath((GameObject.FindWithTag("World").GetComponent<WorldWrapper>().World.CurrentMap as LocalMap).GetBlockMatrix(), Pos, pos);//TODO Тут?
+            List<LocalPos> buf = Pathfinder.MakePath((GameObject.FindWithTag("World").GetComponent<World>().CurrentMap as LocalMap).GetBlockMatrix(), Pos, pos, false);//TODO Тут?
             buf.Reverse();
             Path = new Stack<LocalPos>(buf);
             Path.Pop();
@@ -240,7 +236,7 @@ public sealed class Player : LivingBeing
 
     void UpdateState()
     {
-        List<Terrains.TerrainProperties> terrains = GameObject.FindWithTag("World").GetComponent<Terrains>().GetTerrainProperties(GameObject.FindWithTag("World").GetComponent<WorldWrapper>().World.GetHexTerrain(Pos));
+        List<Terrains.TerrainProperties> terrains = GameObject.FindWithTag("World").GetComponent<Terrains>().GetTerrainProperties(GameObject.FindWithTag("World").GetComponent<World>().GetHexTerrain(Pos));
         float mentalPercent = Mental / MaxMental;
         MentalPenalty curPenalty = mentalPercent < InsaneMentalPenalty.TopPercent ? InsaneMentalPenalty : (mentalPercent < HighMentalPenalty.TopPercent ? HighMentalPenalty : (mentalPercent < MediumMentalPenalty.TopPercent ? MediumMentalPenalty : (mentalPercent < LowMentalPenalty.TopPercent ? LowMentalPenalty : new MentalPenalty() { Water = 0, Food = 0, Stamina = 0 })));
         Water = Water - WaterConsumption - terrains.Sum(t => t.Travel.WaterConsumption) - curPenalty.Water - (CurrentAction != null ? CurrentAction.WaterConsumption : 0);//C#6.0

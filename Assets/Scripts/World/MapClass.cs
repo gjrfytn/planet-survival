@@ -78,6 +78,7 @@ public sealed class LocalMap : Map
     {
         if (Active)
             Deactivate();
+        //TODO Уничтожать Entity
     }
 
     public override void Write(BinaryWriter writer)
@@ -120,18 +121,26 @@ public sealed class LocalMap : Map
 
     public void Activate()
     {
+        Active = true;
         EventManager.EntitySpawned += AddObject;
         EventManager.CreatureMoved += MoveObject;
         EventManager.EntityDestroyed += RemoveObject;
-        Active = true;
+
+        foreach (Dictionary<ushort, Entity> cell in ObjectMatrix)
+            foreach (KeyValuePair<ushort, Entity> obj in cell)
+                obj.Value.gameObject.SetActive(true);
     }
 
     public void Deactivate()
     {
+        Active = false;
         EventManager.EntitySpawned -= AddObject;
         EventManager.CreatureMoved -= MoveObject;
         EventManager.EntityDestroyed -= RemoveObject;
-        Active = false;
+
+        foreach (Dictionary<ushort, Entity> cell in ObjectMatrix)
+            foreach (KeyValuePair<ushort, Entity> obj in cell)
+                obj.Value.gameObject.SetActive(false);
     }
 
     public bool IsBlocked(LocalPos coords)//C#6.0 EBD

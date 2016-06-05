@@ -8,7 +8,7 @@ public static class Pathfinder
         public LocalPos Coord;
     }
 
-    public static List<LocalPos> MakePath(bool[,] blockMatrix, LocalPos from, LocalPos to)
+    public static List<LocalPos> MakePath(bool[,] blockMatrix, LocalPos from, LocalPos to, bool destIsBlocked)
     {
         UnityEngine.Debug.Assert(from != to);
         ushort height = (ushort)blockMatrix.GetLength(0);
@@ -38,11 +38,8 @@ public static class Pathfinder
                         queue.Add(new DistCoordPair() { Dist = (ushort)(UnityEngine.Mathf.Abs(to.X - node.X) + UnityEngine.Mathf.Abs(to.Y - node.Y)), Coord = (LocalPos)node });
                         blockMatrix[node.Y, node.X] = true;
                     }
-                    else if (node == to)//UNDONE
-                    {
-                        //TODO Решить
+                    else if (destIsBlocked && node == to)
                         return path;
-                    }
                 }
 
                 queue.Sort((a, b) => a.Dist - b.Dist);

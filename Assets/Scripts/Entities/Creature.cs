@@ -15,21 +15,19 @@ public class Creature : LivingBeing
 
     Animator Animator;
 
-    protected override void OnEnable()
+    void OnEnable()
     {
-        base.OnEnable();
         EventManager.TurnMade += MakeTurn;
     }
 
-    protected override void OnDisable()
+    void OnDisable()
     {
-        base.OnDisable();
         EventManager.TurnMade -= MakeTurn;
     }
 
     void Awake()
     {
-        Map = GameObject.FindWithTag("World").GetComponent<WorldWrapper>().World.CurrentMap as LocalMap;
+        Map = GameObject.FindWithTag("World").GetComponent<World>().CurrentMap as LocalMap;
 
         Animator = GetComponent<Animator>();
     }
@@ -85,7 +83,7 @@ public class Creature : LivingBeing
             node = Path.Pop();
         if (noPath || Map.IsBlocked(node))
         {
-            List<LocalPos> buf = Pathfinder.MakePath(Map.GetBlockMatrix(), Pos, TargetPos);
+            List<LocalPos> buf = Pathfinder.MakePath(Map.GetBlockMatrix(), Pos, TargetPos, true);
             buf.Reverse();
             Path = new Stack<LocalPos>(buf);
             Path.Pop();

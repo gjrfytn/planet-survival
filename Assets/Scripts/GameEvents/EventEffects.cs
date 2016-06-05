@@ -8,7 +8,7 @@ public class EventEffects : MonoBehaviour
     void Start()
     {
         Player player = UnityEngine.GameObject.FindWithTag("Player").GetComponent<Player>();
-        World world = UnityEngine.GameObject.FindWithTag("World").GetComponent<WorldWrapper>().World;
+        World world = UnityEngine.GameObject.FindWithTag("World").GetComponent<World>();
         Effects = new Dictionary<string, EffectApplier>
 		{
 			{"enemy",new EffectApplier(world.EnemyAttack)},

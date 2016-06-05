@@ -1,22 +1,22 @@
 ﻿using UnityEngine;
 using System.IO;
 
-public class World
+public class World : MonoBehaviour
 {
-    public readonly float LandscapeRoughness;
-    public readonly float ForestRoughness;
+    public float LandscapeRoughness;
+    public float ForestRoughness;
 
-    public readonly WorldGenerator.RiversParameters RiverParam;
-    public readonly WorldGenerator.ClustersParameters ClusterParam;
-    public readonly WorldGenerator.RoadsParameters RoadParam;
+    public WorldGenerator.RiversParameters RiverParam;
+    public WorldGenerator.ClustersParameters ClusterParam;
+    public WorldGenerator.RoadsParameters RoadParam;
 
-    public readonly ushort ChunkSize;
-    public readonly LocalPos LocalMapSize;
+    public ushort ChunkSize;
+    public LocalPos LocalMapSize;
 
-    public readonly byte ForestDensity;
-    public readonly byte TreeCountForForestTerrain;
+    public byte ForestDensity;
+    public byte TreeCountForForestTerrain;
 
-    public readonly LivingBeing[] Enemies;
+    public LivingBeing[] Enemies;
 
     public Map CurrentMap { get; private set; } //TODO Возможно, можно будет убрать. Карта, на которой находится игрок.
 
@@ -31,19 +31,22 @@ public class World
     const string ChunksDirectoryName = "chunks";
     string ChunksDirectoryPath;
 
-    public World(float landscapeRoughness, float forestRoughness, WorldGenerator.RiversParameters riverParam, WorldGenerator.ClustersParameters clusterParam, WorldGenerator.RoadsParameters roadParam, ushort globalMapChunkSize, LocalPos localMapSize, byte forestDensity, byte treeCountForForestTerrain, LivingBeing[] enemies)
-    {
-        LandscapeRoughness = landscapeRoughness;
-        ForestRoughness = forestRoughness;
-        RiverParam = riverParam;
-        ClusterParam = clusterParam;
-        RoadParam = roadParam;
-        ChunkSize = globalMapChunkSize;
-        LocalMapSize = localMapSize;
-        ForestDensity = forestDensity;
-        TreeCountForForestTerrain = treeCountForForestTerrain;
-        Enemies = enemies;
+    public UnityEngine.UI.Button SkipTurnBtn;
 
+    void OnEnable()
+    {
+        EventManager.PlayerMoved += OnPlayerGotoHex;
+        EventManager.MapChanged += RerenderBlueHexes;
+    }
+
+    void OnDisable()
+    {
+        EventManager.PlayerMoved -= OnPlayerGotoHex;
+        EventManager.MapChanged -= RerenderBlueHexes;
+    }
+
+    void Start()
+    {
         ChunksDirectoryPath = Path.Combine(Application.streamingAssetsPath, ChunksDirectoryName); //UNDONE Не будет работать на Android?
 
         if (Directory.Exists(ChunksDirectoryPath))
@@ -77,16 +80,6 @@ public class World
         Visualiser.RenderVisibleHexes(Player.GlobalPos, Player.ViewDistance, CashedChunks, ChunkY, ChunkX);
         for (byte i = 0; i < 6; ++i)
             Visualiser.HighlightHex(HexNavigHelper.GetNeighborMapCoords(Player.GlobalPos, (HexDirection)i), Visualiser.BlueHexSprite);
-        //--
-
-        EventManager.PlayerMoved += OnPlayerGotoHex;
-        EventManager.MapChanged += RerenderBlueHexes;
-    }
-
-    ~World()
-    {
-        EventManager.PlayerMoved -= OnPlayerGotoHex;
-        EventManager.MapChanged -= RerenderBlueHexes;
     }
 
     /// <summary>
@@ -154,14 +147,16 @@ public class World
         Visualiser.DestroyAllHexes(); //TODO Это лучше делать до генерации карты, чтобы не было видно подвисания (или нужно отображение загрузки).
         if (!IsCurrentMapLocal())
         {
+            SkipTurnBtn.gameObject.SetActive(true);
             GotoLocalMap();
             SpawnRandomEnemy();
             Player.transform.position = WorldVisualiser.GetTransformPosFromMapPos(Player.Pos);
         }
         else
         {
+            SkipTurnBtn.gameObject.SetActive(false);
             GotoGlobalMap();
-            EventManager.OnLocalMapLeave();
+            //EventManager.OnLocalMapLeave();
             Player.transform.position = WorldVisualiser.GetTransformPosFromMapPos(Player.GlobalPos);
         }
         EventManager.OnPlayerObjectMoved();
@@ -194,6 +189,7 @@ public class World
     /// </summary>
     void GotoGlobalMap()
     {
+        EventManager.OnEntityDestroy(Player);
         (CurrentMap as LocalMap).Deactivate();
         CurrentMap = CashedChunks[1, 1];
         Player.GlobalPos = GlobalMapPos;
