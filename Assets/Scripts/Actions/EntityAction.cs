@@ -15,7 +15,7 @@ public class EntityAction : MonoBehaviour
     {
         Player = GameObject.FindWithTag("Player").GetComponent<Player>();
 
-		AllActions=new Action[0];//Временно
+        AllActions = new Action[0];//Временно
         /*Action[] enemybuf=new Action[0];
         Action[] containerbuf=new Action[0];
         if(GetComponent<LivingBeing>()!=null)
@@ -76,7 +76,7 @@ public class EntityAction : MonoBehaviour
             BattleAction ba = btn.Action as BattleAction;
             GameObject.FindWithTag("Player").GetComponent<Player>().Attack(GetComponent<LivingBeing>(), ba.Damage, ba.Accuracy);
             EventManager.PopupButtonClicked -= ButtonClick;
-            EventManager.OnTurn();
+            EventManager.OnPlayerTurn();
             Clicked = false;
         }
     }

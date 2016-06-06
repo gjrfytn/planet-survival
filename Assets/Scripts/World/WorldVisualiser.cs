@@ -47,7 +47,6 @@ public class WorldVisualiser : MonoBehaviour
     public byte ForestGenGridSize;
     public float FadeInTime;
     public float FadeTime;
-    public Sprite BlueHexSprite;
     public static Vector2 GlobalHexSpriteSize; //TODO static? Перенести в классы?
     public static Vector2 LocalHexSpriteSize;
 
@@ -79,9 +78,15 @@ public class WorldVisualiser : MonoBehaviour
     }
 
     Queue<QueueType> SignQueue = new Queue<QueueType>();
+    Queue<QueueType> BluesSignQueue = new Queue<QueueType>();
 
-    List<GameObject> RenderedObjects = new List<GameObject>();
-    GameObject RenderedBackground;
+    class BluesType
+    {
+        public GameObject Hex;
+        public bool InSign;
+    }
+
+    List<BluesType> RenderedBlues = new List<BluesType>();
 
     void Awake()
     {
@@ -136,10 +141,10 @@ public class WorldVisualiser : MonoBehaviour
         RenderedHexes.Clear();
     }
 
-    public void DestroyAllObjects()
+    public void DestroyAllBlues()
     {
-        RenderedObjects.ForEach(Destroy);
-        RenderedObjects.Clear();
+        RenderedBlues.ForEach(b => Destroy(b.Hex));
+        RenderedBlues.Clear();
     }
 
     /// <summary>
@@ -602,22 +607,18 @@ public class WorldVisualiser : MonoBehaviour
     /// </summary>
     /// <param name="mapCoords">Координаты хекса.</param>
     /// <param name="highlightHexSprite">Спрайт.</param>
-    public void HighlightHex(GlobalPos pos, Sprite highlightHexSprite)
+    public void HighlightHex(GlobalPos pos)
     {
-        RenderedObjects.Add(Instantiate(InteractableHex, GetTransformPosFromMapPos(pos), Quaternion.identity) as GameObject);
-        RenderedObjects[RenderedObjects.Count - 1].GetComponent<SpriteRenderer>().sprite = highlightHexSprite;
-        RenderedObjects[RenderedObjects.Count - 1].GetComponent<SpriteRenderer>().sortingLayerName = "LandscapeHighlights";
-
-        RenderedObjects[RenderedObjects.Count - 1].GetComponent<HexData>().Pos = pos;//TODO временно
+        BluesType hex = new BluesType { Hex = Instantiate(InteractableHex, GetTransformPosFromMapPos(pos), Quaternion.identity) as GameObject, InSign = true };
+        hex.Hex.GetComponent<HexData>().Pos = pos;
+        RenderedBlues.Add(hex);
     }
 
-    public void HighlightHex(LocalPos pos, Sprite highlightHexSprite)
+    void HighlightHex(LocalPos pos)
     {
-        RenderedObjects.Add(Instantiate(InteractableHex, GetTransformPosFromMapPos(pos), Quaternion.Euler(0, 0, 90)) as GameObject);
-        RenderedObjects[RenderedObjects.Count - 1].GetComponent<SpriteRenderer>().sprite = highlightHexSprite;
-        RenderedObjects[RenderedObjects.Count - 1].GetComponent<SpriteRenderer>().sortingLayerName = "LandscapeHighlights";
-
-        RenderedObjects[RenderedObjects.Count - 1].GetComponent<HexData>().Pos = pos;//TODO временно
+        BluesType hex = new BluesType { Hex = Instantiate(InteractableHex, GetTransformPosFromMapPos(pos), Quaternion.Euler(0, 0, 90)) as GameObject, InSign = true };
+        hex.Hex.GetComponent<HexData>().Pos = pos;
+        RenderedBlues.Add(hex);
     }
 
     public byte[] GetTerrainsSpriteID()
@@ -628,5 +629,56 @@ public class WorldVisualiser : MonoBehaviour
         for (byte i = 0; i < LocalMapParam.Terrains.Length - 1; ++i)
             buf[i + 2] = (byte)LocalMapParam.Terrains[i].Sprites.Length;
         return buf;
+    }
+
+    public void RenderBluesHexes(LocalPos pos, byte distance, LocalMap map)
+    {
+        Debug.Assert(distance != 0);
+        RenderedBlues.ForEach(hex => hex.InSign = false);
+
+        for (byte i = 0; i < 6; ++i)
+        {
+            GlobalPos buf = HexNavigHelper.GetNeighborMapCoords(pos, (TurnedHexDirection)i);
+            if (buf.X >= 0 && buf.Y >= 0 && buf.X < map.Width && buf.Y < map.Height && !map.IsBlocked((LocalPos)buf))
+                BluesSignQueue.Enqueue(new QueueType { Pos = buf, Distance = (byte)(distance - 1) });
+        }
+
+        while (BluesSignQueue.Count != 0)
+        {
+            QueueType buf = BluesSignQueue.Dequeue();
+            SpreadBlues((LocalPos)buf.Pos, buf.Distance, map);
+        }
+
+        for (ushort i = 0; i < RenderedBlues.Count; ++i)
+            if (!RenderedBlues[i].InSign)
+            {
+                Destroy(RenderedBlues[i].Hex);
+                RenderedBlues.RemoveAt(i);
+                --i;
+            }
+    }
+
+    void SpreadBlues(LocalPos pos, byte distance, LocalMap map)
+    {
+        short index = (short)RenderedBlues.FindIndex(x => x.Hex.GetComponent<HexData>().Pos == pos);
+        if (index == -1)
+            HighlightHex(pos);
+        else
+        {
+            if (RenderedBlues[index].InSign)
+                return;
+            else
+                RenderedBlues[index].InSign = true;
+        }
+
+        if (distance != 0)
+        {
+            for (byte i = 0; i < 6; ++i)
+            {
+                GlobalPos buf = HexNavigHelper.GetNeighborMapCoords(pos, (TurnedHexDirection)i);
+                if (buf.X >= 0 && buf.Y >= 0 && buf.X < map.Width && buf.Y < map.Height && !map.IsBlocked((LocalPos)buf))
+                    BluesSignQueue.Enqueue(new QueueType { Pos = buf, Distance = (byte)(distance - 1) });
+            }
+        }
     }
 }

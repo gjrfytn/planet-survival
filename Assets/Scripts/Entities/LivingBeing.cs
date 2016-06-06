@@ -8,6 +8,8 @@ public abstract class LivingBeing : Entity
     public TempWeapon BaseWeapon;
     [Range(0, 1)]
     public float BaseArmor;
+    [Range(0, 255)]
+    public byte Speed;
     public ushort Experience;
 
     public Container Corpse;

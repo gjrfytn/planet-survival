@@ -161,8 +161,6 @@ public sealed class LocalMap : Map
     {
         ObjectMatrix[obj.Pos.Y, obj.Pos.X].Add(freeID, obj);
         freeID++;
-
-        EventManager.OnMapChange();
     }
 
     void MoveObject(LocalPos from, LocalPos to)
@@ -170,16 +168,12 @@ public sealed class LocalMap : Map
         KeyValuePair<ushort, Entity> obj = ObjectMatrix[from.Y, from.X].Single(o => o.Value.Pos != from);
         ObjectMatrix[to.Y, to.X].Add(obj.Key, obj.Value);
         ObjectMatrix[from.Y, from.X].Remove(obj.Key);
-
-        EventManager.OnMapChange();
     }
 
     void RemoveObject(Entity e)
     {
         KeyValuePair<ushort, Entity> obj = ObjectMatrix[e.Pos.Y, e.Pos.X].Single(o => o.Value == e);
         ObjectMatrix[e.Pos.Y, e.Pos.X].Remove(obj.Key);
-
-        EventManager.OnMapChange();
     }
 }
 

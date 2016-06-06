@@ -13,22 +13,26 @@ public class Creature : LivingBeing
     Stack<LocalPos> Path = new Stack<LocalPos>(); //TODO В LivingBeing?
     float MoveTime;
 
+    LocalPos NextMovePoint;
+    Stack<LocalPos> MovePath = new Stack<LocalPos>();
+
+    byte RemainingMoves;
+
     Animator Animator;
 
     void OnEnable()
     {
-        EventManager.TurnMade += MakeTurn;
+        EventManager.PlayerMadeTurn += MakeTurn;
     }
 
     void OnDisable()
     {
-        EventManager.TurnMade -= MakeTurn;
+        EventManager.PlayerMadeTurn -= MakeTurn;
     }
 
     void Awake()
     {
         Map = GameObject.FindWithTag("World").GetComponent<World>().CurrentMap as LocalMap;
-
         Animator = GetComponent<Animator>();
     }
 
@@ -39,11 +43,28 @@ public class Creature : LivingBeing
             float tstep = MoveTime / Time.deltaTime;
             MoveTime -= Time.deltaTime;
 
-            float dstep = Vector2.Distance(transform.position, WorldVisualiser.GetTransformPosFromMapPos(Pos)) / tstep;
-            transform.position = Vector2.MoveTowards(transform.position, WorldVisualiser.GetTransformPosFromMapPos(Pos), dstep);
+            float dstep = Vector2.Distance(transform.position, WorldVisualiser.GetTransformPosFromMapPos(NextMovePoint)) / tstep;
+            transform.position = Vector2.MoveTowards(transform.position, WorldVisualiser.GetTransformPosFromMapPos(NextMovePoint), dstep);
+        }
+        else if (MovePath.Count != 0)
+        {
+            MoveTime = MoveAnimTime;
+            NextMovePoint = MovePath.Pop();
+
+            if (transform.position.x - WorldVisualiser.GetTransformPosFromMapPos(NextMovePoint).x > 0)
+                transform.rotation = new Quaternion(0, 180, 0, 0);
+            else
+                transform.rotation = Quaternion.identity;
         }
         else
+        {
             Animator.SetBool("Moving", false);
+
+            if (RemainingMoves == 0)
+                EventManager.OnCreatureEndTurn();
+            else
+                Think();
+        }
     }
 
     public void MoveTo(LocalPos pos)
@@ -75,31 +96,48 @@ public class Creature : LivingBeing
 
     void Move()
     {
-        LocalPos node = new LocalPos();
-        bool noPath = false;
         if (Path.Count == 0)
-            noPath = true;
-        else
-            node = Path.Pop();
-        if (noPath || Map.IsBlocked(node))
         {
             List<LocalPos> buf = Pathfinder.MakePath(Map.GetBlockMatrix(), Pos, TargetPos, true);
             buf.Reverse();
             Path = new Stack<LocalPos>(buf);
             Path.Pop();
-            node = Path.Pop();
         }
+        else
+        {
+            bool pathIsObsolete = false;
+            LocalPos[] arrBuf = Path.ToArray();
+            foreach (LocalPos pos in arrBuf)
+                if (Map.IsBlocked(pos))
+                {
+                    pathIsObsolete = true;
+                    break;
+                }
+            if (pathIsObsolete)
+            {
+                List<LocalPos> buf = Pathfinder.MakePath(Map.GetBlockMatrix(), Pos, TargetPos, true);
+                buf.Reverse();
+                Path = new Stack<LocalPos>(buf);
+                Path.Pop();
+            }
+        }
+
+        byte movesCount = (byte)Mathf.Min(Speed, Path.Count);
+        RemainingMoves = (byte)(Speed - movesCount);
+
+        List<LocalPos> lstBuf = new List<LocalPos>(movesCount);
+        for (byte i = 0; i < movesCount; ++i)
+        {
+            lstBuf.Add(Path.Pop());
+        }
+        lstBuf.Reverse();
+        MovePath = new Stack<LocalPos>(lstBuf);
+
         LocalPos pBuf = Pos;
-        Pos = node;
+        Pos = lstBuf[0];
         EventManager.OnCreatureMove(pBuf, Pos); //TODO name?
 
-        MoveTime = MoveAnimTime;
-
         Animator.SetBool("Moving", true);
-        if (transform.position.x - WorldVisualiser.GetTransformPosFromMapPos(Pos).x > 0)
-            transform.rotation = new Quaternion(0, 180, 0, 0);
-        else
-            transform.rotation = Quaternion.identity;
     }
 
     void PerformAttack(LivingBeing target, float damage, float accuracy)
@@ -118,9 +156,16 @@ public class Creature : LivingBeing
 
     void MakeTurn()
     {
+        EventManager.OnCreatureStartTurn();
+        Think();
+    }
+
+    void Think()
+    {
         switch (State)
         {
             case AI_State.STATE_IDLE:
+                EventManager.OnCreatureEndTurn();
                 break;
             case AI_State.STATE_MOVE:
                 if (TargetPos == Pos)
@@ -138,6 +183,8 @@ public class Creature : LivingBeing
                 {
                     Path.Clear();
                     PerformAttack(Target, BaseWeapon.NormalHitDamage, 0.75f);//TODO Временно normal, 0.85f
+                    RemainingMoves = 0;
+                    EventManager.OnCreatureEndTurn();
                 }
                 else
                 {

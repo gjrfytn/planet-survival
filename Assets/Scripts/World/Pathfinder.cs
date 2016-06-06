@@ -4,7 +4,8 @@ public static class Pathfinder
 {
     class DistCoordPair
     {
-        public ushort Dist;
+        //public ushort Dist; TODO Временно
+        public float Dist;
         public LocalPos Coord;
     }
 
@@ -21,7 +22,8 @@ public static class Pathfinder
             LocalPos cur = queue[0].Coord;
             blockMatrix[cur.Y, cur.X] = true;
             path.Add(cur);
-            ushort dist = queue[0].Dist;
+            //ushort dist = queue[0].Dist; TODO Временно
+            float dist = queue[0].Dist;
             if (dist == 0)
             {
                 return path;
@@ -35,14 +37,14 @@ public static class Pathfinder
                     GlobalPos node = HexNavigHelper.GetNeighborMapCoords(cur, (TurnedHexDirection)i);
                     if (node.Y >= 0 && node.Y < height && node.X >= 0 && node.X < width && !blockMatrix[node.Y, node.X])
                     {
-                        queue.Add(new DistCoordPair() { Dist = (ushort)(UnityEngine.Mathf.Abs(to.X - node.X) + UnityEngine.Mathf.Abs(to.Y - node.Y)), Coord = (LocalPos)node });
+                        queue.Add(new DistCoordPair() { Dist = UnityEngine.Vector2.Distance(WorldVisualiser.GetTransformPosFromMapPos((LocalPos)node), WorldVisualiser.GetTransformPosFromMapPos(to)), Coord = (LocalPos)node });//TODO Временно
                         blockMatrix[node.Y, node.X] = true;
                     }
                     else if (destIsBlocked && node == to)
                         return path;
                 }
 
-                queue.Sort((a, b) => a.Dist - b.Dist);
+                queue.Sort((a, b) => ((a.Dist - b.Dist > 0) ? 1 : ((a.Dist - b.Dist < 0) ? -1 : 0)));//TODO Временно
             }
         }
         while (queue.Count != 0);

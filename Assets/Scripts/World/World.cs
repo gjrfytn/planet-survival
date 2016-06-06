@@ -35,14 +35,14 @@ public class World : MonoBehaviour
 
     void OnEnable()
     {
-        EventManager.PlayerMoved += OnPlayerGotoHex;
-        EventManager.MapChanged += RerenderBlueHexes;
+        EventManager.PlayerMovedOnGlobal += OnPlayerGotoGlobalHex;
+        EventManager.TurnMade += RerenderBlueHexesOnLocal;
     }
 
     void OnDisable()
     {
-        EventManager.PlayerMoved -= OnPlayerGotoHex;
-        EventManager.MapChanged -= RerenderBlueHexes;
+        EventManager.PlayerMovedOnGlobal -= OnPlayerGotoGlobalHex;
+        EventManager.TurnMade -= RerenderBlueHexesOnLocal;
     }
 
     void Start()
@@ -79,7 +79,7 @@ public class World : MonoBehaviour
         Camera.main.transform.position = new Vector3(Player.transform.position.x, Player.transform.position.y + Camera.main.transform.position.z * (Mathf.Tan((360 - Camera.main.transform.rotation.eulerAngles.x) / 57.3f)), Camera.main.transform.position.z);
         Visualiser.RenderVisibleHexes(Player.GlobalPos, Player.ViewDistance, CashedChunks, ChunkY, ChunkX);
         for (byte i = 0; i < 6; ++i)
-            Visualiser.HighlightHex(HexNavigHelper.GetNeighborMapCoords(Player.GlobalPos, (HexDirection)i), Visualiser.BlueHexSprite);
+            Visualiser.HighlightHex(HexNavigHelper.GetNeighborMapCoords(Player.GlobalPos, (HexDirection)i));
     }
 
     /// <summary>
@@ -94,49 +94,44 @@ public class World : MonoBehaviour
     /// <summary>
     /// Необходимо вызывать, когда игрок переходит на другой хекс.
     /// </summary>
-    void OnPlayerGotoHex(GlobalPos pos)
+    void OnPlayerGotoGlobalHex(GlobalPos pos)
     {
-        if (!IsCurrentMapLocal())
+        int chunkX = Mathf.FloorToInt((float)pos.X / ChunkSize), chunkY = Mathf.FloorToInt((float)pos.Y / ChunkSize);
+
+        if (chunkX != ChunkX || chunkY != ChunkY)
         {
-            int chunkX = Mathf.FloorToInt((float)pos.X / ChunkSize), chunkY = Mathf.FloorToInt((float)pos.Y / ChunkSize);
+            Debug.Log("Cashing chunks.");
 
-            if (chunkX != ChunkX || chunkY != ChunkY)
-            {
-                Debug.Log("Cashing chunks.");
-
-                sbyte dx = (sbyte)(ChunkX - chunkX), dy = (sbyte)(ChunkY - chunkY);
-                if (dx != 0)
-                    for (sbyte y = -1; y < 2; ++y)
-                        SaveChunk(ChunkY + y, ChunkX + dx, CashedChunks[y + 1, dx + 1]);
-                if (dy != 0)
-                    for (sbyte x = -1; x < 2; ++x)
-                        SaveChunk(ChunkY + dy, ChunkX + x, CashedChunks[dy + 1, x + 1]);
-                SaveCurrentChunkLocalMaps();
-
-                Chunk[,] bufCashe = new Chunk[3, 3];
+            sbyte dx = (sbyte)(ChunkX - chunkX), dy = (sbyte)(ChunkY - chunkY);
+            if (dx != 0)
                 for (sbyte y = -1; y < 2; ++y)
-                    for (sbyte x = -1; x < 2; ++x)
-                        bufCashe[y + 1, x + 1] = GetChunk(chunkY + y, chunkX + x);
-                if (!TryLoadFiledChunkLocalMaps(chunkY, chunkX))
-                    for (ushort y = 0; y < ChunkSize; ++y)
-                        for (ushort x = 0; x < ChunkSize; ++x)
-                            LocalMaps[y, x] = null;
+                    SaveChunk(ChunkY + y, ChunkX + dx, CashedChunks[y + 1, dx + 1]);
+            if (dy != 0)
+                for (sbyte x = -1; x < 2; ++x)
+                    SaveChunk(ChunkY + dy, ChunkX + x, CashedChunks[dy + 1, x + 1]);
+            SaveCurrentChunkLocalMaps();
 
-                CashedChunks = bufCashe;
+            Chunk[,] bufCashe = new Chunk[3, 3];
+            for (sbyte y = -1; y < 2; ++y)
+                for (sbyte x = -1; x < 2; ++x)
+                    bufCashe[y + 1, x + 1] = GetChunk(chunkY + y, chunkX + x);
+            if (!TryLoadFiledChunkLocalMaps(chunkY, chunkX))
+                for (ushort y = 0; y < ChunkSize; ++y)
+                    for (ushort x = 0; x < ChunkSize; ++x)
+                        LocalMaps[y, x] = null;
 
-                ChunkY = chunkY;
-                ChunkX = chunkX;
+            CashedChunks = bufCashe;
 
-                CurrentMap = CashedChunks[1, 1];
-            }
+            ChunkY = chunkY;
+            ChunkX = chunkX;
 
-            Visualiser.RenderVisibleHexes(pos, Player.ViewDistance, CashedChunks, ChunkY, ChunkX);
-            Visualiser.DestroyAllObjects();//TODO Временно
-            for (byte i = 0; i < 6; ++i)
-                Visualiser.HighlightHex(HexNavigHelper.GetNeighborMapCoords(pos, (HexDirection)i), Visualiser.BlueHexSprite);
+            CurrentMap = CashedChunks[1, 1];
         }
-        else
-            RerenderBlueHexes();
+
+        Visualiser.RenderVisibleHexes(pos, Player.ViewDistance, CashedChunks, ChunkY, ChunkX);
+        Visualiser.DestroyAllBlues();//TODO Временно
+        for (byte i = 0; i < 6; ++i)
+            Visualiser.HighlightHex(HexNavigHelper.GetNeighborMapCoords(pos, (HexDirection)i));
     }
 
     /// <summary>
@@ -181,7 +176,7 @@ public class World : MonoBehaviour
         EventManager.OnEntitySpawn(Player);
 
         Visualiser.RenderWholeMap(CurrentMap as LocalMap);
-        RerenderBlueHexes();
+        RerenderBlueHexesOnLocal();
     }
 
     /// <summary>
@@ -195,9 +190,9 @@ public class World : MonoBehaviour
         Player.GlobalPos = GlobalMapPos;
         Visualiser.RenderVisibleHexes(Player.GlobalPos, Player.ViewDistance, CashedChunks, ChunkY, ChunkX);
 
-        Visualiser.DestroyAllObjects();
+        Visualiser.DestroyAllBlues();
         for (byte i = 0; i < 6; ++i)
-            Visualiser.HighlightHex(HexNavigHelper.GetNeighborMapCoords(Player.GlobalPos, (HexDirection)i), Visualiser.BlueHexSprite);
+            Visualiser.HighlightHex(HexNavigHelper.GetNeighborMapCoords(Player.GlobalPos, (HexDirection)i));
     }
 
     /// <summary>
@@ -487,11 +482,8 @@ public class World : MonoBehaviour
         return (CurrentMap as Chunk).TerrainMatrix[pos.Y - ChunkY * ChunkSize, pos.X - ChunkX * ChunkSize];
     }
 
-    void RerenderBlueHexes()
+    public void RerenderBlueHexesOnLocal()//C#6.0 EBD
     {
-        Visualiser.DestroyAllObjects();
-        for (byte i = 0; i < 6; ++i)
-            if (IsHexFree((LocalPos)HexNavigHelper.GetNeighborMapCoords(Player.Pos, (TurnedHexDirection)i)))
-                Visualiser.HighlightHex((LocalPos)HexNavigHelper.GetNeighborMapCoords(Player.Pos, (TurnedHexDirection)i), Visualiser.BlueHexSprite);
+        Visualiser.RenderBluesHexes(Player.Pos, Player.RemainingMoves, CurrentMap as LocalMap);
     }
 }

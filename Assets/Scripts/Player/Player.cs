@@ -135,6 +135,8 @@ public sealed class Player : LivingBeing
 
     float MoveTime;
     Stack<LocalPos> Path = new Stack<LocalPos>();//TODO В LivingBeing?
+    public byte RemainingMoves { get; private set; }
+    LocalPos NextMovePoint;
 
     void OnEnable()
     {
@@ -160,6 +162,8 @@ public sealed class Player : LivingBeing
         Food = MaxFood;
         Stamina = MaxStamina;
         Mental = MaxMental;
+
+        RemainingMoves = Speed;
     }
 
     void Update()
@@ -171,8 +175,8 @@ public sealed class Player : LivingBeing
             //TODO Возможно стоит сохранять значение из GetTransformPosFromMapPos(MapCoords,World.IsCurrentMapLocal())), так как это улучшит(?) производительность
             if (GameObject.FindWithTag("World").GetComponent<World>().IsCurrentMapLocal())
             {
-                float dstep = Vector2.Distance(transform.position, WorldVisualiser.GetTransformPosFromMapPos(Pos)) / tstep;
-                transform.position = Vector2.MoveTowards(transform.position, WorldVisualiser.GetTransformPosFromMapPos(Pos), dstep);
+                float dstep = Vector2.Distance(transform.position, WorldVisualiser.GetTransformPosFromMapPos(NextMovePoint)) / tstep;
+                transform.position = Vector2.MoveTowards(transform.position, WorldVisualiser.GetTransformPosFromMapPos(NextMovePoint), dstep);
             }
             else
             {
@@ -184,34 +188,34 @@ public sealed class Player : LivingBeing
         }
         else if (Path.Count != 0)
         {
-            LocalPos buf = Pos;
-            Pos = Path.Pop();
-            EventManager.OnCreatureMove(buf, Pos); //TODO name?
+            //LocalPos buf = Pos;
+            NextMovePoint = Path.Pop();
+            //EventManager.OnCreatureMove(buf, Pos); //TODO name?
 
             MoveTime = MoveAnimTime;
         }
     }
 
-    public void MoveTo(LocalPos pos, bool inBattle)
+    public void MoveTo(LocalPos pos/*, bool inBattle*/)//TODO
     {
+        List<LocalPos> buf = Pathfinder.MakePath((GameObject.FindWithTag("World").GetComponent<World>().CurrentMap as LocalMap).GetBlockMatrix(), Pos, pos, false);//TODO Тут?
+        buf.Reverse();
+        Path = new Stack<LocalPos>(buf);
+        Path.Pop();
+
         LocalPos pBuf = Pos;
-        if (inBattle)
+        Pos = pos;
+
+        EventManager.OnCreatureMove(pBuf, pos);
+        RemainingMoves -= (byte)Path.Count;
+        if (RemainingMoves == 0)
         {
-            MoveTime = MoveAnimTime;
-            GlobalPos = Pos = pos;
+            RemainingMoves = Speed;
+            EventManager.OnPlayerTurn();
+            //EventManager.OnCreatureStartTurn();
         }
         else
-        {
-            List<LocalPos> buf = Pathfinder.MakePath((GameObject.FindWithTag("World").GetComponent<World>().CurrentMap as LocalMap).GetBlockMatrix(), Pos, pos, false);//TODO Тут?
-            buf.Reverse();
-            Path = new Stack<LocalPos>(buf);
-            Path.Pop();
-        }
-
-        //TODO Тут всё очень плохо, надо пересматривать:
-        EventManager.OnCreatureMove(pBuf, pos);
-        EventManager.OnTurn();
-        EventManager.OnPlayerMove(pos);
+            GameObject.FindWithTag("World").GetComponent<World>().RerenderBlueHexesOnLocal();
     }
 
     public void MoveTo(GlobalPos pos, float moveAnimTime)

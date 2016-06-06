@@ -26,12 +26,30 @@ public static class EventManager
         UIHided();
     }
 
-    public static event GlobalPosDelegate PlayerMoved = delegate { };
+    public static event GlobalPosDelegate PlayerMovedOnGlobal = delegate { };
+    public static event VoidDelegate PlayerMadeTurn = delegate { };
+    public static event VoidDelegate CreatureStartedTurn = delegate { };
+    public static event VoidDelegate CreatureEndedTurn = delegate { };
     public static event VoidDelegate TurnMade = delegate { };
 
-    public static void OnPlayerMove(GlobalPos pos)//C#6.0 EBD
+    public static void OnPlayerMoveOnGlobal(GlobalPos pos)//C#6.0 EBD
     {
-        PlayerMoved(pos);
+        PlayerMovedOnGlobal(pos);
+    }
+
+    public static void OnPlayerTurn()//C#6.0 EBD
+    {
+        PlayerMadeTurn();
+    }
+
+    public static void OnCreatureStartTurn()//C#6.0 EBD
+    {
+        CreatureStartedTurn();
+    }
+
+    public static void OnCreatureEndTurn()//C#6.0 EBD
+    {
+        CreatureEndedTurn();
     }
 
     public static void OnTurn()//C#6.0 EBD
@@ -142,12 +160,5 @@ public static class EventManager
     public static void OnPopupButtonExpel()
     {
         PopupButtonsExpelled();
-    }
-
-    public static event VoidDelegate MapChanged = delegate { };
-
-    public static void OnMapChange()
-    {
-        MapChanged();
     }
 }
