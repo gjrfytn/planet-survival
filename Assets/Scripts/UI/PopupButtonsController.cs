@@ -4,16 +4,22 @@ using UnityEngine.UI;
 
 public class PopupButtonsController : MonoBehaviour
 {
-    public GameObject Button;
+    [SerializeField]
+    GameObject Button;
 
-    const float Radius = 1.5f;
-    const float Angle = 15 * Mathf.Deg2Rad;
-    const float FadeInTime = 0.7f;
-    const float FlyTime = 0.5f;
+    [SerializeField]
+    float Radius;
+    [SerializeField]
+    float Angle;
+    [SerializeField]
+    float FadeInTime;
+    [SerializeField]
+    float FlyTime;
 
+    [SerializeField]
     Transform CameraCanvas;
-    List<PopupButton> Buttons = new List<PopupButton>();
 
+    List<PopupButton> Buttons = new List<PopupButton>();
     bool ButtonsShowed;
 
     void OnEnable()
@@ -32,7 +38,7 @@ public class PopupButtonsController : MonoBehaviour
 
     void Start()
     {
-        CameraCanvas = GameObject.Find("CameraCanvas").transform;
+        Angle *= Mathf.Deg2Rad;
     }
 
     void ShowButtons(Vector2 origin, Action[] actions)

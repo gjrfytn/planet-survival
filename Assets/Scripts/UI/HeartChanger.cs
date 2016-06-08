@@ -3,10 +3,14 @@ using UnityEngine.UI;
 
 public class HeartChanger : MonoBehaviour
 {
-    public Sprite FullHP;
-    public Sprite ThreeQuatersHP;
-    public Sprite HalfHP;
-    public Sprite QuaterHP;
+    [SerializeField]
+    Sprite FullHP;
+    [SerializeField]
+    Sprite ThreeQuatersHP;
+    [SerializeField]
+    Sprite HalfHP;
+    [SerializeField]
+    Sprite QuaterHP;
 
     void OnEnable()
     {

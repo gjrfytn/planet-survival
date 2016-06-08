@@ -6,25 +6,43 @@ public static class WorldGenerator
     [System.Serializable]
     public class RiversParameters
     {
-        public float Height; //Коэффициент высоты реки относительно средней высоты
-        public byte Count;
-        public ushort MinimumLength;
-        public byte Attempts; //Количество попыток построения реки из одного хекса
-        public float FlowHeightKoef; //Насколько реалистично река распространяется относительно высоты (1 - самое реалистичное)
+        [SerializeField]
+        float Height_;
+        public float Height { get { return Height_; } private set { Height_ = value; } }//Коэффициент высоты реки относительно средней высоты
+        [SerializeField]
+        byte Count_;
+        public byte Count { get { return Count_; } private set { Count_ = value; } }
+        [SerializeField]
+        ushort MinimumLength_;
+        public ushort MinimumLength { get { return MinimumLength_; } private set { MinimumLength_ = value; } }
+        [SerializeField]
+        byte Attempts_;
+        public byte Attempts { get { return Attempts_; } private set { Attempts_ = value; } } //Количество попыток построения реки из одного хекса
+        [SerializeField]
+        float FlowHeightKoef_;
+        public float FlowHeightKoef { get { return FlowHeightKoef_; } private set { FlowHeightKoef_ = value; } } //Насколько реалистично река распространяется относительно высоты (1 - самое реалистичное)
     }
 
     [System.Serializable]
     public class ClustersParameters
     {
-        public byte Count;
-        public byte Size;
+        [SerializeField]
+        byte Count_;
+        public byte Count { get { return Count_; } private set { Count_ = value; } }
+        [SerializeField]
+        byte Size_;
+        public byte Size { get { return Size_; } private set { Size_ = value; } }
     }
 
     [System.Serializable]
     public class RoadsParameters
     {
-        public float RoadMergeMultiplier;
-        public float GoingAlongRiverMultiplier;
+        [SerializeField]
+        float RoadMergeMultiplier_;
+        public float RoadMergeMultiplier { get { return RoadMergeMultiplier_; } private set { RoadMergeMultiplier_ = value; } }
+        [SerializeField]
+        float GoingAlongRiverMultiplier_;
+        public float GoingAlongRiverMultiplier { get { return GoingAlongRiverMultiplier_; } private set { GoingAlongRiverMultiplier_ = value; } }
     }
 
     public class HeighmapNeighboring

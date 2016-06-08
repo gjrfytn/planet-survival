@@ -2,17 +2,22 @@
 
 public abstract class LivingBeing : Entity
 {
-    public float MoveAnimTime;//TODO Вынести?
-    [Range(0, 255)]
-    public byte MaxHealth;
-    public TempWeapon BaseWeapon;
-    [Range(0, 1)]
-    public float BaseArmor;
-    [Range(0, 255)]
-    public byte Speed;
-    public ushort Experience;
+    [SerializeField]
+    protected float MoveAnimTime;//TODO Вынести?
+    [SerializeField, Range(0, 255)]
+    byte MaxHealth_;
+    public byte MaxHealth { get { return MaxHealth_; } private set { MaxHealth_ = value; } }
+    [SerializeField]
+    protected TempWeapon BaseWeapon;
+    [SerializeField, Range(0, 1)]
+    float BaseArmor;
+    [SerializeField, Range(0, 255)]
+    protected byte Speed;
+    [SerializeField]
+    ushort Experience;
 
-    public Container Corpse;
+    [SerializeField]
+    Container Corpse;
 
     protected byte Health_;
     public virtual byte Health

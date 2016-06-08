@@ -3,22 +3,32 @@ using System.IO;
 
 public class World : MonoBehaviour
 {
-    public float LandscapeRoughness;
-    public float ForestRoughness;
-
-    public WorldGenerator.RiversParameters RiverParam;
-    public WorldGenerator.ClustersParameters ClusterParam;
-    public WorldGenerator.RoadsParameters RoadParam;
-
-    public ushort ChunkSize;
-    public LocalPos LocalMapSize;
-
-    public byte ForestDensity;
-    public byte TreeCountForForestTerrain;
-
-    public LivingBeing[] Enemies;
-
     public Map CurrentMap { get; private set; } //TODO Возможно, можно будет убрать. Карта, на которой находится игрок.
+
+    [SerializeField]
+    float LandscapeRoughness;
+    [SerializeField]
+    float ForestRoughness;
+
+    [SerializeField]
+    WorldGenerator.RiversParameters RiverParam;
+    [SerializeField]
+    WorldGenerator.ClustersParameters ClusterParam;
+    [SerializeField]
+    WorldGenerator.RoadsParameters RoadParam;
+
+    [SerializeField]
+    ushort ChunkSize;
+    [SerializeField]
+    LocalPos LocalMapSize;
+
+    [SerializeField]
+    byte ForestDensity;
+    [SerializeField]
+    byte TreeCountForForestTerrain;
+
+    [SerializeField]
+    LivingBeing[] Enemies;
 
     Chunk[,] CashedChunks = new Chunk[3, 3];
     LocalMap[,] LocalMaps;
@@ -31,7 +41,8 @@ public class World : MonoBehaviour
     const string ChunksDirectoryName = "chunks";
     string ChunksDirectoryPath;
 
-    public UnityEngine.UI.Button SkipTurnBtn;
+    [SerializeField]
+    UnityEngine.UI.Button SkipTurnBtn;
 
     void OnEnable()
     {
@@ -205,8 +216,8 @@ public class World : MonoBehaviour
 
         if (river)
         {
-            LocalPos[] riverPath = new LocalPos[] { new LocalPos(0, (ushort)(LocalMapSize.Y >> 1)), new LocalPos((ushort)(LocalMapSize.X - 1), (ushort)(LocalMapSize.Y >> 1)) }; //UNDONE			
-            WorldGenerator.MakeEqualHeightLine(map.HeightMatrix, riverPath, Visualiser.LocalMapParam.Terrains[0].StartingHeight - 0.0001f);
+            // LocalPos[] riverPath = new LocalPos[] { new LocalPos(0, (ushort)(LocalMapSize.Y >> 1)), new LocalPos((ushort)(LocalMapSize.X - 1), (ushort)(LocalMapSize.Y >> 1)) }; //UNDONE			
+            //WorldGenerator.MakeEqualHeightLine(map.HeightMatrix, riverPath, Visualiser.LocalMapParam.Terrains[0].StartingHeight - 0.0001f); TODO
         }
         float?[,] buf = new float?[LocalMapSize.Y, LocalMapSize.X];
         for (ushort y = 0; y < LocalMapSize.Y; ++y)

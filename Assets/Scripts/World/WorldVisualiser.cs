@@ -7,48 +7,103 @@ public class WorldVisualiser : MonoBehaviour
     [System.Serializable]
     public class Terrain
     {
-        public float StartingHeight;
-        public Sprite[] Sprites;
+        [SerializeField]
+        float StartingHeight_;
+        public float StartingHeight { get { return StartingHeight_; } set { StartingHeight_ = value; } }
+        [SerializeField]
+        Sprite[] Sprites_;
+        public Sprite[] Sprites { get { return Sprites_; } set { Sprites_ = value; } }
     }
 
-    public GameObject Hex;
-    public GameObject InteractableHex;
     [System.Serializable]
     public class GlobalMapSettings
     {
-        public Sprite[] BottommostTerrainSprites;
-        public Terrain[] Terrains;
-        public Sprite[] RiverStartSprites;
-        public Sprite[] RiverStraightSprites;
-        public Sprite[] RiverTurnSprites;
-        public Sprite[] RiverEndSprites;
-        public Sprite[] TreeSprites;
-        public Sprite[] RuinSprites;
-        public Sprite[] RoadStraightSprites;
-        public Sprite[] RoadTurnSprites;
-        public Sprite[] RoadStraightBridgeSprites;
-        public Sprite[] RoadTurnBridgeSprites;
+        [SerializeField]
+        Sprite[] BottommostTerrainSprites_;
+        public Sprite[] BottommostTerrainSprites { get { return BottommostTerrainSprites_; } private set { BottommostTerrainSprites_ = value; } }
+        [SerializeField]
+        Terrain[] Terrains_;
+        public Terrain[] Terrains { get { return Terrains_; } private set { Terrains_ = value; } }
+        [SerializeField]
+        Sprite[] RiverStartSprites_;
+        public Sprite[] RiverStartSprites { get { return RiverStartSprites_; } private set { RiverStartSprites_ = value; } }
+        [SerializeField]
+        Sprite[] RiverStraightSprites_;
+        public Sprite[] RiverStraightSprites { get { return RiverStraightSprites_; } private set { RiverStraightSprites_ = value; } }
+        [SerializeField]
+        Sprite[] RiverTurnSprites_;
+        public Sprite[] RiverTurnSprites { get { return RiverTurnSprites_; } private set { RiverTurnSprites_ = value; } }
+        [SerializeField]
+        Sprite[] RiverEndSprites_;
+        public Sprite[] RiverEndSprites { get { return RiverEndSprites_; } private set { RiverEndSprites_ = value; } }
+        [SerializeField]
+        Sprite[] TreeSprites_;
+        public Sprite[] TreeSprites { get { return TreeSprites_; } private set { TreeSprites_ = value; } }
+        [SerializeField]
+        Sprite[] RuinSprites_;
+        public Sprite[] RuinSprites { get { return RuinSprites_; } private set { RuinSprites_ = value; } }
+        [SerializeField]
+        Sprite[] RoadStraightSprites_;
+        public Sprite[] RoadStraightSprites { get { return RoadStraightSprites_; } private set { RoadStraightSprites_ = value; } }
+        [SerializeField]
+        Sprite[] RoadTurnSprites_;
+        public Sprite[] RoadTurnSprites { get { return RoadTurnSprites_; } private set { RoadTurnSprites_ = value; } }
+        [SerializeField]
+        Sprite[] RoadStraightBridgeSprites_;
+        public Sprite[] RoadStraightBridgeSprites { get { return RoadStraightBridgeSprites_; } private set { RoadStraightBridgeSprites_ = value; } }
+        [SerializeField]
+        Sprite[] RoadTurnBridgeSprites_;
+        public Sprite[] RoadTurnBridgeSprites { get { return RoadTurnBridgeSprites_; } private set { RoadTurnBridgeSprites_ = value; } }
     }
-    public GlobalMapSettings GlobalMapParam;
+
     [System.Serializable]
     public class LocalMapSettings
     {
-        public Sprite[] WaterSprites;
-        public Terrain[] Terrains;
-        public Sprite[] BankSprites;
-        public Sprite[] DiagBankSprites;
-        public Sprite[] TreeSprites;
-        public Sprite[] BushSprites;
-        public float PlantProbability;
-        public float BushesForestValue;
+        [SerializeField]
+        Sprite[] WaterSprites_;
+        public Sprite[] WaterSprites { get { return WaterSprites_; } private set { WaterSprites_ = value; } }
+        [SerializeField]
+        Terrain[] Terrains_;
+        public Terrain[] Terrains { get { return Terrains_; } private set { Terrains_ = value; } }
+        [SerializeField]
+        Sprite[] BankSprites_;
+        public Sprite[] BankSprites { get { return BankSprites_; } private set { BankSprites_ = value; } }
+        [SerializeField]
+        Sprite[] DiagBankSprites_;
+        public Sprite[] DiagBankSprites { get { return DiagBankSprites_; } private set { DiagBankSprites_ = value; } }
+        [SerializeField]
+        Sprite[] TreeSprites_;
+        public Sprite[] TreeSprites { get { return TreeSprites_; } private set { TreeSprites_ = value; } }
+        [SerializeField]
+        Sprite[] BushSprites_;
+        public Sprite[] BushSprites { get { return BushSprites_; } private set { BushSprites_ = value; } }
+        [SerializeField]
+        float PlantProbability_;
+        public float PlantProbability { get { return PlantProbability_; } private set { PlantProbability_ = value; } }
+        [SerializeField]
+        float BushesForestValue_;
+        public float BushesForestValue { get { return BushesForestValue_; } private set { BushesForestValue_ = value; } }
     }
-    public LocalMapSettings LocalMapParam;
-    public Material DiffuseMaterial;
-    public byte ForestGenGridSize;
-    public float FadeInTime;
-    public float FadeTime;
-    public static Vector2 GlobalHexSpriteSize; //TODO static? Перенести в классы?
-    public static Vector2 LocalHexSpriteSize;
+
+    public static Vector2 GlobalHexSpriteSize { get; private set; } //TODO static? Перенести в классы?
+    public static Vector2 LocalHexSpriteSize { get; private set; }
+
+    [SerializeField]
+    GameObject Hex;
+    [SerializeField]
+    GameObject InteractableHex;
+    [SerializeField]
+    GlobalMapSettings GlobalMapParam;
+    [SerializeField]
+    LocalMapSettings LocalMapParam;
+    [SerializeField]
+    Material DiffuseMaterial;
+    [SerializeField]
+    byte ForestGenGridSize;
+    [SerializeField]
+    float FadeInTime;
+    [SerializeField]
+    float FadeTime;
 
     List<Sprite> AllGlobalHexSprites = new List<Sprite>();
     List<Sprite> AllRiverSprites = new List<Sprite>();
@@ -119,10 +174,8 @@ public class WorldVisualiser : MonoBehaviour
             Debug.Assert(AllLocalHexSprites[i - 1].bounds.size == AllLocalHexSprites[i].bounds.size);
         //--
 
-        GlobalHexSpriteSize.x = GlobalMapParam.BottommostTerrainSprites[0].bounds.size.x;
-        GlobalHexSpriteSize.y = GlobalMapParam.BottommostTerrainSprites[0].bounds.size.y;
-        LocalHexSpriteSize.x = LocalMapParam.WaterSprites[0].bounds.size.x;
-        LocalHexSpriteSize.y = LocalMapParam.WaterSprites[0].bounds.size.y;
+        GlobalHexSpriteSize = new Vector2(GlobalMapParam.BottommostTerrainSprites[0].bounds.size.x, GlobalMapParam.BottommostTerrainSprites[0].bounds.size.y);
+        LocalHexSpriteSize = new Vector2(LocalMapParam.WaterSprites[0].bounds.size.x, LocalMapParam.WaterSprites[0].bounds.size.y);
     }
 
     /// <summary>
@@ -245,7 +298,7 @@ public class WorldVisualiser : MonoBehaviour
         bool forestBlocked = false;
         if (map.RiverMatrix[pos.Y, pos.X])
         {
-            GameObject riverSprite = new GameObject();
+            GameObject riverSprite = new GameObject("riverSprite");
             hex.LandscapeObj.Add(riverSprite);
             riverSprite.transform.position = hex.Hex.transform.position;
             riverSprite.AddComponent<SpriteRenderer>().sortingLayerName = "LandscapeObjects";
@@ -262,7 +315,7 @@ public class WorldVisualiser : MonoBehaviour
         }
         if (map.ClusterMatrix[pos.Y, pos.X])
         {
-            GameObject clusterSprite = new GameObject();
+            GameObject clusterSprite = new GameObject("clusterSprite");
             hex.LandscapeObj.Add(clusterSprite);
             clusterSprite.transform.position = hex.Hex.transform.position;
             clusterSprite.AddComponent<SpriteRenderer>().sortingLayerName = "Infrastructure";
@@ -275,7 +328,7 @@ public class WorldVisualiser : MonoBehaviour
         }
         if (map.RoadMatrix[pos.Y, pos.X])
         {
-            GameObject roadSprite = new GameObject();
+            GameObject roadSprite = new GameObject("roadSprite");
             hex.LandscapeObj.Add(roadSprite);
             roadSprite.transform.position = hex.Hex.transform.position;
             roadSprite.AddComponent<SpriteRenderer>().sortingLayerName = "Infrastructure";
@@ -310,7 +363,7 @@ public class WorldVisualiser : MonoBehaviour
             for (byte i = 0; i < 6; ++i) //TODO К оптимизации.
                 if (map.Contains(HexNavigHelper.GetNeighborMapCoords(pos, (TurnedHexDirection)i)) && map.HeightMatrix[HexNavigHelper.GetNeighborMapCoords(pos, (TurnedHexDirection)i).Y, HexNavigHelper.GetNeighborMapCoords(pos, (TurnedHexDirection)i).X] > LocalMapParam.Terrains[0].StartingHeight)
                 {
-                    GameObject bank = new GameObject();
+                    GameObject bank = new GameObject("bankSprite");
                     hex.LandscapeObj.Add(bank);
                     bank.transform.position = hex.Hex.transform.position;
                     bank.AddComponent<SpriteRenderer>().sortingLayerName = "LandscapeObjects";
@@ -344,7 +397,7 @@ public class WorldVisualiser : MonoBehaviour
         else
             if (map.ForestMatrix[pos.Y, pos.X] > 0 && Random.value < LocalMapParam.PlantProbability * map.ForestMatrix[pos.Y, pos.X])
             {
-                GameObject plant = new GameObject();
+                GameObject plant = new GameObject("plantSprite");
                 hex.LandscapeObj.Add(plant);
                 plant.AddComponent<SpriteRenderer>().sortingLayerName = "LandscapeObjects";
                 plant.GetComponent<SpriteRenderer>().material = DiffuseMaterial;
@@ -535,7 +588,7 @@ public class WorldVisualiser : MonoBehaviour
                         for (float x = 0; x < spriteSize.x; x += gridStepX)
                         {
                             Vector2 v = new Vector2(Random.value * gridStepX, Random.value * gridStepY); //TODO new?
-                            GameObject tree = new GameObject();
+                            GameObject tree = new GameObject("treeSprite");
                             hex.Trees.Add(tree);
                             tree.transform.position = new Vector2(gridOrigin.x + x + v.x, gridOrigin.y + y + v.y);
                             tree.AddComponent<SpriteRenderer>().sortingLayerName = "LandscapeObjects";//
@@ -550,7 +603,7 @@ public class WorldVisualiser : MonoBehaviour
                     Vector2 v = Random.insideUnitCircle;
                     v.x *= spriteSize.x * 0.5f;
                     v.y *= spriteSize.y * 0.5f;
-                    GameObject tree = new GameObject();
+                    GameObject tree = new GameObject("treeSprite");
                     hex.Trees.Add(tree);
                     tree.transform.position = new Vector2(hex.Hex.transform.position.x + v.x, hex.Hex.transform.position.y + v.y);
                     tree.AddComponent<SpriteRenderer>().sortingLayerName = "LandscapeObjects";//

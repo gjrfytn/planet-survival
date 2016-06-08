@@ -3,7 +3,8 @@ using System.Collections.Generic;
 
 public class Creature : LivingBeing
 {
-    public enum AI_State : byte { STATE_IDLE, STATE_MOVE, STATE_ATTACK };
+    enum AI_State : byte { STATE_IDLE, STATE_MOVE, STATE_ATTACK };
+
     public bool AttackingPlayer { get; private set; }
 
     LocalMap Map;

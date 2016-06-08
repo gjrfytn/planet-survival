@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
-using System.Linq;
+//using System.Linq;
 
 public sealed class Player : LivingBeing
 {
@@ -20,16 +20,21 @@ public sealed class Player : LivingBeing
     }
 
     [Header("Основные характеристики")]
-    [Range(0, 255)]
-    public byte MaxWater = 100;
-    [Range(0, 255)]
-    public byte MaxFood = 100;
-    [Range(0, 255)]
-    public byte MaxStamina = 100;
-    [Range(0, 255)]
-    public byte MaxMental = 100;
-    [Range(0, 255)]
-    public byte MentalRegen = 100;
+    [SerializeField, Range(0, 255)]
+    byte MaxWater_;
+    public byte MaxWater { get { return MaxWater_; } private set { MaxWater_ = value; } }
+    [SerializeField, Range(0, 255)]
+    byte MaxFood_;
+    public byte MaxFood { get { return MaxFood_; } private set { MaxFood_ = value; } }
+    [SerializeField, Range(0, 255)]
+    byte MaxStamina_;
+    public byte MaxStamina { get { return MaxStamina_; } private set { MaxStamina_ = value; } }
+    [SerializeField, Range(0, 255)]
+    byte MaxMental_;
+    public byte MaxMental { get { return MaxMental_; } private set { MaxMental_ = value; } }
+    [SerializeField, Range(0, 255)]
+    byte MentalRegen_;
+    public byte MentalRegen { get { return MentalRegen_; } private set { MentalRegen_ = value; } }
 
     //TODO Ждём C# 6.0 инициализаторы свойств:
     public override byte Health
@@ -105,31 +110,55 @@ public sealed class Player : LivingBeing
         }
     }
 
-    public float WaterConsumption;
-    public float FoodConsumption;
-    public float StaminaConsumption;
+    [SerializeField]
+    float WaterConsumption;
+    [SerializeField]
+    float FoodConsumption;
+    [SerializeField]
+    float StaminaConsumption;
 
     [System.Serializable]
-    public class MentalPenalty
+    class MentalPenalty
     {
-        public float TopPercent;
-        public float Water;
-        public float Food;
-        public float Stamina;
+        [SerializeField]
+        float TopPercent_;
+        public float TopPercent { get { return TopPercent_; } private set { TopPercent_ = value; } }
+        [SerializeField]
+        float Water_;
+        public float Water { get { return Water_; } private set { Water_ = value; } }
+        [SerializeField]
+        float Food_;
+        public float Food { get { return Food_; } private set { Food_ = value; } }
+        [SerializeField]
+        float Stamina_;
+        public float Stamina { get { return Stamina_; } private set { Stamina_ = value; } }
+
+        public MentalPenalty(float water, float food, float stamina)
+        {
+            Water_ = water;
+            Food_ = food;
+            Stamina_ = stamina;
+        }
     }
 
-    public MentalPenalty LowMentalPenalty;
-    public MentalPenalty MediumMentalPenalty;
-    public MentalPenalty HighMentalPenalty;
-    public MentalPenalty InsaneMentalPenalty;
+    [SerializeField]
+    MentalPenalty LowMentalPenalty;
+    [SerializeField]
+    MentalPenalty MediumMentalPenalty;
+    [SerializeField]
+    MentalPenalty HighMentalPenalty;
+    [SerializeField]
+    MentalPenalty InsaneMentalPenalty;
 
     TimedAction CurrentAction;
-
-    public bool CanDualWield;
+    [SerializeField]
+    bool CanDualWield_;
+    public bool CanDualWield { get { return CanDualWield_; } private set { CanDualWield_ = value; } }
 
     [Header("Дальность обзора")]
-    [Range(0, 255)]
-    public byte ViewDistance;
+    [SerializeField, Range(0, 255)]
+    byte ViewDistance_;
+    public byte ViewDistance { get { return ViewDistance_; } private set { ViewDistance_ = value; } }
 
     byte Level;
 
@@ -240,12 +269,12 @@ public sealed class Player : LivingBeing
 
     void UpdateState()
     {
-        List<Terrains.TerrainProperties> terrains = GameObject.FindWithTag("World").GetComponent<Terrains>().GetTerrainProperties(GameObject.FindWithTag("World").GetComponent<World>().GetHexTerrain(Pos));
+        TimedAction terrainCons = GameObject.FindWithTag("World").GetComponent<Terrains>().GetTerrainProperties(GameObject.FindWithTag("World").GetComponent<World>().GetHexTerrain(Pos));
         float mentalPercent = Mental / MaxMental;
-        MentalPenalty curPenalty = mentalPercent < InsaneMentalPenalty.TopPercent ? InsaneMentalPenalty : (mentalPercent < HighMentalPenalty.TopPercent ? HighMentalPenalty : (mentalPercent < MediumMentalPenalty.TopPercent ? MediumMentalPenalty : (mentalPercent < LowMentalPenalty.TopPercent ? LowMentalPenalty : new MentalPenalty() { Water = 0, Food = 0, Stamina = 0 })));
-        Water = Water - WaterConsumption - terrains.Sum(t => t.Travel.WaterConsumption) - curPenalty.Water - (CurrentAction != null ? CurrentAction.WaterConsumption : 0);//C#6.0
-        Food = Food - FoodConsumption - terrains.Sum(t => t.Travel.FoodConsumption) - curPenalty.Food - (CurrentAction != null ? CurrentAction.FoodConsumption : 0);//C#6.0
-        Stamina = Stamina - StaminaConsumption - terrains.Sum(t => t.Travel.StaminaConsumption) - curPenalty.Stamina - (CurrentAction != null ? CurrentAction.StaminaConsumption : 0);//C#6.0
+        MentalPenalty curPenalty = mentalPercent < InsaneMentalPenalty.TopPercent ? InsaneMentalPenalty : (mentalPercent < HighMentalPenalty.TopPercent ? HighMentalPenalty : (mentalPercent < MediumMentalPenalty.TopPercent ? MediumMentalPenalty : (mentalPercent < LowMentalPenalty.TopPercent ? LowMentalPenalty : new MentalPenalty(0, 0, 0))));
+        Water = Water - WaterConsumption - terrainCons.WaterConsumption - curPenalty.Water - (CurrentAction != null ? CurrentAction.WaterConsumption : 0);//C#6.0
+        Food = Food - FoodConsumption - terrainCons.FoodConsumption - curPenalty.Food - (CurrentAction != null ? CurrentAction.FoodConsumption : 0);//C#6.0
+        Stamina = Stamina - StaminaConsumption - terrainCons.StaminaConsumption - curPenalty.Stamina - (CurrentAction != null ? CurrentAction.StaminaConsumption : 0);//C#6.0
     }
 
     void EndAction()

@@ -4,13 +4,18 @@ using System.Collections.Generic;
 public class Terrains : MonoBehaviour
 {
     [System.Serializable]
-    public class TerrainProperties
+    class TerrainProperties
     {
-        public TerrainType Terrain;
-        public TimedAction Travel;
+        [SerializeField]
+        TerrainType Terrain_;
+        public TerrainType Terrain { get { return Terrain_; } private set { Terrain_ = value; } }
+        [SerializeField]
+        TimedAction Travel_;
+        public TimedAction Travel { get { return Travel_; } private set { Travel_ = value; } }
     }
 
-    public TerrainProperties[] TerrainsArray;
+    [SerializeField]
+    TerrainProperties[] TerrainsArray;
 
     void Awake()
     {
@@ -24,12 +29,17 @@ public class Terrains : MonoBehaviour
         }
     }
 
-    public List<TerrainProperties> GetTerrainProperties(TerrainType type)
+    public TimedAction GetTerrainProperties(TerrainType type)
     {
-        List<TerrainProperties> terrProp = new List<TerrainProperties>();
+        TimedAction prop = new TimedAction();
         foreach (TerrainProperties p in TerrainsArray)
             if ((p.Terrain & type) != TerrainType.NONE)
-                terrProp.Add(p);
-        return terrProp;
+            {
+                prop.Duration += p.Travel.Duration;
+                prop.WaterConsumption += p.Travel.WaterConsumption;
+                prop.FoodConsumption += p.Travel.FoodConsumption;
+                prop.StaminaConsumption += p.Travel.StaminaConsumption;
+            }
+        return prop;
     }
 }

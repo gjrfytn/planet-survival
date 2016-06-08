@@ -5,9 +5,12 @@ using UnityEngine.UI;
 
 public class GameEventManager : MonoBehaviour
 {
-    public GameObject EventPanel;
-    public GameObject ReactionButtonPanel;
-    public GameObject Btn;
+    [SerializeField]
+    GameObject EventPanel;
+    [SerializeField]
+    GameObject ReactionButtonPanel;
+    [SerializeField]
+    GameObject Btn;
     const string EventsFilename = "events.edb";
     List<GameEvent> Events = new List<GameEvent>();
     List<GameObject> ReactionButtons = new List<GameObject>();

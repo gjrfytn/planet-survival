@@ -16,15 +16,7 @@ public class HexInteraction : MonoBehaviour
             //TerrainType terrType = (World.CurrentMap as Chunk).GetTerrainType( GetComponent<HexData>().MapCoords);
             EventManager.OnPlayerMoveOnGlobal(GetComponent<HexData>().Pos); //Временно см. Player 114
             TerrainType terrType = World.GetHexTerrain(GetComponent<HexData>().Pos);
-            TimedAction travel = new TimedAction();
-            foreach (Terrains.TerrainProperties p in GameObject.FindWithTag("World").GetComponent<Terrains>().TerrainsArray)
-                if ((terrType & p.Terrain) != 0)
-                {
-                    travel.Duration += p.Travel.Duration;
-                    travel.WaterConsumption += p.Travel.WaterConsumption;
-                    travel.FoodConsumption += p.Travel.FoodConsumption;
-                    travel.StaminaConsumption += p.Travel.StaminaConsumption;
-                }
+            TimedAction travel = GameObject.FindWithTag("World").GetComponent<Terrains>().GetTerrainProperties(terrType);
             GameObject.FindWithTag("Player").GetComponent<Player>().MoveTo(GetComponent<HexData>().Pos, travel.Duration * GameTime.GameMinToRealSec);
             EventManager.OnActionStart(travel);
         }

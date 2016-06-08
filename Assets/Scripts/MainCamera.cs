@@ -2,6 +2,9 @@
 
 public class MainCamera : MonoBehaviour
 {
+    [SerializeField]
+    float ZoomSpeed;
+    [SerializeField]
     Player Player;
     //World World;
 
@@ -20,10 +23,9 @@ public class MainCamera : MonoBehaviour
         EventManager.PlayerObjectMoved -= FollowPlayer;
     }
 
-    void Start()
+    void Update()
     {
-        Player = GameObject.FindWithTag("Player").GetComponent<Player>();
-        // World = GameObject.FindWithTag("World").GetComponent<World>();
+        GetComponent<Camera>().orthographicSize -= Input.GetAxis("Mouse ScrollWheel") * ZoomSpeed;
     }
 
     /* void CalculateMove(GlobalPos pos)

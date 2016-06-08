@@ -4,7 +4,9 @@ using System.IO;
 public class Entity : MonoBehaviour, IBinaryReadableWriteable
 {
     public virtual LocalPos Pos { get; set; }
-    public bool Blocking; //TODO private set?
+    [SerializeField]
+    bool Blocking_;
+    public bool Blocking { get { return Blocking_; } private set { Blocking_ = value; } }
 
     public virtual void Write(BinaryWriter writer)
     {

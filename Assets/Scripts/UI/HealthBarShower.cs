@@ -2,16 +2,13 @@
 
 public class HealthBarShower : MonoBehaviour
 {
+    [SerializeField]
     Sprite healthBarSprite;
+    [SerializeField]
     Sprite healthBarFillerSprite;
+
     GameObject healthBar;
     GameObject healthBarFiller;
-
-    void Start()
-    {
-        healthBarSprite = Resources.Load<Sprite>("Sprites/healthBar");
-        healthBarFillerSprite = Resources.Load<Sprite>("Sprites/healthBarFiller");
-    }
 
     //UNDONE
     public void OnMouseEnter()
