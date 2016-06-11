@@ -1,85 +1,60 @@
-﻿public enum EquipmentSlotType
+﻿using UnityEngine;
+using System.Collections;
+
+public enum ItemType : byte
 {
-	Weapon,
-	OffHand,
-	Head,
-	Armor,
-	Belt,
-	Boots,
-	Gloves,
-	Pants,
-	Consumable,
-	Socket
+    Weapon,
+    OffHand,
+    Head,
+    Chest,
+    Belt,
+    Hands,
+    Pants,
+    Boots,
+    Socket,
+    Backpack,
+    Consumable,
+    Book,
+    AudioPlayer,
+    AudioRecord,
+    Other,
 }
 
-public enum SlotType
+
+public enum EquipmentItemType : byte
 {
-	Inventory,
-	Equipment,
-	Crafting,
-	Merchant
+    Head,
+    Chest,
+    Pants,
+    Boots,
+    Weapon,
+    OffHand,
+    Socket,
+    Backpack,
 }
 
-public enum TabType
+
+public enum ItemQuality : byte
 {
-	Armor,
-	Weapon,
-	Misc,
-	Repair
+    Legendary,
+    Rare,
+    Unusual,
+    Normal,
+    Junk
 }
 
-public enum ItemQuality
+public enum OtherItemType : byte
 {
-	Junk,
-	Normal,
-	Unusual,
-	Rare,
-	Legendary
+    Consumable,
+    Socket,
+    Book,
 }
 
-public enum WeaponType
+public enum SlotType : byte
 {
-	Knife,
-	Axe,
-	Pistol
+    Inventory,
+    Equipment,
+    Crafting,
+    Hotbar,
 }
 
-public enum ConsumableType
-{
-	Potion
-}
-
-public enum CraftingTabType
-{
-	Weapon,
-	Armor
-}
-
-public enum ItemTypeToCreate
-{
-	Weapon,
-	Armor,
-	Other
-}
-
-public enum ArmorTypeToCreate
-{
-	Head,
-	Armor,
-	Belt,
-	Boots,
-	Gloves,
-	Pants,
-	OffHand
-}
-
-public enum OtherTypeToCreate
-{
-	Consumable,
-	Socket
-}
-
-public enum ConsumableTypeToCreate
-{
-	Potion
-}

@@ -1,9 +1,9 @@
 ﻿using UnityEngine;
+using System.Collections;
 using System.Collections.Generic;
-//using System.Linq;
 
-public sealed class Player : LivingBeing
-{
+public class Player : LivingBeing {
+
     public GlobalPos GlobalPos;
     public override LocalPos Pos
     {
@@ -172,6 +172,13 @@ public sealed class Player : LivingBeing
         EventManager.ActionStarted += StartAction;
         EventManager.HourPassed += UpdateState;
         EventManager.ActionEnded += EndAction;
+
+        //Inventory
+        Inventory.ItemUsed += UseItem;
+        Inventory.ItemEquipped += EquipArmor;
+        Inventory.ItemEquipped += EquipWeapon;
+        Inventory.ItemUnequipped += UnequipArmor;
+        Inventory.ItemUnequipped += UnequipWeapon;
     }
 
     void OnDisable()
@@ -179,6 +186,13 @@ public sealed class Player : LivingBeing
         EventManager.ActionStarted -= StartAction;
         EventManager.HourPassed -= UpdateState;
         EventManager.ActionEnded -= EndAction;
+
+        //Inventory
+        Inventory.ItemUsed -= UseItem;
+        Inventory.ItemEquipped -= EquipArmor;
+        Inventory.ItemEquipped -= EquipWeapon;
+        Inventory.ItemUnequipped -= UnequipArmor;
+        Inventory.ItemUnequipped -= UnequipWeapon;
     }
 
     protected override void Start()
@@ -305,5 +319,99 @@ public sealed class Player : LivingBeing
     public TempWeapon GetWeapon()
     {
         return Weapon == null ? BaseWeapon : Weapon;
+    }
+
+    public byte MaxEnergy;
+    public byte MaxDamage;
+
+    public byte CurrentHealth;
+    public byte CurrentEnergy;
+    public byte CurrentArmor;
+    public byte CurrentDamage;
+
+
+
+
+	
+
+    public void UseItem(Item item)
+    {
+        for (int i = 0; i < item.ItemAttributes.Count; i++)
+        {
+            if (item.ItemAttributes[i].AttributeName == "Health")
+            {
+                if ((CurrentHealth + item.ItemAttributes[i].AttributeValue) > MaxHealth)
+                    CurrentHealth = MaxHealth;
+                else
+                    CurrentHealth += (byte)item.ItemAttributes[i].AttributeValue;
+            }   
+            if (item.ItemAttributes[i].AttributeName == "Armor")
+            {
+                    CurrentArmor += (byte)item.ItemAttributes[i].AttributeValue;
+            }
+            if (item.ItemAttributes[i].AttributeName == "Damage")
+            {
+                if ((CurrentDamage + item.ItemAttributes[i].AttributeValue) > MaxDamage)
+                    CurrentDamage = MaxDamage;
+                else
+                    CurrentDamage += (byte)item.ItemAttributes[i].AttributeValue;
+            }
+        }
+    }
+
+    public void EquipArmor(Item item)
+    {
+        for (int i = 0; i < item.ItemAttributes.Count; i++)
+        {
+            if (item.ItemAttributes[i].AttributeName == "Health")
+            {
+                //MaxHealth += (byte)item.ItemAttributes[i].AttributeValue;
+            }
+            if (item.ItemAttributes[i].AttributeName == "Armor")
+            {
+                CurrentArmor += (byte)item.ItemAttributes[i].AttributeValue;
+            }
+        }
+        CurrentArmor += (byte)item.Armor;
+    }
+
+    public void UnequipArmor(Item item)
+    {
+        for (int i = 0; i < item.ItemAttributes.Count; i++)
+        {
+            if (item.ItemAttributes[i].AttributeName == "Health")
+            {
+                //MaxHealth -= (byte)item.ItemAttributes[i].AttributeValue;
+            }
+            if (item.ItemAttributes[i].AttributeName == "Armor")
+            {
+                CurrentArmor -= (byte)item.ItemAttributes[i].AttributeValue;
+            }
+        }
+        CurrentArmor -= (byte)item.Armor;
+    }
+
+    public void EquipWeapon(Item item)
+    {
+        for (int i = 0; i < item.ItemAttributes.Count; i++)
+        {
+            if (item.ItemAttributes[i].AttributeName == "Damage")
+            {
+                CurrentDamage += (byte)item.ItemAttributes[i].AttributeValue;
+            }
+        }
+        CurrentDamage += (byte)item.Damage;
+    }
+
+    public void UnequipWeapon(Item item)
+    {
+        for (int i = 0; i < item.ItemAttributes.Count; i++)
+        {
+            if (item.ItemAttributes[i].AttributeName == "Damage")
+            {
+                MaxDamage -= (byte)item.ItemAttributes[i].AttributeValue;
+            }
+        }
+        CurrentDamage -= (byte)item.Damage;
     }
 }
