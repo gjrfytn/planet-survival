@@ -1,9 +1,8 @@
 ﻿using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
 
-public class Player : LivingBeing {
-
+public class Player : LivingBeing
+{
     public GlobalPos GlobalPos;
     public override LocalPos Pos
     {
@@ -274,6 +273,7 @@ public class Player : LivingBeing {
             target.TakeDamage((byte)damage, true);
         else
             EventManager.OnAttackMiss(transform.position);
+        RemainingMoves = Speed;
     }
 
     void StartAction(TimedAction action)
@@ -332,7 +332,7 @@ public class Player : LivingBeing {
 
 
 
-	
+
 
     public void UseItem(Item item)
     {
@@ -344,10 +344,10 @@ public class Player : LivingBeing {
                     CurrentHealth = MaxHealth;
                 else
                     CurrentHealth += (byte)item.ItemAttributes[i].AttributeValue;
-            }   
+            }
             if (item.ItemAttributes[i].AttributeName == "Armor")
             {
-                    CurrentArmor += (byte)item.ItemAttributes[i].AttributeValue;
+                CurrentArmor += (byte)item.ItemAttributes[i].AttributeValue;
             }
             if (item.ItemAttributes[i].AttributeName == "Damage")
             {

@@ -51,7 +51,7 @@ public class LocalMapEditor : MonoBehaviour {
 			{
 				for(ushort j = 0; j < map.Height; ++j)
 				{
-					map.HeightMatrix[j, i] = TerrainHeight;
+					//map.HeightMatrix[j, i] = TerrainHeight;
 				}
 			}
 			GameObject.FindWithTag("World").GetComponent<WorldVisualiser>().RenderWholeMap(map);

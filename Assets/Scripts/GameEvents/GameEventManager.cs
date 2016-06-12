@@ -92,7 +92,7 @@ public class GameEventManager : MonoBehaviour
         for (byte i = 0; i < terrainsCount; ++i)
         {
             TerrainType t = (TerrainType)Mathf.Pow(2, i);
-            if ((t & terrain) != 0)
+            if ((t & terrain) != TerrainType.NONE)
                 weight += evnt.TerrainWeights[t];
         }
         return weight;

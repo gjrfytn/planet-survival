@@ -6,66 +6,43 @@ public class MainCamera : MonoBehaviour
     float ZoomSpeed;
     [SerializeField]
     Player Player;
-    //World World;
+    [SerializeField]
+    World World;
 
-    bool MoveX = true, MoveY = true;
-    //bool CapturedX = false, CapturedY = false;
+    Vector3 LocalMapTopRight;
 
     void OnEnable()
     {
-        // EventManager.PlayerMoved += CalculateMove;
         EventManager.PlayerObjectMoved += FollowPlayer;
     }
 
     void OnDisable()
     {
-        // EventManager.PlayerMoved -= CalculateMove;
         EventManager.PlayerObjectMoved -= FollowPlayer;
+    }
+
+    void Start()
+    {
+        LocalMapTopRight = new Vector3(World.LocalMapSize.X * WorldVisualiser.LocalHexSpriteSize.x - WorldVisualiser.LocalHexSpriteSize.x * 0.5f, World.LocalMapSize.Y * WorldVisualiser.LocalHexSpriteSize.y * 0.75f - WorldVisualiser.LocalHexSpriteSize.y * 0.5f, 0);
     }
 
     void Update()
     {
-        GetComponent<Camera>().orthographicSize -= Input.GetAxis("Mouse ScrollWheel") * ZoomSpeed;
+        Camera.main.orthographicSize -= Input.GetAxis("Mouse ScrollWheel") * ZoomSpeed;
     }
 
-    /* void CalculateMove(GlobalPos pos)
-     {
-         if (World.IsCurrentMapLocal())
-         {
-             if (Screen.width >> 1 < WorldVisualiser.LocalHexSpriteSize.x * 100 * (Player.Pos.X) && Screen.width >> 1 < WorldVisualiser.LocalHexSpriteSize.x * 100 * (World.LocalMapSize.X - Player.Pos.Y))
-             {
-                 if (CapturedX)
-                     CapturedX = false;
-                 else
-                     MoveX = true;
-             }
-             else
-             {
-                 MoveX = false;
-                 CapturedX = true;
-             }
-             if (Screen.height >> 1 < WorldVisualiser.LocalHexSpriteSize.y * 75 * (Player.Pos.Y) && Screen.height >> 1 < WorldVisualiser.LocalHexSpriteSize.y * 75 * (World.LocalMapSize.Y - Player.Pos.Y))
-             {
-                 if (CapturedY)
-                     CapturedY = false;
-                 else
-                     MoveY = true;
-             }
-             else
-             {
-                 MoveY = false;
-                 CapturedY = true;
-             }
-         }
-         else
-         {
-             MoveX = true;
-             MoveY = true;
-         }
-     }*/
-
-    void FollowPlayer()//C#6.0 EBD
+    void FollowPlayer()
     {
-        transform.position = new Vector3(MoveX ? Player.transform.position.x : transform.position.x, MoveY ? Player.transform.position.y : transform.position.y, transform.position.z);
+        Vector3 buf = transform.position;
+        transform.position = new Vector3(Player.transform.position.x, Player.transform.position.y, transform.position.z);
+        Vector2 zeroPoint = Camera.main.WorldToScreenPoint(Vector3.zero);
+        Vector2 topRightPoint = Camera.main.WorldToScreenPoint(LocalMapTopRight);
+        if (World.IsCurrentMapLocal())
+        {
+            if (zeroPoint.y > 0 || topRightPoint.y < Screen.height)
+                transform.position = new Vector3(transform.position.x, buf.y, buf.z);
+            if (zeroPoint.x > 0 || topRightPoint.x < Screen.width)
+                transform.position = new Vector3(buf.x, transform.position.y, buf.z);
+        }
     }
 }

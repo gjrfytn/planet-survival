@@ -8,8 +8,8 @@ public class WorldVisualiser : MonoBehaviour
     public class Terrain
     {
         [SerializeField]
-        float StartingHeight_;
-        public float StartingHeight { get { return StartingHeight_; } set { StartingHeight_ = value; } }
+        TerrainType TerrainType_;
+        public TerrainType TerrainType { get { return TerrainType_; } set { TerrainType_ = value; } }
         [SerializeField]
         Sprite[] Sprites_;
         public Sprite[] Sprites { get { return Sprites_; } set { Sprites_ = value; } }
@@ -18,9 +18,6 @@ public class WorldVisualiser : MonoBehaviour
     [System.Serializable]
     public class GlobalMapSettings
     {
-        [SerializeField]
-        Sprite[] BottommostTerrainSprites_;
-        public Sprite[] BottommostTerrainSprites { get { return BottommostTerrainSprites_; } private set { BottommostTerrainSprites_ = value; } }
         [SerializeField]
         Terrain[] Terrains_;
         public Terrain[] Terrains { get { return Terrains_; } private set { Terrains_ = value; } }
@@ -60,9 +57,6 @@ public class WorldVisualiser : MonoBehaviour
     public class LocalMapSettings
     {
         [SerializeField]
-        Sprite[] WaterSprites_;
-        public Sprite[] WaterSprites { get { return WaterSprites_; } private set { WaterSprites_ = value; } }
-        [SerializeField]
         Terrain[] Terrains_;
         public Terrain[] Terrains { get { return Terrains_; } private set { Terrains_ = value; } }
         [SerializeField]
@@ -89,8 +83,6 @@ public class WorldVisualiser : MonoBehaviour
     public static Vector2 LocalHexSpriteSize { get; private set; }
 
     [SerializeField]
-    GameObject Hex;
-    [SerializeField]
     GameObject InteractableHex;
     [SerializeField]
     GlobalMapSettings GlobalMapParam;
@@ -114,6 +106,7 @@ public class WorldVisualiser : MonoBehaviour
     class ListType
     {
         public GameObject Hex;
+        public GlobalPos Pos;
         public bool InSign;
         public List<GameObject> Trees = new List<GameObject>();
         //public GameObject RiverSprite;
@@ -145,7 +138,6 @@ public class WorldVisualiser : MonoBehaviour
 
     void Awake()
     {
-        AllGlobalHexSprites.AddRange(GlobalMapParam.BottommostTerrainSprites);
         System.Array.ForEach(GlobalMapParam.Terrains, ts => AllGlobalHexSprites.AddRange(ts.Sprites));
         //foreach (Terrain ts in GlobalMapParam.Terrains)
         //AllGlobalHexSprites.AddRange(ts.Sprites);
@@ -160,22 +152,19 @@ public class WorldVisualiser : MonoBehaviour
         AllRoadSprites.AddRange(GlobalMapParam.RoadStraightBridgeSprites);
         AllRoadSprites.AddRange(GlobalMapParam.RoadTurnBridgeSprites);
 
-        AllLocalHexSprites.AddRange(LocalMapParam.WaterSprites);
         System.Array.ForEach(LocalMapParam.Terrains, ts => AllLocalHexSprites.AddRange(ts.Sprites));
         //foreach (Terrain ts in LocalMapParam.Terrains)
         //AllLocalHexSprites.AddRange(ts.Sprites);
 
         //Assert
-        for (byte i = 1; i < GlobalMapParam.Terrains.Length; ++i)
-            Debug.Assert(GlobalMapParam.Terrains[i - 1].StartingHeight < GlobalMapParam.Terrains[i].StartingHeight);
         for (ushort i = 1; i < AllGlobalHexSprites.Count; ++i)
             Debug.Assert(AllGlobalHexSprites[i - 1].bounds.size == AllGlobalHexSprites[i].bounds.size);
         for (ushort i = 1; i < AllLocalHexSprites.Count; ++i)
             Debug.Assert(AllLocalHexSprites[i - 1].bounds.size == AllLocalHexSprites[i].bounds.size);
         //--
 
-        GlobalHexSpriteSize = new Vector2(GlobalMapParam.BottommostTerrainSprites[0].bounds.size.x, GlobalMapParam.BottommostTerrainSprites[0].bounds.size.y);
-        LocalHexSpriteSize = new Vector2(LocalMapParam.WaterSprites[0].bounds.size.x, LocalMapParam.WaterSprites[0].bounds.size.y);
+        GlobalHexSpriteSize = new Vector2(GlobalMapParam.Terrains[0].Sprites[0].bounds.size.x, GlobalMapParam.Terrains[0].Sprites[0].bounds.size.y);
+        LocalHexSpriteSize = new Vector2(LocalMapParam.Terrains[0].Sprites[0].bounds.size.x, LocalMapParam.Terrains[0].Sprites[0].bounds.size.y);
     }
 
     /// <summary>
@@ -256,11 +245,15 @@ public class WorldVisualiser : MonoBehaviour
         inchunkPos.X = (ushort)(pos.X - chunkSize * chunkX);
         inchunkPos.Y = (ushort)(pos.Y - chunkSize * chunkY);
 
-        short index = (short)RenderedHexes.FindIndex(x => x.Hex.GetComponent<HexData>().Pos == pos);
+        short index = (short)RenderedHexes.FindIndex(x => x.Pos == pos);
         if (index == -1)
         {
-            ListType hex = new ListType { Hex = Instantiate(Hex, GetTransformPosFromMapPos(pos), Quaternion.identity) as GameObject, InSign = true };
-            hex.Hex.GetComponent<HexData>().Pos = pos;
+            ListType hex = new ListType { Hex = new GameObject("hex"), InSign = true };
+            hex.Hex.transform.position = GetTransformPosFromMapPos(pos);
+            hex.Pos = pos;
+            hex.Hex.AddComponent<SpriteRenderer>();
+            hex.Hex.AddComponent<Fader>();
+
             MakeHexGraphics(hex, inchunkPos, map);
             RenderedHexes.Add(hex);
         }
@@ -296,7 +289,7 @@ public class WorldVisualiser : MonoBehaviour
             hex.Hex.GetComponent<SpriteRenderer>().sprite = ChooseHexSprite(pos, map);
         hex.Hex.GetComponent<SpriteRenderer>().sortingLayerName = "Landscape";//
         bool forestBlocked = false;
-        if (map.RiverMatrix[pos.Y, pos.X])
+        if ((map.TerrainMatrix[pos.Y, pos.X] & TerrainType.RIVER) != TerrainType.NONE)
         {
             GameObject riverSprite = new GameObject("riverSprite");
             hex.LandscapeObj.Add(riverSprite);
@@ -313,7 +306,7 @@ public class WorldVisualiser : MonoBehaviour
             riverSprite.AddComponent<Fader>();
             forestBlocked = true;
         }
-        if (map.ClusterMatrix[pos.Y, pos.X])
+        if ((map.TerrainMatrix[pos.Y, pos.X] & TerrainType.BUILDING) != TerrainType.NONE)
         {
             GameObject clusterSprite = new GameObject("clusterSprite");
             hex.LandscapeObj.Add(clusterSprite);
@@ -326,7 +319,7 @@ public class WorldVisualiser : MonoBehaviour
             clusterSprite.AddComponent<Fader>();
             forestBlocked = true;
         }
-        if (map.RoadMatrix[pos.Y, pos.X])
+        if ((map.TerrainMatrix[pos.Y, pos.X] & TerrainType.ROAD) != TerrainType.NONE)
         {
             GameObject roadSprite = new GameObject("roadSprite");
             hex.LandscapeObj.Add(roadSprite);
@@ -357,11 +350,11 @@ public class WorldVisualiser : MonoBehaviour
         else
             hex.Hex.GetComponent<SpriteRenderer>().sprite = ChooseHexSprite(pos, map);
         hex.Hex.GetComponent<SpriteRenderer>().sortingLayerName = "Landscape";//
-        if (map.HeightMatrix[pos.Y, pos.X] < LocalMapParam.Terrains[0].StartingHeight)
+        if ((map.TerrainMatrix[pos.Y, pos.X] & TerrainType.WATER) != TerrainType.NONE)
         {
             //float offsetbuf=(LocalHexSpriteSize.pos.X-LocalHexSpriteSize.y)/2;
             for (byte i = 0; i < 6; ++i) //TODO К оптимизации.
-                if (map.Contains(HexNavigHelper.GetNeighborMapCoords(pos, (TurnedHexDirection)i)) && map.HeightMatrix[HexNavigHelper.GetNeighborMapCoords(pos, (TurnedHexDirection)i).Y, HexNavigHelper.GetNeighborMapCoords(pos, (TurnedHexDirection)i).X] > LocalMapParam.Terrains[0].StartingHeight)
+                if (map.Contains(HexNavigHelper.GetNeighborMapCoords(pos, (TurnedHexDirection)i)) && (map.TerrainMatrix[HexNavigHelper.GetNeighborMapCoords(pos, (TurnedHexDirection)i).Y, HexNavigHelper.GetNeighborMapCoords(pos, (TurnedHexDirection)i).X] & TerrainType.WATER) == TerrainType.NONE)
                 {
                     GameObject bank = new GameObject("bankSprite");
                     hex.LandscapeObj.Add(bank);
@@ -420,20 +413,12 @@ public class WorldVisualiser : MonoBehaviour
     Sprite ChooseHexSprite(LocalPos pos, Chunk map) //UNDONE
     {
         byte id = 0;
-        if (map.HeightMatrix[pos.Y, pos.X] < GlobalMapParam.Terrains[0].StartingHeight)
-            id = (byte)Random.Range(0, GlobalMapParam.BottommostTerrainSprites.Length);
-        else if (map.HeightMatrix[pos.Y, pos.X] >= GlobalMapParam.Terrains[GlobalMapParam.Terrains.Length - 1].StartingHeight)
-        {
-            for (byte i = 0; i < GlobalMapParam.Terrains.Length - 1; ++i, id += (byte)GlobalMapParam.Terrains[i].Sprites.Length) ;
-            id += (byte)(Random.Range(0, GlobalMapParam.Terrains[GlobalMapParam.Terrains.Length - 1].Sprites.Length) + GlobalMapParam.BottommostTerrainSprites.Length);
-        }
-        else
-            for (byte i = 1; i < GlobalMapParam.Terrains.Length; i++)
-                if (map.HeightMatrix[pos.Y, pos.X] >= GlobalMapParam.Terrains[i - 1].StartingHeight && map.HeightMatrix[pos.Y, pos.X] < GlobalMapParam.Terrains[i].StartingHeight)
-                {
-                    for (byte j = 0; j < i - 1; ++j, id += (byte)GlobalMapParam.Terrains[j].Sprites.Length) ;
-                    id += (byte)(Random.Range(0, GlobalMapParam.Terrains[i - 1].Sprites.Length) + GlobalMapParam.BottommostTerrainSprites.Length);
-                }
+        for (byte i = 0; i < GlobalMapParam.Terrains.Length; ++i)
+            if (map.TerrainMatrix[pos.Y, pos.X] == GlobalMapParam.Terrains[i].TerrainType)
+            {
+                for (byte j = 0; j < i; ++j, id += (byte)GlobalMapParam.Terrains[j].Sprites.Length) ;
+                id += (byte)Random.Range(0, GlobalMapParam.Terrains[i].Sprites.Length);
+            }
 
         map.HexSpriteID_Matrix[pos.Y, pos.X] = id;
         return AllGlobalHexSprites[id];
@@ -442,20 +427,12 @@ public class WorldVisualiser : MonoBehaviour
     Sprite ChooseHexSprite(LocalPos pos, LocalMap map) //UNDONE
     {
         byte id = 0;
-        if (map.HeightMatrix[pos.Y, pos.X] < LocalMapParam.Terrains[0].StartingHeight)
-            id = (byte)Random.Range(0, LocalMapParam.WaterSprites.Length);
-        else if (map.HeightMatrix[pos.Y, pos.X] >= LocalMapParam.Terrains[LocalMapParam.Terrains.Length - 1].StartingHeight)
-        {
-            for (byte i = 0; i < LocalMapParam.Terrains.Length - 1; ++i, id += (byte)LocalMapParam.Terrains[i].Sprites.Length) ;
-            id += (byte)(Random.Range(0, LocalMapParam.Terrains[LocalMapParam.Terrains.Length - 1].Sprites.Length) + LocalMapParam.WaterSprites.Length);
-        }
-        else
-            for (byte i = 1; i < LocalMapParam.Terrains.Length; i++)
-                if (map.HeightMatrix[pos.Y, pos.X] >= LocalMapParam.Terrains[i - 1].StartingHeight && map.HeightMatrix[pos.Y, pos.X] < LocalMapParam.Terrains[i].StartingHeight)
-                {
-                    for (byte j = 0; j < i - 1; ++j, id += (byte)LocalMapParam.Terrains[j].Sprites.Length) ;
-                    id += (byte)(Random.Range(0, LocalMapParam.Terrains[i - 1].Sprites.Length) + LocalMapParam.WaterSprites.Length);
-                }
+        for (byte i = 0; i < LocalMapParam.Terrains.Length; ++i)
+            if (map.TerrainMatrix[pos.Y, pos.X] == LocalMapParam.Terrains[i].TerrainType)
+            {
+                for (byte j = 0; j < i; ++j, id += (byte)LocalMapParam.Terrains[j].Sprites.Length) ;
+                id += (byte)Random.Range(0, LocalMapParam.Terrains[i].Sprites.Length);
+            }
 
         map.HexSpriteID_Matrix[pos.Y, pos.X] = id;
         return AllLocalHexSprites[id];
@@ -525,12 +502,12 @@ public class WorldVisualiser : MonoBehaviour
                 Vector2 inchunkPos = GetTransformPosFromMapPos((GlobalPos)pos);
                 if (index == 0)
                 {
-                    id = (byte)(map.RiverMatrix[pos.Y, pos.X] ? Random.Range(0, GlobalMapParam.RoadStraightBridgeSprites.Length) + GlobalMapParam.RoadStraightSprites.Length + GlobalMapParam.RoadTurnSprites.Length : Random.Range(0, GlobalMapParam.RoadStraightSprites.Length));
+                    id = (byte)((map.TerrainMatrix[pos.Y, pos.X] & TerrainType.RIVER) != TerrainType.NONE ? Random.Range(0, GlobalMapParam.RoadStraightBridgeSprites.Length) + GlobalMapParam.RoadStraightSprites.Length + GlobalMapParam.RoadTurnSprites.Length : Random.Range(0, GlobalMapParam.RoadStraightSprites.Length));
                     angle = (short)(Mathf.Sign(road[1].X - pos.X) * Vector2.Angle(Vector2.down, GetTransformPosFromMapPos((GlobalPos)road[1]) - inchunkPos));
                 }
                 else if (index == road.Count - 1)
                 {
-                    id = (byte)(map.RiverMatrix[pos.Y, pos.X] ? Random.Range(0, GlobalMapParam.RoadStraightBridgeSprites.Length) + GlobalMapParam.RoadStraightSprites.Length + GlobalMapParam.RoadTurnSprites.Length : Random.Range(0, GlobalMapParam.RoadStraightSprites.Length));
+                    id = (byte)((map.TerrainMatrix[pos.Y, pos.X] & TerrainType.RIVER) != TerrainType.NONE ? Random.Range(0, GlobalMapParam.RoadStraightBridgeSprites.Length) + GlobalMapParam.RoadStraightSprites.Length + GlobalMapParam.RoadTurnSprites.Length : Random.Range(0, GlobalMapParam.RoadStraightSprites.Length));
                     angle = (short)(Mathf.Sign(road[road.Count - 2].X - pos.X) * Vector2.Angle(Vector2.down, GetTransformPosFromMapPos((GlobalPos)road[road.Count - 2]) - inchunkPos));
                 }
                 else
@@ -539,12 +516,12 @@ public class WorldVisualiser : MonoBehaviour
                     Vector2 next = GetTransformPosFromMapPos((GlobalPos)road[index + 1]) - inchunkPos;
                     if ((short)Vector2.Angle(prev, next) > 150) //(==180, !=120)
                     {
-                        id = (byte)(map.RiverMatrix[pos.Y, pos.X] ? Random.Range(0, GlobalMapParam.RoadStraightBridgeSprites.Length) + GlobalMapParam.RoadStraightSprites.Length + GlobalMapParam.RoadTurnSprites.Length : Random.Range(0, GlobalMapParam.RoadStraightSprites.Length));
+                        id = (byte)((map.TerrainMatrix[pos.Y, pos.X] & TerrainType.RIVER) != TerrainType.NONE ? Random.Range(0, GlobalMapParam.RoadStraightBridgeSprites.Length) + GlobalMapParam.RoadStraightSprites.Length + GlobalMapParam.RoadTurnSprites.Length : Random.Range(0, GlobalMapParam.RoadStraightSprites.Length));
                         angle = (short)(Mathf.Sign(road[index - 1].X - pos.X) * Vector2.Angle(Vector2.down, prev));
                     }
                     else
                     {
-                        id = (byte)(map.RiverMatrix[pos.Y, pos.X] ? Random.Range(0, GlobalMapParam.RoadTurnBridgeSprites.Length) + GlobalMapParam.RoadStraightSprites.Length + GlobalMapParam.RoadTurnSprites.Length + GlobalMapParam.RoadStraightBridgeSprites.Length : Random.Range(0, GlobalMapParam.RoadTurnSprites.Length) + GlobalMapParam.RoadStraightSprites.Length);
+                        id = (byte)((map.TerrainMatrix[pos.Y, pos.X] & TerrainType.RIVER) != TerrainType.NONE ? Random.Range(0, GlobalMapParam.RoadTurnBridgeSprites.Length) + GlobalMapParam.RoadStraightSprites.Length + GlobalMapParam.RoadTurnSprites.Length + GlobalMapParam.RoadStraightBridgeSprites.Length : Random.Range(0, GlobalMapParam.RoadTurnSprites.Length) + GlobalMapParam.RoadStraightSprites.Length);
                         angle = (short)(Mathf.Sign(road[index - 1].X - pos.X) * Vector2.Angle(Vector2.down, prev));
                         if (Mathf.Approximately(prev.x, 0))
                             angle += (short)(240 * (Mathf.Sign(prev.y) == Mathf.Sign(next.x) ? 1 : 0));
@@ -632,8 +609,12 @@ public class WorldVisualiser : MonoBehaviour
             for (ushort x = 0; x < width; ++x)
             {
                 // TODO Возможно стоит заменить ListType на Hex?
-                ListType hex = new ListType { Hex = Instantiate(Hex, GetTransformPosFromMapPos(new LocalPos(x, y)), Quaternion.identity) as GameObject, InSign = true };
-                hex.Hex.GetComponent<HexData>().Pos = new GlobalPos(x, y);//TODO new?
+                ListType hex = new ListType { Hex = new GameObject("hex"), InSign = true };
+                hex.Hex.transform.position = GetTransformPosFromMapPos(new LocalPos(x, y));
+                hex.Pos = new GlobalPos(x, y);
+                hex.Hex.AddComponent<SpriteRenderer>();
+                hex.Hex.AddComponent<Fader>();
+
                 MakeHexGraphics(hex, new LocalPos(x, y), map);
                 RenderedHexes.Add(hex);
             }
@@ -663,24 +644,22 @@ public class WorldVisualiser : MonoBehaviour
     public void HighlightHex(GlobalPos pos)
     {
         BluesType hex = new BluesType { Hex = Instantiate(InteractableHex, GetTransformPosFromMapPos(pos), Quaternion.identity) as GameObject, InSign = true };
-        hex.Hex.GetComponent<HexData>().Pos = pos;
+        hex.Hex.GetComponent<HexInteraction>().Pos = pos;
         RenderedBlues.Add(hex);
     }
 
     void HighlightHex(LocalPos pos)
     {
         BluesType hex = new BluesType { Hex = Instantiate(InteractableHex, GetTransformPosFromMapPos(pos), Quaternion.Euler(0, 0, 90)) as GameObject, InSign = true };
-        hex.Hex.GetComponent<HexData>().Pos = pos;
+        hex.Hex.GetComponent<HexInteraction>().Pos = pos;
         RenderedBlues.Add(hex);
     }
 
     public byte[] GetTerrainsSpriteID()
     {
         byte[] buf = new byte[1 + LocalMapParam.Terrains.Length];
-        buf[0] = 0;
-        buf[1] = (byte)LocalMapParam.WaterSprites.Length;
         for (byte i = 0; i < LocalMapParam.Terrains.Length - 1; ++i)
-            buf[i + 2] = (byte)LocalMapParam.Terrains[i].Sprites.Length;
+            buf[i + 1] = (byte)LocalMapParam.Terrains[i].Sprites.Length;
         return buf;
     }
 
@@ -713,7 +692,7 @@ public class WorldVisualiser : MonoBehaviour
 
     void SpreadBlues(LocalPos pos, byte distance, LocalMap map)
     {
-        short index = (short)RenderedBlues.FindIndex(x => x.Hex.GetComponent<HexData>().Pos == pos);
+        short index = (short)RenderedBlues.FindIndex(x => x.Hex.GetComponent<HexInteraction>().Pos == pos);
         if (index == -1)
             HighlightHex(pos);
         else

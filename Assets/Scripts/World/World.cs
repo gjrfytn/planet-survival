@@ -11,16 +11,21 @@ public class World : MonoBehaviour
     float ForestRoughness;
 
     [SerializeField]
-    WorldGenerator.RiversParameters RiverParam;
+    WorldGenerator.TerrainSettings GlobalMapTerrainParam;
     [SerializeField]
-    WorldGenerator.ClustersParameters ClusterParam;
+    WorldGenerator.TerrainSettings LocalMapTerrainParam;
     [SerializeField]
-    WorldGenerator.RoadsParameters RoadParam;
+    WorldGenerator.RiversSettings RiverParam;
+    [SerializeField]
+    WorldGenerator.ClustersSettings ClusterParam;
+    [SerializeField]
+    WorldGenerator.RoadsSettings RoadParam;
 
     [SerializeField]
     ushort ChunkSize;
     [SerializeField]
-    LocalPos LocalMapSize;
+    LocalPos LocalMapSize_;
+    public LocalPos LocalMapSize { get { return LocalMapSize_; } private set { LocalMapSize_ = value; } }
 
     [SerializeField]
     byte ForestDensity;
@@ -54,6 +59,16 @@ public class World : MonoBehaviour
     {
         EventManager.PlayerMovedOnGlobal -= OnPlayerGotoGlobalHex;
         EventManager.TurnMade -= RerenderBlueHexesOnLocal;
+    }
+
+    void Awake()
+    {
+        //Assert
+        for (byte i = 1; i < GlobalMapTerrainParam.Terrains.Length; ++i)
+            Debug.Assert(GlobalMapTerrainParam.Terrains[i - 1].StartingHeight < GlobalMapTerrainParam.Terrains[i].StartingHeight);
+        for (byte i = 1; i < LocalMapTerrainParam.Terrains.Length; ++i)
+            Debug.Assert(LocalMapTerrainParam.Terrains[i - 1].StartingHeight < LocalMapTerrainParam.Terrains[i].StartingHeight);
+        //--
     }
 
     void Start()
@@ -157,6 +172,7 @@ public class World : MonoBehaviour
             GotoLocalMap();
             SpawnRandomEnemy();
             Player.transform.position = WorldVisualiser.GetTransformPosFromMapPos(Player.Pos);
+            Camera.main.transform.position = new Vector3(Player.transform.position.x, Player.transform.position.y, Camera.main.transform.position.z);
         }
         else
         {
@@ -176,7 +192,7 @@ public class World : MonoBehaviour
         GlobalMapPos = Player.GlobalPos;
         LocalPos pos = new LocalPos((ushort)(GlobalMapPos.X - ChunkX * ChunkSize), (ushort)(GlobalMapPos.Y - ChunkY * ChunkSize)); //TODO new?
         if (LocalMaps[pos.Y, pos.X] == null)
-            LocalMaps[pos.Y, pos.X] = CreateLocalMap(CashedChunks[1, 1].HeightMatrix[pos.Y, pos.X], CashedChunks[1, 1].ForestMatrix[pos.Y, pos.X], CashedChunks[1, 1].RiverMatrix[pos.Y, pos.X], CashedChunks[1, 1].RoadMatrix[pos.Y, pos.X], CashedChunks[1, 1].ClusterMatrix[pos.Y, pos.X]);
+            LocalMaps[pos.Y, pos.X] = CreateLocalMap(CashedChunks[1, 1].HeightMatrix[pos.Y, pos.X], CashedChunks[1, 1].ForestMatrix[pos.Y, pos.X], (CashedChunks[1, 1].TerrainMatrix[pos.Y, pos.X] & TerrainType.RIVER) != TerrainType.NONE);
         CurrentMap = LocalMaps[pos.Y, pos.X];
         (CurrentMap as LocalMap).Activate();
 
@@ -210,22 +226,16 @@ public class World : MonoBehaviour
     /// Создаёт локальную карту.
     /// </summary>
     /// <param name="coords">Координаты новой карты на глобальной.</param>
-    LocalMap CreateLocalMap(float height, float forest, bool river, bool road, bool ruins)
+    LocalMap CreateLocalMap(float height, float forest, bool river)
     {
-        LocalMap map = new LocalMap(LocalMapSize.X, LocalMapSize.Y);
-
+        float?[,] buf = new float?[LocalMapSize.Y, LocalMapSize.X];
         if (river)
         {
-            // LocalPos[] riverPath = new LocalPos[] { new LocalPos(0, (ushort)(LocalMapSize.Y >> 1)), new LocalPos((ushort)(LocalMapSize.X - 1), (ushort)(LocalMapSize.Y >> 1)) }; //UNDONE			
+            //LocalPos[] riverPath = new LocalPos[] { new LocalPos(0, (ushort)(LocalMapSize.Y >> 1)), new LocalPos((ushort)(LocalMapSize.X - 1), (ushort)(LocalMapSize.Y >> 1)) }; //UNDONE			
             //WorldGenerator.MakeEqualHeightLine(map.HeightMatrix, riverPath, Visualiser.LocalMapParam.Terrains[0].StartingHeight - 0.0001f); TODO
         }
-        float?[,] buf = new float?[LocalMapSize.Y, LocalMapSize.X];
-        for (ushort y = 0; y < LocalMapSize.Y; ++y)
-            for (ushort x = 0; x < LocalMapSize.X; ++x)
-                if (map.HeightMatrix[y, x] != 0)
-                    buf[y, x] = map.HeightMatrix[y, x];
 
-        WorldGenerator.HeighmapNeighboring hmNb = new WorldGenerator.HeighmapNeighboring();
+        WorldGenerator.HeighmapNeighboring hmNb;
         hmNb.Left = new float[LocalMapSize.Y];
         hmNb.Top = new float[LocalMapSize.X];
         hmNb.Right = new float[LocalMapSize.Y];
@@ -236,12 +246,16 @@ public class World : MonoBehaviour
             hmNb.Bottom[i] = hmNb.Top[i] = height;
         WorldGenerator.CreateHeightmap(ref buf, LandscapeRoughness, hmNb);
 
+        LocalMap map = new LocalMap(LocalMapSize.X, LocalMapSize.Y);
+        float[,] buf2 = new float[LocalMapSize.Y, LocalMapSize.X];
         for (ushort y = 0; y < LocalMapSize.Y; ++y)
             for (ushort x = 0; x < LocalMapSize.X; ++x)
             {
-                map.HeightMatrix[y, x] = buf[y, x].Value;
+                buf2[y, x] = buf[y, x].Value;
                 buf[y, x] = null;
             }
+        map.TerrainMatrix = WorldGenerator.CreateTerrainmap(ref buf2, ref LocalMapTerrainParam);
+
 
         for (ushort i = 0; i < LocalMapSize.Y; ++i)
             hmNb.Right[i] = hmNb.Left[i] = forest;
@@ -463,23 +477,11 @@ public class World : MonoBehaviour
                 buf[y, x] = buf[y, x].Value * ForestDensity;
                 chunk.ForestMatrix[y, x] = Mathf.Clamp(buf[y, x].Value, 0, Mathf.Abs(buf[y, x].Value));
             }
-        chunk.Rivers = WorldGenerator.CreateRivers(chunk.HeightMatrix, chunk.RiverMatrix, RiverParam);
-        chunk.Clusters = WorldGenerator.CreateClusters(chunk, ClusterParam);
-        chunk.Roads = WorldGenerator.CreateRoads(chunk.HeightMatrix, chunk.RiverMatrix, chunk.RoadMatrix, chunk.Clusters, RoadParam);
-        CalculateChunkTerrains(chunk);
+        chunk.Rivers = WorldGenerator.CreateRivers(ref chunk.HeightMatrix, chunk.TerrainMatrix, ref RiverParam);
+        chunk.Clusters = WorldGenerator.CreateClusters(chunk, ref ClusterParam);
+        chunk.Roads = WorldGenerator.CreateRoads(ref chunk.HeightMatrix, chunk.TerrainMatrix, ref chunk.Clusters, ref RoadParam);
+        chunk.TerrainMatrix = WorldGenerator.CreateTerrainmap(ref chunk.HeightMatrix, ref GlobalMapTerrainParam);
         return chunk;
-    }
-
-    void CalculateChunkTerrains(Chunk chunk)
-    {
-        for (ushort y = 0; y < ChunkSize; ++y)
-            for (ushort x = 0; x < ChunkSize; ++x)
-                chunk.TerrainMatrix[y, x] = MakeTerrainFromHeight(chunk.HeightMatrix[y, x]) | (chunk.ForestMatrix[y, x] > TreeCountForForestTerrain ? TerrainType.FOREST : TerrainType.NONE) | (chunk.RiverMatrix[y, x] ? TerrainType.RIVER : TerrainType.NONE);
-    }
-
-    TerrainType MakeTerrainFromHeight(float height)//C#6.0 EBD
-    {
-        return TerrainType.MEADOW; //UNDONE
     }
 
     //TEST

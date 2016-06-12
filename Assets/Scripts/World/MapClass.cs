@@ -7,7 +7,8 @@ public abstract class Map : IBinaryReadableWriteable
     public readonly ushort Width;
     public readonly ushort Height;
 
-    public float[,] HeightMatrix;
+    public TerrainType[,] TerrainMatrix;
+
     public byte?[,] HexSpriteID_Matrix;
 
     public float[,] ForestMatrix;
@@ -16,7 +17,7 @@ public abstract class Map : IBinaryReadableWriteable
     {
         Width = width;
         Height = height;
-        HeightMatrix = new float[height, width];
+        TerrainMatrix = new TerrainType[height, width];
         HexSpriteID_Matrix = new byte?[height, width];
         ForestMatrix = new float[height, width];
     }
@@ -25,7 +26,7 @@ public abstract class Map : IBinaryReadableWriteable
     {
         for (ushort y = 0; y < Height; ++y)
             for (ushort x = 0; x < Width; ++x)
-                writer.Write(HeightMatrix[y, x]);
+                writer.Write((int)TerrainMatrix[y, x]);
         for (ushort y = 0; y < Height; ++y)
             for (ushort x = 0; x < Width; ++x)
                 writer.Write((short)(HexSpriteID_Matrix[y, x] ?? -1));
@@ -39,7 +40,9 @@ public abstract class Map : IBinaryReadableWriteable
     {
         for (ushort y = 0; y < Height; ++y)
             for (ushort x = 0; x < Width; ++x)
-                HeightMatrix[y, x] = reader.ReadSingle();
+            {
+                TerrainMatrix[y, x] = (TerrainType)reader.ReadInt32();
+            }
         for (ushort y = 0; y < Height; ++y)
             for (ushort x = 0; x < Width; ++x)
             {
@@ -63,7 +66,6 @@ public sealed class LocalMap : Map
     bool Active;
     ushort freeID;
     Dictionary<ushort, Entity>[,] ObjectMatrix;
-
 
     public LocalMap(ushort width, ushort height)
         : base(width, height)
@@ -179,14 +181,13 @@ public sealed class LocalMap : Map
 
 public sealed class Chunk : Map
 {
-    public bool[,] RiverMatrix;
+    public float[,] HeightMatrix;
+
     public byte?[,] RiverSpriteID_Matrix;
     public short[,] RiverSpriteRotationMatrix;
 
-    public bool[,] ClusterMatrix;
     public byte?[,] ClusterSpriteID_Matrix;
 
-    public bool[,] RoadMatrix;
     public byte?[,] RoadSpriteID_Matrix;
     public short[,] RoadSpriteRotationMatrix;
 
@@ -194,20 +195,15 @@ public sealed class Chunk : Map
     public List<List<LocalPos>> Clusters;
     public List<List<LocalPos>> Roads;
 
-    public TerrainType[,] TerrainMatrix;
-
     public Chunk(ushort width, ushort height)
         : base(width, height)
     {
-        RiverMatrix = new bool[height, width];
+        HeightMatrix = new float[height, width];
         RiverSpriteID_Matrix = new byte?[height, width];
         RiverSpriteRotationMatrix = new short[height, width];
-        ClusterMatrix = new bool[height, width];
         ClusterSpriteID_Matrix = new byte?[height, width];
-        RoadMatrix = new bool[height, width];
         RoadSpriteID_Matrix = new byte?[height, width];
         RoadSpriteRotationMatrix = new short[height, width];
-        TerrainMatrix = new TerrainType[height, width];
     }
 
     public override void Write(BinaryWriter writer)
@@ -215,7 +211,8 @@ public sealed class Chunk : Map
         base.Write(writer);
         for (ushort y = 0; y < Height; ++y)
             for (ushort x = 0; x < Width; ++x)
-                writer.Write(RiverMatrix[y, x]);
+                writer.Write(HeightMatrix[y, x]);
+
         for (ushort y = 0; y < Height; ++y)
             for (ushort x = 0; x < Width; ++x)
                 writer.Write((short)(RiverSpriteID_Matrix[y, x] ?? -1));
@@ -225,14 +222,8 @@ public sealed class Chunk : Map
 
         for (ushort y = 0; y < Height; ++y)
             for (ushort x = 0; x < Width; ++x)
-                writer.Write(ClusterMatrix[y, x]);
-        for (ushort y = 0; y < Height; ++y)
-            for (ushort x = 0; x < Width; ++x)
                 writer.Write((short)(ClusterSpriteID_Matrix[y, x] ?? -1));
 
-        for (ushort y = 0; y < Height; ++y)
-            for (ushort x = 0; x < Width; ++x)
-                writer.Write(RoadMatrix[y, x]);
         for (ushort y = 0; y < Height; ++y)
             for (ushort x = 0; x < Width; ++x)
                 writer.Write((short)(RoadSpriteID_Matrix[y, x] ?? -1));
@@ -270,8 +261,6 @@ public sealed class Chunk : Map
                 writer.Write(Roads[i][j].Y);
             }
         }
-
-        //TODO TerrainType
     }
 
     public override void Read(BinaryReader reader)
@@ -279,7 +268,8 @@ public sealed class Chunk : Map
         base.Read(reader);
         for (ushort y = 0; y < Height; ++y)
             for (ushort x = 0; x < Width; ++x)
-                RiverMatrix[y, x] = reader.ReadBoolean();
+                HeightMatrix[y, x] = reader.ReadSingle();
+
         for (ushort y = 0; y < Height; ++y)
             for (ushort x = 0; x < Width; ++x)
             {
@@ -292,17 +282,11 @@ public sealed class Chunk : Map
 
         for (ushort y = 0; y < Height; ++y)
             for (ushort x = 0; x < Width; ++x)
-                ClusterMatrix[y, x] = reader.ReadBoolean();
-        for (ushort y = 0; y < Height; ++y)
-            for (ushort x = 0; x < Width; ++x)
             {
                 short buf = reader.ReadInt16();
                 ClusterSpriteID_Matrix[y, x] = buf == -1 ? null : (byte?)buf;
             }
 
-        for (ushort y = 0; y < Height; ++y)
-            for (ushort x = 0; x < Width; ++x)
-                RoadMatrix[y, x] = reader.ReadBoolean();
         for (ushort y = 0; y < Height; ++y)
             for (ushort x = 0; x < Width; ++x)
             {
