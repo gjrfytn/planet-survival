@@ -69,6 +69,22 @@ public class World : MonoBehaviour
         for (byte i = 1; i < LocalMapTerrainParam.Terrains.Length; ++i)
             Debug.Assert(LocalMapTerrainParam.Terrains[i - 1].StartingHeight < LocalMapTerrainParam.Terrains[i].StartingHeight);
         //--
+        for (byte i = 0; i < GlobalMapTerrainParam.Terrains.Length; ++i)
+        {
+            if (GlobalMapTerrainParam.Terrains[i].TerrainType == TerrainType.NONE)
+                throw new System.Exception("You should not initialize TerrainType.NONE.");
+            for (byte j = 0; j < GlobalMapTerrainParam.Terrains.Length; ++j)
+                if (GlobalMapTerrainParam.Terrains[i].TerrainType == GlobalMapTerrainParam.Terrains[j].TerrainType && i != j)
+                    throw new System.Exception("Duplicatated terrain types in GlobalMapTerrainParam.Terrains.");
+        }
+        for (byte i = 0; i < LocalMapTerrainParam.Terrains.Length; ++i)
+        {
+            if (LocalMapTerrainParam.Terrains[i].TerrainType == TerrainType.NONE)
+                throw new System.Exception("You should not initialize TerrainType.NONE.");
+            for (byte j = 0; j < LocalMapTerrainParam.Terrains.Length; ++j)
+                if (LocalMapTerrainParam.Terrains[i].TerrainType == LocalMapTerrainParam.Terrains[j].TerrainType && i != j)
+                    throw new System.Exception("Duplicatated terrain types in LocalMapTerrainParam.Terrains.");
+        }
     }
 
     void Start()
@@ -332,7 +348,7 @@ public class World : MonoBehaviour
         if (File.Exists(filePath))
         {
             chunk = new Chunk(ChunkSize, ChunkSize);
-            using (BinaryReader reader = new BinaryReader(File.Open(filePath, FileMode.Open)))
+            using (SymBinaryReader reader = new SymBinaryReader(File.Open(filePath, FileMode.Open)))
             {
                 chunk.Read(reader);
             }
@@ -368,7 +384,7 @@ public class World : MonoBehaviour
         string filePath = Path.Combine(ChunksDirectoryPath, chunkY + "_" + chunkX + "lm");
         if (File.Exists(filePath))
         {
-            using (BinaryReader reader = new BinaryReader(File.Open(filePath, FileMode.Open)))
+            using (SymBinaryReader reader = new SymBinaryReader(File.Open(filePath, FileMode.Open)))
             {
                 for (ushort y = 0; y < ChunkSize; ++y)
                     for (ushort x = 0; x < ChunkSize; ++x)

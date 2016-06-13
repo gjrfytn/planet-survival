@@ -34,7 +34,7 @@ public class GameEventManager : MonoBehaviour
     void CallEvent()
     {
         //CollectFactors();
-        TerrainType terrain = GameObject.FindWithTag("World").GetComponent<World>().GetHexTerrain(GameObject.FindWithTag("Player").GetComponent<Player>().Pos);
+        TerrainType terrain = GameObject.FindWithTag("World").GetComponent<World>().GetHexTerrain(GameObject.FindWithTag("Player").GetComponent<Player>().GlobalPos);
 
         List<GameEvent> possibleEvents = new List<GameEvent>(Events);//List<GameEvent> possibleEvents = Events.Where(e => true == true).ToList(); //TODO Фильтрация
         short weight = -100; //TODO
@@ -91,7 +91,7 @@ public class GameEventManager : MonoBehaviour
         byte terrainsCount = (byte)(System.Enum.GetNames(typeof(TerrainType)).Length - 1);
         for (byte i = 0; i < terrainsCount; ++i)
         {
-            TerrainType t = (TerrainType)Mathf.Pow(2, i);
+            TerrainType t = (TerrainType)(1 << i);
             if ((t & terrain) != TerrainType.NONE)
                 weight += evnt.TerrainWeights[t];
         }
@@ -148,9 +148,9 @@ public class GameEventManager : MonoBehaviour
                     Dictionary<TerrainType, sbyte> terrainWeights = new Dictionary<TerrainType, sbyte>(terrainsCount);
                     byte weightsCount = reader.ReadByte();
                     for (byte i = 0; i < weightsCount; ++i)
-                        terrainWeights.Add((TerrainType)Mathf.Pow(2, i), reader.ReadSByte()); //TODO Если нужно, при возведении можно использовать сдвиг.
+                        terrainWeights.Add((TerrainType)(1 << i), reader.ReadSByte()); //TODO Если нужно, при возведении можно использовать сдвиг.
                     for (byte i = weightsCount; i < terrainsCount; ++i)
-                        terrainWeights.Add((TerrainType)Mathf.Pow(2, i), 0);
+                        terrainWeights.Add((TerrainType)(1 << i), 0);
 
                     //weightsCount = reader.ReadByte();
                     GameEvent.TimeWeights timeWeights = new GameEvent.TimeWeights()

@@ -28,7 +28,20 @@ public class MainCamera : MonoBehaviour
 
     void Update()
     {
-        Camera.main.orthographicSize -= Input.GetAxis("Mouse ScrollWheel") * ZoomSpeed;
+        if (Input.GetAxis("Mouse ScrollWheel") != 0)
+        {
+            if (World.IsCurrentMapLocal())
+            {
+                float scroll = Input.GetAxis("Mouse ScrollWheel") * ZoomSpeed;
+                Camera.main.orthographicSize -= scroll;
+                Vector2 zeroPoint = Camera.main.WorldToScreenPoint(Vector3.zero);
+                Vector2 topRightPoint = Camera.main.WorldToScreenPoint(LocalMapTopRight);
+                if (zeroPoint.x > 0 && topRightPoint.x < Screen.width && zeroPoint.y > 0 && topRightPoint.y < Screen.height)
+                    Camera.main.orthographicSize += scroll;
+            }
+            else
+                Camera.main.orthographicSize -= Input.GetAxis("Mouse ScrollWheel") * ZoomSpeed;
+        }
     }
 
     void FollowPlayer()

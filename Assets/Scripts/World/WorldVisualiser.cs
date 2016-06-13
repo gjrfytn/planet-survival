@@ -138,6 +138,23 @@ public class WorldVisualiser : MonoBehaviour
 
     void Awake()
     {
+        for (byte i = 0; i < GlobalMapParam.Terrains.Length; ++i)
+        {
+            if (GlobalMapParam.Terrains[i].TerrainType == TerrainType.NONE)
+                throw new System.Exception("You should not initialize TerrainType.NONE.");
+            for (byte j = 0; j < GlobalMapParam.Terrains.Length; ++j)
+                if (GlobalMapParam.Terrains[i].TerrainType == GlobalMapParam.Terrains[j].TerrainType && i != j)
+                    throw new System.Exception("Duplicatated terrain types in GlobalMapParam.Terrains.");
+        }
+        for (byte i = 0; i < LocalMapParam.Terrains.Length; ++i)
+        {
+            if (LocalMapParam.Terrains[i].TerrainType == TerrainType.NONE)
+                throw new System.Exception("You should not initialize TerrainType.NONE.");
+            for (byte j = 0; j < LocalMapParam.Terrains.Length; ++j)
+                if (LocalMapParam.Terrains[i].TerrainType == LocalMapParam.Terrains[j].TerrainType && i != j)
+                    throw new System.Exception("Duplicatated terrain types in LocalMapParam.Terrains.");
+        }
+
         System.Array.ForEach(GlobalMapParam.Terrains, ts => AllGlobalHexSprites.AddRange(ts.Sprites));
         //foreach (Terrain ts in GlobalMapParam.Terrains)
         //AllGlobalHexSprites.AddRange(ts.Sprites);

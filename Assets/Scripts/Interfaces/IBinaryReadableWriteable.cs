@@ -3,5 +3,5 @@
 interface IBinaryReadableWriteable
 {
     void Write(BinaryWriter writer);
-    void Read(BinaryReader writer);
+    void Read(SymBinaryReader writer);
 }

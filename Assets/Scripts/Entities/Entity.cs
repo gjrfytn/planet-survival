@@ -15,14 +15,15 @@ public class Entity : MonoBehaviour, IBinaryReadableWriteable
         writer.Write(Blocking);
     }
 
-    public virtual void Read(BinaryReader reader)
+    public virtual void Read(SymBinaryReader reader)
     {
-        LocalPos buf = new LocalPos(
-            reader.ReadUInt16(),
-            reader.ReadUInt16()
-        );
+        LocalPos buf;
+        reader.Read(out buf.X);
+        reader.Read(out buf.Y);
         Pos = buf;
-        Blocking = reader.ReadBoolean();
+        bool buf2;
+        reader.Read(out buf2);
+        Blocking = buf2;
     }
 
     public virtual void Destroy()

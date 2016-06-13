@@ -27,6 +27,7 @@ public abstract class Map : IBinaryReadableWriteable
         for (ushort y = 0; y < Height; ++y)
             for (ushort x = 0; x < Width; ++x)
                 writer.Write((int)TerrainMatrix[y, x]);
+
         for (ushort y = 0; y < Height; ++y)
             for (ushort x = 0; x < Width; ++x)
                 writer.Write((short)(HexSpriteID_Matrix[y, x] ?? -1));
@@ -36,23 +37,27 @@ public abstract class Map : IBinaryReadableWriteable
                 writer.Write(ForestMatrix[y, x]);
     }
 
-    public virtual void Read(BinaryReader reader)
+    public virtual void Read(SymBinaryReader reader)
     {
         for (ushort y = 0; y < Height; ++y)
             for (ushort x = 0; x < Width; ++x)
             {
-                TerrainMatrix[y, x] = (TerrainType)reader.ReadInt32();
+                int buf;
+                reader.Read(out buf);
+                TerrainMatrix[y, x] = (TerrainType)buf;
             }
+
         for (ushort y = 0; y < Height; ++y)
             for (ushort x = 0; x < Width; ++x)
             {
-                short buf = reader.ReadInt16();
+                short buf;
+                reader.Read(out buf);
                 HexSpriteID_Matrix[y, x] = buf == -1 ? null : (byte?)buf;
             }
 
         for (ushort y = 0; y < Height; ++y)
             for (ushort x = 0; x < Width; ++x)
-                ForestMatrix[y, x] = reader.ReadSingle();
+                reader.Read(out ForestMatrix[y, x]);
     }
 
     public bool Contains(GlobalPos coords)//C#6.0 EBD
@@ -99,23 +104,23 @@ public sealed class LocalMap : Map
             }
     }
 
-    public override void Read(BinaryReader reader)
+    public override void Read(SymBinaryReader reader)
     {
         base.Read(reader);
-        freeID = reader.ReadUInt16();
+        reader.Read(out freeID);
         for (ushort y = 0; y < Height; ++y)
             for (ushort x = 0; x < Width; ++x)
             {
-                byte objCount = reader.ReadByte();
+                byte objCount;
+                reader.Read(out objCount);
                 ObjectMatrix[y, x] = new Dictionary<ushort, Entity>(objCount);
                 for (byte i = 0; i < objCount; ++i)
                 {
                     UnityEngine.GameObject entBuf = new UnityEngine.GameObject(); //TODO
-                    ushort idBuf = reader.ReadUInt16();
+                    ushort idBuf;
+                    reader.Read(out idBuf);
                     entBuf.AddComponent<Entity>().Read(reader);
-                    ObjectMatrix[y, x].Add(
-                        idBuf,
-                        entBuf.GetComponent<Entity>()
+                    ObjectMatrix[y, x].Add(idBuf, entBuf.GetComponent<Entity>()
                     );
                 }
             }
@@ -263,83 +268,89 @@ public sealed class Chunk : Map
         }
     }
 
-    public override void Read(BinaryReader reader)
+    public override void Read(SymBinaryReader reader)
     {
         base.Read(reader);
         for (ushort y = 0; y < Height; ++y)
             for (ushort x = 0; x < Width; ++x)
-                HeightMatrix[y, x] = reader.ReadSingle();
+                reader.Read(out HeightMatrix[y, x]);
 
         for (ushort y = 0; y < Height; ++y)
             for (ushort x = 0; x < Width; ++x)
             {
-                short buf = reader.ReadInt16();
+                short buf;
+                reader.Read(out buf);
                 RiverSpriteID_Matrix[y, x] = buf == -1 ? null : (byte?)buf;
             }
         for (ushort y = 0; y < Height; ++y)
             for (ushort x = 0; x < Width; ++x)
-                RiverSpriteRotationMatrix[y, x] = reader.ReadInt16();
+                reader.Read(out RiverSpriteRotationMatrix[y, x]);
 
         for (ushort y = 0; y < Height; ++y)
             for (ushort x = 0; x < Width; ++x)
             {
-                short buf = reader.ReadInt16();
+                short buf;
+                reader.Read(out buf);
                 ClusterSpriteID_Matrix[y, x] = buf == -1 ? null : (byte?)buf;
             }
 
         for (ushort y = 0; y < Height; ++y)
             for (ushort x = 0; x < Width; ++x)
             {
-                short buf = reader.ReadInt16();
+                short buf;
+                reader.Read(out buf);
                 RoadSpriteID_Matrix[y, x] = buf == -1 ? null : (byte?)buf;
             }
         for (ushort y = 0; y < Height; ++y)
             for (ushort x = 0; x < Width; ++x)
-                RoadSpriteRotationMatrix[y, x] = reader.ReadInt16();
+                reader.Read(out RoadSpriteRotationMatrix[y, x]);
 
-
-
-        byte riversCount = reader.ReadByte();
+        byte riversCount;
+        reader.Read(out riversCount);
         Rivers = new List<List<LocalPos>>(riversCount);
         for (byte i = 0; i < riversCount; ++i)
         {
-            ushort riverLength = reader.ReadUInt16();
+            ushort riverLength;
+            reader.Read(out riverLength);
             Rivers.Add(new List<LocalPos>(riverLength));
             for (ushort j = 0; j < riverLength; ++j)
             {
-                Rivers[i].Add(new LocalPos(
-                    reader.ReadUInt16(),
-                    reader.ReadUInt16()
-                    ));
+                LocalPos buf;
+                reader.Read(out buf.X);
+                reader.Read(out buf.Y);
+                Rivers[i].Add(buf);
             }
         }
-
-        byte clusterCount = reader.ReadByte();
+        byte clusterCount;
+        reader.Read(out clusterCount);
         Clusters = new List<List<LocalPos>>(clusterCount);
         for (byte i = 0; i < clusterCount; ++i)
         {
-            ushort clusterSize = reader.ReadByte();
+            byte clusterSize;
+            reader.Read(out clusterSize);
             Clusters.Add(new List<LocalPos>(clusterSize));
             for (byte j = 0; j < clusterSize; ++j)
             {
-                Clusters[i].Add(new LocalPos(
-                    reader.ReadUInt16(),
-                    reader.ReadUInt16()
-                    ));
+                LocalPos buf;
+                reader.Read(out buf.X);
+                reader.Read(out buf.Y);
+                Clusters[i].Add(buf);
             }
         }
-        byte roadCount = reader.ReadByte();
+        byte roadCount;
+        reader.Read(out roadCount);
         Roads = new List<List<LocalPos>>(roadCount);
         for (byte i = 0; i < roadCount; ++i)
         {
-            ushort roadLength = reader.ReadUInt16();
+            ushort roadLength;
+            reader.Read(out roadLength);
             Roads.Add(new List<LocalPos>(roadLength));
             for (ushort j = 0; j < roadLength; ++j)
             {
-                Roads[i].Add(new LocalPos(
-                    reader.ReadUInt16(),
-                    reader.ReadUInt16()
-                    ));
+                LocalPos buf;
+                reader.Read(out buf.X);
+                reader.Read(out buf.Y);
+                Roads[i].Add(buf);
             }
         }
     }
