@@ -197,6 +197,7 @@ public class Player : LivingBeing
     protected override void Start()
     {
         base.Start();
+        transform.position = WorldVisualiser.GetTransformPosFromMapPos(GlobalPos);
         GetComponent<SpriteRenderer>().sortingLayerName = "Player";
 
         //TODO C# 6.0 инициализаторы свойств:

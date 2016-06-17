@@ -16,7 +16,6 @@ public class HexInteraction : MonoBehaviour
     {
         if (!World.IsCurrentMapLocal())
         {
-            //TerrainType terrType = (World.CurrentMap as Chunk).GetTerrainType( GetComponent<HexData>().MapCoords);
             EventManager.OnPlayerMoveOnGlobal(Pos); //Временно см. Player 114
             TerrainType terrType = World.GetHexTerrain(Pos);
             TimedAction travel = GameObject.FindWithTag("World").GetComponent<Terrains>().GetTerrainProperties(terrType);

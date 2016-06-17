@@ -43,7 +43,7 @@ public class EntityAction : MonoBehaviour
             EventManager.PopupButtonClicked += ButtonClick;
 
             Action[] filteredActions;
-            if (GetComponent<Creature>().AttackingPlayer)
+            if ((GetComponent<Creature>().AggressiveTo & Creature.AggrTarget.PLAYER) != Creature.AggrTarget.NONE)
             {
                 TempWeapon weapon = Player.GetWeapon();
                 filteredActions = new Action[]{

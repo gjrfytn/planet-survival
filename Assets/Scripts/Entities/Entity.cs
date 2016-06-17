@@ -26,6 +26,11 @@ public class Entity : MonoBehaviour, IBinaryReadableWriteable
         Blocking = buf2;
     }
 
+    protected virtual void Start()
+    {
+        transform.position = WorldVisualiser.GetTransformPosFromMapPos(Pos);
+    }
+
     public virtual void Destroy()
     {
         EventManager.OnEntityDestroy(this);

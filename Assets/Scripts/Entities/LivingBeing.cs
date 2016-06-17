@@ -34,8 +34,9 @@ public abstract class LivingBeing : Entity
         }
     }
 
-    protected virtual void Start()
+    protected override void Start()
     {
+        base.Start();
         Debug.Assert(Corpse.GetComponent<Container>() != null);
         Health = MaxHealth; //TODO C# 6.0 инициализаторы свойств
     }

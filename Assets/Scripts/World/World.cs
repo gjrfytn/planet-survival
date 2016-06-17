@@ -11,15 +11,9 @@ public class World : MonoBehaviour
     float ForestRoughness;
 
     [SerializeField]
-    WorldGenerator.TerrainSettings GlobalMapTerrainParam;
+    WorldGenerator.GlobalTerrainSettings GlobalMapTerrainParam;
     [SerializeField]
-    WorldGenerator.TerrainSettings LocalMapTerrainParam;
-    [SerializeField]
-    WorldGenerator.RiversSettings RiverParam;
-    [SerializeField]
-    WorldGenerator.ClustersSettings ClusterParam;
-    [SerializeField]
-    WorldGenerator.RoadsSettings RoadParam;
+    WorldGenerator.LocalTerrainSettings LocalMapTerrainParam;
 
     [SerializeField]
     ushort ChunkSize;
@@ -115,9 +109,6 @@ public class World : MonoBehaviour
         CurrentMap = CashedChunks[1, 1];
 
         Player = GameObject.FindWithTag("Player").GetComponent<Player>();
-        Player.GlobalPos.X = 5;
-        Player.GlobalPos.Y = 5;
-        Player.transform.position = WorldVisualiser.GetTransformPosFromMapPos(Player.GlobalPos);
         Camera.main.transform.position = new Vector3(Player.transform.position.x, Player.transform.position.y + Camera.main.transform.position.z * (Mathf.Tan((360 - Camera.main.transform.rotation.eulerAngles.x) / 57.3f)), Camera.main.transform.position.z);
         Visualiser.RenderVisibleHexes(Player.GlobalPos, Player.ViewDistance, CashedChunks, ChunkY, ChunkX);
         for (byte i = 0; i < 6; ++i)
@@ -270,18 +261,8 @@ public class World : MonoBehaviour
                 buf2[y, x] = buf[y, x].Value;
                 buf[y, x] = null;
             }
-        map.TerrainMatrix = WorldGenerator.CreateTerrainmap(ref buf2, ref LocalMapTerrainParam);
-
-
-        for (ushort i = 0; i < LocalMapSize.Y; ++i)
-            hmNb.Right[i] = hmNb.Left[i] = forest;
-        for (ushort i = 0; i < LocalMapSize.X; ++i)
-            hmNb.Bottom[i] = hmNb.Top[i] = forest;
-        WorldGenerator.CreateHeightmap(ref buf, ForestRoughness, hmNb);
-
-        for (ushort y = 0; y < LocalMapSize.Y; ++y)
-            for (ushort x = 0; x < LocalMapSize.X; ++x)
-                map.ForestMatrix[y, x] = buf[y, x].Value;
+        map.TerrainMatrix = WorldGenerator.CreateTerrainmap(buf2, LocalMapTerrainParam);
+        WorldGenerator.CreateVegetation(ref map, LocalMapTerrainParam, forest);
 
         return map;
     }
@@ -421,10 +402,9 @@ public class World : MonoBehaviour
     void SpawnRandomEnemy()
     {
         LocalPos pos = new LocalPos((ushort)Random.Range(0, LocalMapSize.X), (ushort)Random.Range(0, LocalMapSize.Y));
-        Creature enemy = (MonoBehaviour.Instantiate(Enemies[Random.Range(0, Enemies.Length)], WorldVisualiser.GetTransformPosFromMapPos(pos), Quaternion.identity) as Creature);
+        Creature enemy = (MonoBehaviour.Instantiate(Enemies[Random.Range(0, Enemies.Length)]) as Creature);
         enemy.Pos = pos;
         EventManager.OnEntitySpawn(enemy);
-        enemy.GetComponent<Creature>().Attack(Player);
     }
 
     public bool IsHexFree(LocalPos pos)
@@ -493,10 +473,10 @@ public class World : MonoBehaviour
                 buf[y, x] = buf[y, x].Value * ForestDensity;
                 chunk.ForestMatrix[y, x] = Mathf.Clamp(buf[y, x].Value, 0, Mathf.Abs(buf[y, x].Value));
             }
-        chunk.Rivers = WorldGenerator.CreateRivers(ref chunk.HeightMatrix, chunk.TerrainMatrix, ref RiverParam);
-        chunk.Clusters = WorldGenerator.CreateClusters(chunk, ref ClusterParam);
-        chunk.Roads = WorldGenerator.CreateRoads(ref chunk.HeightMatrix, chunk.TerrainMatrix, ref chunk.Clusters, ref RoadParam);
-        chunk.TerrainMatrix = WorldGenerator.CreateTerrainmap(ref chunk.HeightMatrix, ref GlobalMapTerrainParam);
+        chunk.Rivers = WorldGenerator.CreateRivers(chunk.HeightMatrix, ref chunk.TerrainMatrix, GlobalMapTerrainParam.RiversParam);
+        chunk.Clusters = WorldGenerator.CreateClusters(ref chunk, GlobalMapTerrainParam.ClustersParam);
+        chunk.Roads = WorldGenerator.CreateRoads(chunk.HeightMatrix, ref chunk.TerrainMatrix, chunk.Clusters, GlobalMapTerrainParam.RoadsParam);
+        chunk.TerrainMatrix = WorldGenerator.CreateTerrainmap(chunk.HeightMatrix, GlobalMapTerrainParam);
         return chunk;
     }
 

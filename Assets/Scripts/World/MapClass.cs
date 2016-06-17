@@ -11,15 +11,12 @@ public abstract class Map : IBinaryReadableWriteable
 
     public byte?[,] HexSpriteID_Matrix;
 
-    public float[,] ForestMatrix;
-
     public Map(ushort width, ushort height)
     {
         Width = width;
         Height = height;
         TerrainMatrix = new TerrainType[height, width];
         HexSpriteID_Matrix = new byte?[height, width];
-        ForestMatrix = new float[height, width];
     }
 
     public virtual void Write(BinaryWriter writer)
@@ -31,10 +28,6 @@ public abstract class Map : IBinaryReadableWriteable
         for (ushort y = 0; y < Height; ++y)
             for (ushort x = 0; x < Width; ++x)
                 writer.Write((short)(HexSpriteID_Matrix[y, x] ?? -1));
-
-        for (ushort y = 0; y < Height; ++y)
-            for (ushort x = 0; x < Width; ++x)
-                writer.Write(ForestMatrix[y, x]);
     }
 
     public virtual void Read(SymBinaryReader reader)
@@ -54,10 +47,6 @@ public abstract class Map : IBinaryReadableWriteable
                 reader.Read(out buf);
                 HexSpriteID_Matrix[y, x] = buf == -1 ? null : (byte?)buf;
             }
-
-        for (ushort y = 0; y < Height; ++y)
-            for (ushort x = 0; x < Width; ++x)
-                reader.Read(out ForestMatrix[y, x]);
     }
 
     public bool Contains(GlobalPos coords)//C#6.0 EBD
@@ -164,7 +153,7 @@ public sealed class LocalMap : Map
         return bm;
     }
 
-    void AddObject(Entity obj)
+    public void AddObject(Entity obj)
     {
         ObjectMatrix[obj.Pos.Y, obj.Pos.X].Add(freeID, obj);
         freeID++;
@@ -182,11 +171,23 @@ public sealed class LocalMap : Map
         KeyValuePair<ushort, Entity> obj = ObjectMatrix[e.Pos.Y, e.Pos.X].Single(o => o.Value == e);
         ObjectMatrix[e.Pos.Y, e.Pos.X].Remove(obj.Key);
     }
+
+    public List<LivingBeing> GetAllLivingBeings()
+    {
+        List<LivingBeing> lBList = new List<LivingBeing>();
+        foreach (Dictionary<ushort, Entity> hex in ObjectMatrix)
+            foreach (Entity obj in hex.Values)
+                if (obj is LivingBeing)
+                    lBList.Add((LivingBeing)obj);
+        return lBList;
+    }
 }
 
 public sealed class Chunk : Map
 {
     public float[,] HeightMatrix;
+
+    public float[,] ForestMatrix;
 
     public byte?[,] RiverSpriteID_Matrix;
     public short[,] RiverSpriteRotationMatrix;
@@ -204,6 +205,7 @@ public sealed class Chunk : Map
         : base(width, height)
     {
         HeightMatrix = new float[height, width];
+        ForestMatrix = new float[height, width];
         RiverSpriteID_Matrix = new byte?[height, width];
         RiverSpriteRotationMatrix = new short[height, width];
         ClusterSpriteID_Matrix = new byte?[height, width];
@@ -217,6 +219,10 @@ public sealed class Chunk : Map
         for (ushort y = 0; y < Height; ++y)
             for (ushort x = 0; x < Width; ++x)
                 writer.Write(HeightMatrix[y, x]);
+
+        for (ushort y = 0; y < Height; ++y)
+            for (ushort x = 0; x < Width; ++x)
+                writer.Write(ForestMatrix[y, x]);
 
         for (ushort y = 0; y < Height; ++y)
             for (ushort x = 0; x < Width; ++x)
@@ -274,6 +280,10 @@ public sealed class Chunk : Map
         for (ushort y = 0; y < Height; ++y)
             for (ushort x = 0; x < Width; ++x)
                 reader.Read(out HeightMatrix[y, x]);
+
+        for (ushort y = 0; y < Height; ++y)
+            for (ushort x = 0; x < Width; ++x)
+                reader.Read(out ForestMatrix[y, x]);
 
         for (ushort y = 0; y < Height; ++y)
             for (ushort x = 0; x < Width; ++x)

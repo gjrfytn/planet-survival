@@ -135,56 +135,13 @@ public class GameEventManager : MonoBehaviour
     {
         if (File.Exists(filename))
         {
-            using (BinaryReader reader = new BinaryReader(File.Open(filename, FileMode.Open)))
+            using (SymBinaryReader reader = new SymBinaryReader(File.Open(filename, FileMode.Open)))
             {
                 while (reader.PeekChar() != -1)
                 {
-                    string name = reader.ReadString();
-                    bool storyEvent = reader.ReadBoolean();
-                    string description = reader.ReadString();
-                    float probability = reader.ReadSingle();
-
-                    byte terrainsCount = (byte)(System.Enum.GetNames(typeof(TerrainType)).Length - 1);
-                    Dictionary<TerrainType, sbyte> terrainWeights = new Dictionary<TerrainType, sbyte>(terrainsCount);
-                    byte weightsCount = reader.ReadByte();
-                    for (byte i = 0; i < weightsCount; ++i)
-                        terrainWeights.Add((TerrainType)(1 << i), reader.ReadSByte()); //TODO Если нужно, при возведении можно использовать сдвиг.
-                    for (byte i = weightsCount; i < terrainsCount; ++i)
-                        terrainWeights.Add((TerrainType)(1 << i), 0);
-
-                    //weightsCount = reader.ReadByte();
-                    GameEvent.TimeWeights timeWeights = new GameEvent.TimeWeights()
-                    {
-                        Day = reader.ReadSByte(),
-                        Night = reader.ReadSByte()
-                    };
-                    GameEvent.StateWeights stateWeights = new GameEvent.StateWeights();
-                    //
-
-                    byte reactionCount = reader.ReadByte();
-                    List<GameEvent.Reaction> reactions = new List<GameEvent.Reaction>(reactionCount);
-                    for (byte i = 0; i < reactionCount; ++i)
-                    {
-                        string reacDesc = reader.ReadString();
-
-                        byte resultCount = reader.ReadByte();
-                        List<GameEvent.Reaction.Result> results = new List<GameEvent.Reaction.Result>(resultCount);
-                        for (byte j = 0; j < resultCount; ++j)
-                        {
-                            results.Add(new GameEvent.Reaction.Result()
-                                        {
-                                            Description = reader.ReadString(),
-                                            Probability = reader.ReadSingle()
-                                        });
-                        }
-
-                        reactions.Add(new GameEvent.Reaction()
-                                      {
-                                          Description = reacDesc,
-                                          Results = results
-                                      });
-                    }
-                    Events.Add(new GameEvent(name, storyEvent, description, probability, terrainWeights, timeWeights, stateWeights, reactions));
+                    GameEvent buf = new GameEvent();
+                    buf.Read(reader);
+                    Events.Add(buf);
                 }
             }
         }

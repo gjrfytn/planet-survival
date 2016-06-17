@@ -1,11 +1,21 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
+using System.Linq;
 
 public class Creature : LivingBeing
 {
-    enum AI_State : byte { STATE_IDLE, STATE_MOVE, STATE_ATTACK };
+    [System.Flags]
+    public enum AggrTarget : byte
+    {
+        NONE = 0x0,
+        PLAYER = 0x1,
+        NONPLAYER = 0xFE,
+        EVERYBODY = 0xFF
+    };
 
-    public bool AttackingPlayer { get; private set; }
+    enum AI_State : byte { IDLE, MOVE, ATTACK };
+
+    public AggrTarget AggressiveTo;
 
     LocalMap Map;
     LocalPos TargetPos;
@@ -70,27 +80,24 @@ public class Creature : LivingBeing
 
     public void MoveTo(LocalPos pos)
     {
-        State = AI_State.STATE_MOVE;
+        State = AI_State.MOVE;
         TargetPos = pos;
     }
 
-    public void Attack(LivingBeing target)
+    void Attack(LivingBeing target)
     {
-        State = AI_State.STATE_ATTACK;
+        State = AI_State.ATTACK;
         Target = target;
         TargetPos = Target.Pos;
-
-        if (target is Player)
-            AttackingPlayer = true;
 
         Animator.SetBool("Agressive", true);
     }
 
-    public void Idle()
+    void Idle()
     {
         Target = null;
         Path.Clear();
-        State = AI_State.STATE_IDLE;
+        State = AI_State.IDLE;
 
         Animator.SetBool("Agressive", false);
     }
@@ -155,6 +162,20 @@ public class Creature : LivingBeing
             transform.rotation = Quaternion.identity;
     }
 
+    LivingBeing FindTarget()
+    {
+        switch (AggressiveTo)
+        {
+            case AggrTarget.PLAYER:
+                return GameObject.FindWithTag("Player").GetComponent<Player>();
+            case AggrTarget.EVERYBODY:
+                List<LivingBeing> buf = Map.GetAllLivingBeings();
+                buf.Remove(this);
+                return buf.Find(lb1 => HexNavigHelper.Distance(Pos, lb1.Pos, true) == buf.Min(lb2 => HexNavigHelper.Distance(Pos, lb2.Pos, true)));
+        }
+        return null;
+    }
+
     void MakeTurn()
     {
         EventManager.OnCreatureStartTurn();
@@ -165,31 +186,44 @@ public class Creature : LivingBeing
     {
         switch (State)
         {
-            case AI_State.STATE_IDLE:
-                EventManager.OnCreatureEndTurn();
+            case AI_State.IDLE:
+                if (AggressiveTo != AggrTarget.NONE)
+                {
+                    LivingBeing target = FindTarget();
+                    if (target != null)
+                    {
+                        Attack(target);
+                        Think();
+                    }
+                }
+                else
+                    EventManager.OnCreatureEndTurn();
                 break;
-            case AI_State.STATE_MOVE:
+            case AI_State.MOVE:
                 if (TargetPos == Pos)
                     Idle();
                 else
                     Move();
                 break;
-            case AI_State.STATE_ATTACK:
-                if (TargetPos != Target.Pos)
-                {
-                    TargetPos = Target.Pos;
-                    Path.Clear();
-                }
-                if (HexNavigHelper.IsMapCoordsAdjacent(TargetPos, Pos, true))
-                {
-                    Path.Clear();
-                    PerformAttack(Target, BaseWeapon.NormalHitDamage, 0.75f);//TODO Временно normal, 0.85f
-                    RemainingMoves = 0;
-                    EventManager.OnCreatureEndTurn();
-                }
+            case AI_State.ATTACK:
+                if (AggressiveTo == AggrTarget.NONE)
+                    Idle();
                 else
                 {
-                    Move();
+                    if (TargetPos != Target.Pos)
+                    {
+                        TargetPos = Target.Pos;
+                        Path.Clear();
+                    }
+                    if (HexNavigHelper.IsMapCoordsAdjacent(TargetPos, Pos, true))
+                    {
+                        Path.Clear();
+                        PerformAttack(Target, BaseWeapon.NormalHitDamage, 0.75f);//TODO Временно normal, 0.85f
+                        RemainingMoves = 0;
+                        EventManager.OnCreatureEndTurn();
+                    }
+                    else
+                        Move();
                 }
                 break;
         }

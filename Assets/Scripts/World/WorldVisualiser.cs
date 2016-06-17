@@ -65,18 +65,6 @@ public class WorldVisualiser : MonoBehaviour
         [SerializeField]
         Sprite[] DiagBankSprites_;
         public Sprite[] DiagBankSprites { get { return DiagBankSprites_; } private set { DiagBankSprites_ = value; } }
-        [SerializeField]
-        Sprite[] TreeSprites_;
-        public Sprite[] TreeSprites { get { return TreeSprites_; } private set { TreeSprites_ = value; } }
-        [SerializeField]
-        Sprite[] BushSprites_;
-        public Sprite[] BushSprites { get { return BushSprites_; } private set { BushSprites_ = value; } }
-        [SerializeField]
-        float PlantProbability_;
-        public float PlantProbability { get { return PlantProbability_; } private set { PlantProbability_ = value; } }
-        [SerializeField]
-        float BushesForestValue_;
-        public float BushesForestValue { get { return BushesForestValue_; } private set { BushesForestValue_ = value; } }
     }
 
     public static Vector2 GlobalHexSpriteSize { get; private set; } //TODO static? Перенести в классы?
@@ -368,7 +356,6 @@ public class WorldVisualiser : MonoBehaviour
             hex.Hex.GetComponent<SpriteRenderer>().sprite = ChooseHexSprite(pos, map);
         hex.Hex.GetComponent<SpriteRenderer>().sortingLayerName = "Landscape";//
         if ((map.TerrainMatrix[pos.Y, pos.X] & TerrainType.WATER) != TerrainType.NONE)
-        {
             //float offsetbuf=(LocalHexSpriteSize.pos.X-LocalHexSpriteSize.y)/2;
             for (byte i = 0; i < 6; ++i) //TODO К оптимизации.
                 if (map.Contains(HexNavigHelper.GetNeighborMapCoords(pos, (TurnedHexDirection)i)) && (map.TerrainMatrix[HexNavigHelper.GetNeighborMapCoords(pos, (TurnedHexDirection)i).Y, HexNavigHelper.GetNeighborMapCoords(pos, (TurnedHexDirection)i).X] & TerrainType.WATER) == TerrainType.NONE)
@@ -403,21 +390,7 @@ public class WorldVisualiser : MonoBehaviour
                     bank.GetComponent<SpriteRenderer>().material = DiffuseMaterial;
                     bank.AddComponent<Fader>();
                 }
-        }
-        else
-            if (map.ForestMatrix[pos.Y, pos.X] > 0 && Random.value < LocalMapParam.PlantProbability * map.ForestMatrix[pos.Y, pos.X])
-            {
-                GameObject plant = new GameObject("plantSprite");
-                hex.LandscapeObj.Add(plant);
-                plant.AddComponent<SpriteRenderer>().sortingLayerName = "LandscapeObjects";
-                plant.GetComponent<SpriteRenderer>().material = DiffuseMaterial;
-                if (map.ForestMatrix[pos.Y, pos.X] < LocalMapParam.BushesForestValue)
-                    plant.GetComponent<SpriteRenderer>().sprite = LocalMapParam.BushSprites[Random.Range(0, LocalMapParam.BushSprites.Length)];
-                else
-                    plant.GetComponent<SpriteRenderer>().sprite = LocalMapParam.TreeSprites[Random.Range(0, LocalMapParam.TreeSprites.Length)];
-                plant.transform.position = new Vector2(hex.Hex.transform.position.x, hex.Hex.transform.position.y + plant.GetComponent<SpriteRenderer>().sprite.bounds.extents.y - LocalHexSpriteSize.y * 0.5f);
-                plant.AddComponent<Fader>();
-            }
+
         hex.Hex.GetComponent<Fader>().FadeIn(FadeInTime);
         hex.LandscapeObj.ForEach(obj => obj.GetComponent<Fader>().FadeIn(FadeInTime));
     }
@@ -564,7 +537,7 @@ public class WorldVisualiser : MonoBehaviour
     /// </summary>
     /// <param name="hex">Хекс.</param>
     /// <param name="mapCoords">Координаты в матрице.</param>
-    void MakeHexForest(ListType hex, LocalPos pos, Map map) //TODO (WIP)
+    void MakeHexForest(ListType hex, LocalPos pos, Chunk map)
     {
         Vector2 spriteSize = hex.Hex.GetComponent<SpriteRenderer>().sprite.bounds.size;
         if (map.ForestMatrix[pos.Y, pos.X] >= 1) //TODO
@@ -644,12 +617,12 @@ public class WorldVisualiser : MonoBehaviour
     /// <param name="mapCoords">Координаты на карте.</param>
     public static Vector2 GetTransformPosFromMapPos(LocalPos pos)//C#6.0 EBD
     {
-        return new Vector2(pos.X * LocalHexSpriteSize.x + (pos.Y % 2) * LocalHexSpriteSize.x * 0.5f, pos.Y * LocalHexSpriteSize.y * 0.75f);
+        return new Vector2(pos.X * LocalHexSpriteSize.x + (pos.Y & 1) * LocalHexSpriteSize.x * 0.5f, pos.Y * LocalHexSpriteSize.y * 0.75f);
     }
 
     public static Vector2 GetTransformPosFromMapPos(GlobalPos pos)//C#6.0 EBD
     {
-        return new Vector2(pos.X * GlobalHexSpriteSize.x * 0.75f, pos.Y * GlobalHexSpriteSize.y + ((pos.X % 2) != 0 ? 1 : 0) * GlobalHexSpriteSize.y * 0.5f);
+        return new Vector2(pos.X * GlobalHexSpriteSize.x * 0.75f, pos.Y * GlobalHexSpriteSize.y + (pos.X & 1) * GlobalHexSpriteSize.y * 0.5f);
     }
 
 
