@@ -28,7 +28,7 @@ public class InventoryManager : MonoBehaviour {
     public GameObject EquipmentSlotPrefab;
     public GameObject ItemPrefab;
     [Header("Other")] // Неудачное название
-    public GameObject DraggingItem;
+    public GameObject DraggingSlot;
 
     [Header("Quality colors")]
     public Color JunkColor;

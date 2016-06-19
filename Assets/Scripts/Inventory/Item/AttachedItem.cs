@@ -8,6 +8,9 @@ public class AttachedItem : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
 
     public Item Item;
 
+    [HideInInspector]
+    public Text StackSize;
+
     public InventoryManager InventoryManager;
     public Inventory Inventory;
     public static Equipment Equipment;
@@ -34,8 +37,8 @@ public class AttachedItem : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
 
         CanvasGroup = GetComponent<CanvasGroup>();
         RectTransform = GetComponent<RectTransform>();
-        DraggingSlotRectTransform = InventoryManager.DraggingItem.GetComponent<RectTransform>();
-        DraggingSlot = InventoryManager.DraggingItem.transform;
+        DraggingSlotRectTransform = InventoryManager.DraggingSlot.GetComponent<RectTransform>();
+        DraggingSlot = InventoryManager.DraggingSlot.transform;
     }
 	
 	// Update is called once per frame
@@ -43,12 +46,38 @@ public class AttachedItem : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
 	
 	}
 
+
+
     public void CreateDuplicate(GameObject Item)
     {
         Item item = Item.GetComponent<AttachedItem>().Item;
         GameObject duplicate = Inventory.AddItem(item.Id, item.StackSize);
         Item.GetComponent<AttachedItem>().Duplicate = duplicate;
         duplicate.GetComponent<AttachedItem>().Duplicate = Item;
+    }
+
+    public void UpdateStackSize()
+    {
+        StackSize = transform.GetComponentInChildren<Text>();
+        if (Item.MaxStackSize > 1)
+        {
+            StackSize.text = Item.StackSize.ToString();
+            StackSize.enabled = true;
+            if (Duplicate != null)
+            {
+                Duplicate.GetComponent<AttachedItem>().StackSize = Duplicate.transform.GetComponentInChildren<Text>();
+                Duplicate.GetComponent<AttachedItem>().StackSize.text = Item.StackSize.ToString();
+                Duplicate.GetComponent<AttachedItem>().StackSize.enabled = true;
+            }
+        }
+        else
+        {
+            StackSize.enabled = false;
+            if (Duplicate != null)
+            {
+                Duplicate.GetComponent<AttachedItem>().StackSize.enabled = false;
+            }
+        }
     }
 
 
@@ -63,7 +92,7 @@ public class AttachedItem : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
         GetComponent<RectTransform>().GetWorldCorners(slotCorners);
 
         Vector2 localPointerPosition;
-        if (RectTransformUtility.ScreenPointToLocalPointInRectangle(Tooltip.CanvasRectTransform, slotCorners[3], data.pressEventCamera, out localPointerPosition))
+        if (RectTransformUtility.ScreenPointToLocalPointInRectangle(Tooltip.Canvas.GetComponent<RectTransform>(), slotCorners[3], data.pressEventCamera, out localPointerPosition))
         {
             Tooltip.RectTransform.localPosition = localPointerPosition;
         }
@@ -98,7 +127,7 @@ public class AttachedItem : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
                 #region IsEquipment
                 for (int i = 0; i < Equipment.Slots.Count; i++)
                 {
-                    if (Equipment.Slots[i].GetComponent<EquipmentSlot>().EquipmentType.Equals(Item.ItemType))
+                    if (Equipment.Slots[i].GetComponent<EquipmentSlot>().EquipmentType.Equals(Item.ItemType) || Item.ItemType == ItemType.Socket)
                     {
                         if (Equipment.Slots[i].transform.childCount == 0)
                         {
@@ -146,7 +175,7 @@ public class AttachedItem : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
                             {
                                 //Inventory.EquipItem(Item);
                                 //Inventory.UnequipItem(equippedItem.GetComponent<AttachedItem>().Item);
-                                equippedItem.transform.SetParent(this.transform.parent);
+                                equippedItem.transform.SetParent(transform.parent);
                                 equippedItem.GetComponent<RectTransform>().localPosition = Vector3.zero;
                                 if (gameObject.GetComponentInParent<Slot>().SlotType == SlotType.Hotbar)
                                 {
@@ -186,38 +215,21 @@ public class AttachedItem : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
                 }
                 #endregion
             }
-            else
+            else if(Item.IsConsumable)
             {
                 Item duplicateItem = null;
 
-                if (Item.ItemType == ItemType.Book)
-                {
-                    //
-                }
-                if(Item.ItemType == ItemType.AudioPlayer)
-                {
-                    GameObject audioPlayer = Instantiate(Item.CustomObject);
-                    audioPlayer.name = "AudioPlayer";
-                    audioPlayer.transform.SetParent(InventoryManager.transform);
-                    audioPlayer.GetComponent<RectTransform>().localPosition = Vector3.zero;
-                }
-                if (Item.ItemType == ItemType.AudioRecord)
-                {
-                    //
-                }
-                if (Item.ItemType == ItemType.Consumable)
-                {
                     if (Duplicate != null)
                     {
                         duplicateItem = Duplicate.GetComponent<AttachedItem>().Item;
                     }
                     Inventory.UseItem(Item);
                     Item.StackSize--;
-                    InventoryManager.Stackable(Hotbar.Slots);
+                    UpdateStackSize();
                     if (duplicateItem != null)
                     {
                         Duplicate.GetComponent<AttachedItem>().Item.StackSize--;
-                        InventoryManager.Stackable(Inventory.Slots);
+                        UpdateStackSize();
                         if (Item.StackSize <= 0)
                         {
                             if (Tooltip != null)
@@ -236,42 +248,26 @@ public class AttachedItem : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
                         }
                         Destroy(gameObject);
                     }
-                }
+            }
+            else
+            {
+                //Item duplicateItem = null;
 
-
-
-
-                /*Item duplicateItem = null;
-                if (Duplicate != null)
+                if (Item.ItemType == ItemType.Book)
                 {
-                    duplicateItem = Duplicate.GetComponent<AttachedItem>().Item;
+                    //
                 }
-                Inventory.UseItem(Item);
-                Item.StackSize--;
-                Inventory.Stackable();
-                if (duplicateItem != null)
+                if(Item.ItemType == ItemType.AudioPlayer)
                 {
-                    Duplicate.GetComponent<AttachedItem>().Item.StackSize--;
-                    Inventory.Stackable();
-                    if (Item.StackSize <= 0)
-                    {
-                        if (Tooltip != null)
-                        {
-                            Tooltip.DeactivateTooltip();
-                        }
-                        Inventory.RemoveItem(Item);
-                        Destroy(Duplicate);
-                    }
+                    GameObject audioPlayer = Instantiate(Item.CustomObject);
+                    audioPlayer.name = "AudioPlayer";
+                    audioPlayer.transform.SetParent(InventoryManager.transform);
+                    audioPlayer.GetComponent<RectTransform>().localPosition = Vector3.zero;
                 }
-                if (Item.StackSize <= 0)
-                {
-                    if (Tooltip != null)
-                    {
-                        Tooltip.DeactivateTooltip();
-                    }
-                    Destroy(gameObject);
-                    //Inventory.RemoveItem(Item);
-                }*/
+            }
+            if (Tooltip != null)
+            {
+                Tooltip.DeactivateTooltip();
             }
         }
         else if (data.button == PointerEventData.InputButton.Left) //Поменять
@@ -283,13 +279,16 @@ public class AttachedItem : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
 
     public void OnBeginDrag(PointerEventData data)
     {
-        CanvasGroup.blocksRaycasts = false;
-        DraggingItem = gameObject;
-        LastSlot = transform.parent.gameObject.transform;
-
-        if (transform.parent.GetComponent<Slot>().SlotType == SlotType.Equipment)
+        if (data.button == PointerEventData.InputButton.Left)
         {
-            Inventory.UnequipItem(Item);
+            CanvasGroup.blocksRaycasts = false;
+            DraggingItem = gameObject;
+            LastSlot = transform.parent.gameObject.transform;
+
+            if (transform.parent.GetComponent<Slot>().SlotType == SlotType.Equipment)
+            {
+                Inventory.UnequipItem(Item);
+            }
         }
     }
 
@@ -301,7 +300,6 @@ public class AttachedItem : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
             {
                 return;
             }
-
             if (data.button == PointerEventData.InputButton.Left)
             {
                 RectTransform.SetAsLastSibling();
@@ -309,31 +307,34 @@ public class AttachedItem : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
                 Vector2 localPointerPosition;
                 if (RectTransformUtility.ScreenPointToLocalPointInRectangle(DraggingSlotRectTransform, Input.mousePosition, data.pressEventCamera, out localPointerPosition))
                 {
-                    RectTransform.localPosition = localPointerPosition /*- PointerOffset*/;
+                    RectTransform.localPosition = localPointerPosition;
                     if (Duplicate != null)
                     {
                         Destroy(Duplicate);
                     }
                 }
+                Inventory.UpdateItemList();
             }
-            Inventory.UpdateItemList();
         }
     }
 
     public void OnEndDrag(PointerEventData data)
     {
-        CanvasGroup.blocksRaycasts = true;
-        DraggingItem = null;
-        if (gameObject.transform.parent == DraggingSlot)
+        if (data.button == PointerEventData.InputButton.Left)
         {
-            GameObject dropItem = (GameObject)Instantiate(Item.DroppedItem);
-            dropItem.AddComponent<PickUpItem>();
-            dropItem.GetComponent<PickUpItem>().Item = Item;
-            dropItem.transform.localPosition = GameObject.FindGameObjectWithTag("Player").transform.localPosition;
+            CanvasGroup.blocksRaycasts = true;
+            //DraggingItem = null;
+            if (gameObject.transform.parent == DraggingSlot)
+            {
+                GameObject dropItem = (GameObject)Instantiate(Item.DroppedItem);
+                dropItem.AddComponent<PickUpItem>();
+                dropItem.GetComponent<PickUpItem>().Item = Item;
+                dropItem.transform.localPosition = GameObject.FindGameObjectWithTag("Player").transform.localPosition;
+                Inventory.UpdateItemList();
+                Destroy(gameObject);
+                Debug.Log("Предмет выброшен");
+            }
             Inventory.UpdateItemList();
-            Destroy(gameObject);
         }
-        Inventory.UpdateItemList();
     }
-
 }

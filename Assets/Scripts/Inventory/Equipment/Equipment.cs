@@ -24,7 +24,8 @@ public class Equipment : MonoBehaviour, IDropHandler {
 
     Player Player;
     // Use this for initialization
-    void Start() {
+    void Awake()
+    {
         Player = GameObject.FindGameObjectWithTag("Player").GetComponent<Player>();
         AttachedItem.Equipment = GetComponent<Equipment>();
 

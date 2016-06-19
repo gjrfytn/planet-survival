@@ -8,12 +8,13 @@ public class ItemEditor : EditorWindow {
     Item Item = new Item();
 
     //ItemType ItemTypeToCreate;
-    EquipmentItemType EquipmentItemTypeToCreate;
-    OtherItemType OtherTypeToCreate;
+    EquipmentItemType EquipmentItemTypeToCreate; //Предметы которые можно одеть на персонажа
+    OtherItemType OtherItemTypeToCreate; //Любые предметы которые нельзя надеть на персонажа
 
     Texture2D Logo = null;
 
     bool OffHandOnly;
+    bool IsOther;
     bool EnableAttributes;
     int AttributeAmount;
 
@@ -176,15 +177,26 @@ public class ItemEditor : EditorWindow {
 
         Item.ItemSound = (AudioClip)EditorGUILayout.ObjectField("Item sound: ", Item.ItemSound, typeof(AudioClip), false);
 
+        Item.UseSound = (AudioClip)EditorGUILayout.ObjectField("Use sound: ", Item.UseSound, typeof(AudioClip), false);
+
         Item.DroppedItem = (GameObject)EditorGUILayout.ObjectField("Dropped item: ", Item.DroppedItem, typeof(GameObject), false);
 
         Item.CustomObject = (GameObject)EditorGUILayout.ObjectField("Custom object: ", Item.CustomObject, typeof(GameObject), false);
 
-        Item.IsEquipment = EditorGUILayout.Toggle("Is equipment: ", Item.IsEquipment);
+        Item.Cooldown = EditorGUILayout.IntField("Cooldown: ", Item.Cooldown);
+
+        if (!IsOther)
+        {
+            Item.IsEquipment = EditorGUILayout.Toggle("Equipment: ", Item.IsEquipment);
+        }
+        if (!Item.IsEquipment)
+        {
+            IsOther = EditorGUILayout.Toggle("Other: ", IsOther);
+        }
 
         if (Item.IsEquipment)
         {
-            Item.Stackable = false;
+            Item.IsStackable = false;
             EquipmentItemTypeToCreate = (EquipmentItemType)EditorGUILayout.EnumPopup("Equipment type: ", EquipmentItemTypeToCreate);
 
             string[] itemTypes = System.Enum.GetNames(typeof(ItemType));
@@ -233,21 +245,50 @@ public class ItemEditor : EditorWindow {
 
                 GUILayout.BeginHorizontal();
 
-                Item.Armor = EditorGUILayout.IntField("Armor: ", Item.Armor);
+                Item.Armor = EditorGUILayout.FloatField("Armor: ", Item.Armor);
 
                 GUILayout.EndHorizontal();
 
             }
         }
-        else
+        else if(IsOther)
         {
-            Item.ItemType = ItemType.Other;
 
-            Item.UseSound = (AudioClip)EditorGUILayout.ObjectField("Use sound: ", Item.UseSound, typeof(AudioClip), false);
+            OtherItemTypeToCreate = (OtherItemType)EditorGUILayout.EnumPopup("Item type: ", OtherItemTypeToCreate);
 
-            Item.Stackable = EditorGUILayout.Toggle("Stackable: ", Item.Stackable);
+            string[] itemTypes = System.Enum.GetNames(typeof(ItemType));
 
-            if (Item.Stackable)
+            for (int i = 0; i < itemTypes.Length; i++)
+            {
+                if (itemTypes[i] == OtherItemTypeToCreate.ToString())
+                {
+                    Item.ItemType = (ItemType)System.Enum.Parse(typeof(ItemType), itemTypes[i]);
+                    break;
+                }
+            }
+
+
+            if (Item.ItemType == ItemType.Potion)
+            {
+                EditorGUILayout.LabelField("Note: potions are consumables by default", GUILayout.Height(40));
+                Item.IsConsumable = true;
+                Item.HealthRestore = EditorGUILayout.IntField("Health restore", Item.HealthRestore);
+                Item.EnergyRestore = EditorGUILayout.IntField("Health restore", Item.EnergyRestore);
+            }
+            else
+            {
+                Item.HealthRestore = 0;
+                Item.EnergyRestore = 0;
+            }
+
+            if (Item.ItemType != ItemType.Potion)
+            {
+                Item.IsConsumable = EditorGUILayout.Toggle(new GUIContent("Consumable: "), Item.IsConsumable);
+            }
+
+            Item.IsStackable = EditorGUILayout.Toggle("Stackable: ", Item.IsStackable);
+
+            if (Item.IsStackable)
             {
                 Item.MaxStackSize = EditorGUILayout.IntField("Max stack size: ", Item.MaxStackSize);
             }
@@ -286,6 +327,17 @@ public class ItemEditor : EditorWindow {
                     ItemToManage = ItemDatabase.Items[i];
                     string[] itemTypes = System.Enum.GetNames(typeof(ItemType));
 
+                    string[] equipmentItemTypes = System.Enum.GetNames(typeof(ItemType));
+
+                    for (int k = 0; k < itemTypes.Length; k++)
+                    {
+                        if (itemTypes[k] == EquipmentItemTypeToCreate.ToString())
+                        {
+                            Item.ItemType = (ItemType)System.Enum.Parse(typeof(ItemType), itemTypes[k]);
+                            break;
+                        }
+                    }
+
                     for (int k = 0; k < itemTypes.Length; k++)
                     {
                         if (itemTypes[k] == ItemToManage.ItemType.ToString())
@@ -294,14 +346,14 @@ public class ItemEditor : EditorWindow {
                             {
                                 break;
                             }
-                            else if (ItemToManage.ItemType != ItemType.Consumable && ItemToManage.ItemType != ItemType.Socket)
+                            else if (ItemToManage.ItemType != ItemType.Potion && ItemToManage.ItemType != ItemType.Socket)
                             {
                                 //EquipmentItemTypeToCreate = (EquipmentItemType)System.Enum.Parse(typeof(EquipmentItemType), itemTypes[k]);
                                 break;
                             }
                             else
                             {
-                                ItemToManage.ItemType = ItemType.Other;
+                                //ItemToManage.ItemType = ItemType.Other;
                                 //OtherTypeToCreate = (OtherItemType)System.Enum.Parse(typeof(OtherItemType), itemTypes[k]);
                                 break;
                             }
@@ -322,15 +374,14 @@ public class ItemEditor : EditorWindow {
                             {
                                 break;
                             }
-                            else if (ItemToManage.ItemType != ItemType.Consumable && ItemToManage.ItemType != ItemType.Socket)
+                            else if (ItemToManage.ItemType != ItemType.Potion && ItemToManage.ItemType != ItemType.Socket)
                             {
                                 //EquipmentItemTypeToCreate = (EquipmentItemType)System.Enum.Parse(typeof(EquipmentItemType), itemTypes[k]);
                                 break;
                             }
                             else
                             {
-                                ItemToManage.ItemType = ItemType.Other;
-                                //OtherTypeToCreate = (OtherItemType)System.Enum.Parse(typeof(OtherItemType), itemTypes[k]);
+
                                 break;
                             }
                         }
@@ -425,20 +476,20 @@ public class ItemEditor : EditorWindow {
 
                         GUILayout.BeginHorizontal();
 
-                        ItemToManage.Armor = EditorGUILayout.IntField("Armor: ", ItemToManage.Armor);
+                        ItemToManage.Armor = EditorGUILayout.FloatField("Armor: ", ItemToManage.Armor);
 
                         GUILayout.EndHorizontal();
                     }
                 }
                 else
                 {
-                    ItemToManage.ItemType = ItemType.Other;
+                    //ItemToManage.ItemType = ItemType.Other;
 
                     ItemToManage.UseSound = (AudioClip)EditorGUILayout.ObjectField("Use sound: ", ItemToManage.UseSound, typeof(AudioClip), false);
 
-                    ItemToManage.Stackable = EditorGUILayout.Toggle("Stackable: ", ItemToManage.Stackable);
+                    ItemToManage.IsStackable = EditorGUILayout.Toggle("Stackable: ", ItemToManage.IsStackable);
 
-                    if (ItemToManage.Stackable)
+                    if (ItemToManage.IsStackable)
                     {
                         ItemToManage.MaxStackSize = EditorGUILayout.IntField("Max stack size: ", ItemToManage.MaxStackSize);
                     }

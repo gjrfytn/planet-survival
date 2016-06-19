@@ -21,11 +21,9 @@ public class Item
 
     public AudioClip ItemSound;
 
-    public bool Stackable;
+    public bool IsStackable;
     public int StackSize;
     public int MaxStackSize;
-    public int HealAmount;
-    public bool Consumable;
     public AudioClip UseSound;
 
     [Multiline]
@@ -41,24 +39,31 @@ public class Item
 
     public ItemType ItemType;
 
-    public int Cooldown;
+    public int Cooldown; //Задержка перед использованием
 
     public Sprite Icon;
 
+    //Weapon
     public int Damage;
     public int CriticalDamage;
     public float AttackSpeed;
-    public float LifeSteal;
+    //public float LifeSteal;
     public int Range;
 
     [Tooltip("Указывается эффект из скрипта")]
     public string UseEffectScriptName;
 
-
-    public int Armor;
+    //Armor
+    public float Armor;
     public int BlockAmount;
-    public int BlockChance;
+    public float BlockChance;
 
+    //Consumable
+    public int HealthRestore;
+    public int EnergyRestore;
+
+    public int ReturnItemId;
+    public int ReturnItemStackSize;
     [SerializeField]
     public List<ItemAttribute> ItemAttributes = new List<ItemAttribute>();
 

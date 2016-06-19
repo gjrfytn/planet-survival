@@ -13,23 +13,22 @@ public enum ItemType : byte
     Boots,
     Socket,
     Backpack,
-    Consumable,
     Book,
     AudioPlayer,
-    AudioRecord,
+    Potion,
+    Consumable,
     Other,
 }
 
-
+//Предметы которые можно одеть на персонажа
 public enum EquipmentItemType : byte
 {
+    Weapon,
     Head,
     Chest,
     Pants,
     Boots,
-    Weapon,
     OffHand,
-    Socket,
     Backpack,
 }
 
@@ -43,11 +42,13 @@ public enum ItemQuality : byte
     Junk
 }
 
+//Любые предметы которые нельзя надеть на персонажа
 public enum OtherItemType : byte
 {
-    Consumable,
+    Potion, //
     Socket,
     Book,
+    AudioRecord,
 }
 
 public enum SlotType : byte

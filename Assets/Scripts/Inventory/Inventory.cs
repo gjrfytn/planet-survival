@@ -110,6 +110,7 @@ public class Inventory : MonoBehaviour, IDropHandler {
 
                 item.name = attachedItem.Item.Name;
                 attachedItem.Item.ItemStartNumber = ItemsInInventory.Count;
+                attachedItem.UpdateStackSize();
                 return item;
             }
         }
@@ -207,22 +208,43 @@ public class Inventory : MonoBehaviour, IDropHandler {
         int stack;
         for(int i = 0; i < ItemsInInventory.Count; i++)
         {
-            if(ItemsInInventory[i].Id == id)
+            if(ItemsInInventory[i].Id == id && ItemsInInventory[i].IsStackable)
             {
                 stack = ItemsInInventory[i].StackSize + stackSize;
-                if(stack <= ItemsInInventory[i].MaxStackSize)
+                int rest = (stack) % ItemsInInventory[i].MaxStackSize;
+                GameObject tempItem = GetItemGameObject(ItemsInInventory[i]);
+                if (stack <= ItemsInInventory[i].MaxStackSize)
                 {
                     ItemsInInventory[i].StackSize = stack;
-                    GameObject temp = GetItemGameObject(ItemsInInventory[i]);
-                    if(temp != null && temp.GetComponent<AttachedItem>().Duplicate != null)
+                    tempItem.GetComponent<AttachedItem>().UpdateStackSize();
+                    //GameObject temp = GetItemGameObject(ItemsInInventory[i]);
+                    if(tempItem != null && tempItem.GetComponent<AttachedItem>().Duplicate != null)
                     {
-                        temp.GetComponent<AttachedItem>().Duplicate.GetComponent<AttachedItem>().Item.StackSize = stack;
+                        tempItem.GetComponent<AttachedItem>().Duplicate.GetComponent<AttachedItem>().Item.StackSize = stack;
+                        tempItem.GetComponent<AttachedItem>().UpdateStackSize();
                     }
+                    return true;
+                }
+                if (stack > ItemsInInventory[i].MaxStackSize)
+                {
+                    //int rest = (stack) % ItemsInInventory[i].MaxStackSize;
+                    ItemsInInventory[i].StackSize = ItemsInInventory[i].MaxStackSize;
+                    if (tempItem != null && tempItem.GetComponent<AttachedItem>().Duplicate != null)
+                    {
+                        tempItem.GetComponent<AttachedItem>().Duplicate.GetComponent<AttachedItem>().Item.StackSize = stack;
+                    }
+                    AddItem(ItemsInInventory[i].Id, rest);
+                    GetItemGameObject(ItemsInInventory[i]).GetComponent<AttachedItem>().UpdateStackSize();
                     return true;
                 }
             }
         }
         return false;
+    }
+
+    public void StackItem(Item item)
+    {
+
     }
 
     public GameObject GetItemGameObject(Item item)

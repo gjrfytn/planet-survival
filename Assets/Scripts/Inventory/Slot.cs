@@ -10,7 +10,8 @@ public class Slot : MonoBehaviour, IDropHandler {
     public int SlotNumber;
     public bool ContainsItem;
 
-    GameObject DraggingItem;
+    GameObject DraggingItemGameObject;
+    AttachedItem DraggingItem;
     protected InventoryManager InventoryManager;
     protected Inventory Inventory;
 	// Use this for initialization
@@ -36,53 +37,126 @@ public class Slot : MonoBehaviour, IDropHandler {
 
     public void OnDrop(PointerEventData data)
     {
-        DraggingItem = AttachedItem.DraggingItem;
-        Item draggingItem = DraggingItem.GetComponent<AttachedItem>().Item;
-        Item itemFromSlot = new Item();
-        bool sameItem = draggingItem.Name == itemFromSlot.Name;
-        if(DraggingItem != null)
+        if(AttachedItem.DraggingItem != null)
         {
-            if (GetComponentInChildren<AttachedItem>() == null)
+            DraggingItemGameObject = AttachedItem.DraggingItem;
+            DraggingItem = DraggingItemGameObject.GetComponent<AttachedItem>();
+
+            bool addItemIntoSlot = AddItemIntoSlot();
+            if(addItemIntoSlot)
             {
-                if (SlotType == SlotType.Inventory)
-                {
-                    AddItemIntoSlot(DraggingItem);
-                }
-                if(SlotType == SlotType.Equipment && DraggingItem.GetComponent<AttachedItem>().Item.IsEquipment && GetComponent<EquipmentSlot>().EquipmentType.Equals(DraggingItem.GetComponent<AttachedItem>().Item.ItemType))
-                {
-                    AddItemIntoSlot(DraggingItem);
-                    Inventory.EquipItem(transform.GetComponentInChildren<AttachedItem>().Item);
-                }
-                if(SlotType == SlotType.Hotbar)
-                {
-                    DraggingItem.GetComponent<AttachedItem>().CreateDuplicate(DraggingItem);
-                    AddItemIntoSlot(DraggingItem);
-                    InventoryManager.Stackable(Inventory.Slots);
-                }
+                DraggingItemGameObject.transform.SetParent(gameObject.transform);
+                DraggingItemGameObject.GetComponent<RectTransform>().localPosition = Vector2.zero;
+                Debug.Log("addItemIntoSlot: " + addItemIntoSlot);
             }
             else
             {
-                if (SlotType == SlotType.Inventory)
-                {
-                    itemFromSlot = GetComponentInChildren<AttachedItem>().Item;
-                    AddItemIntoSlot(DraggingItem);
-                }
-                if (SlotType == SlotType.Equipment && DraggingItem.GetComponent<AttachedItem>().Item.IsEquipment && GetComponent<EquipmentSlot>().EquipmentType.Equals(DraggingItem.GetComponent<AttachedItem>().Item.ItemType))
-                {
-                    gameObject.transform.GetChild(0).SetParent(DraggingItem.GetComponent<AttachedItem>().LastSlot);
-                    Inventory.UnequipItem(transform.GetComponentInChildren<AttachedItem>().Item);
-                    Destroy(transform.GetChild(0).gameObject);
-                    AddItemIntoSlot(DraggingItem);
-                    Inventory.EquipItem(transform.GetComponentInChildren<AttachedItem>().Item);
-                }
+                DraggingItemGameObject.transform.SetParent(DraggingItem.LastSlot.transform);
+                DraggingItemGameObject.GetComponent<RectTransform>().localPosition = Vector2.zero;
+                Debug.LogWarning("addItemIntoSlot: " + addItemIntoSlot);
             }
         }
     }
 
-    public void AddItemIntoSlot(GameObject itemGameObject)
+    public bool AddItemIntoSlot()
     {
-        itemGameObject.transform.SetParent(gameObject.transform);
-        itemGameObject.GetComponent<RectTransform>().localPosition = Vector2.zero;
+        GameObject draggingItemGameObject = AttachedItem.DraggingItem;
+        AttachedItem draggingItem = draggingItemGameObject.GetComponent<AttachedItem>();
+        if (GetComponentInChildren<AttachedItem>() == null)
+        {
+            if (SlotType == SlotType.Inventory)
+            {
+                //Debug.Log("Inventory");
+            }
+            if (SlotType == SlotType.Equipment && DraggingItem.GetComponent<AttachedItem>().Item.IsEquipment && GetComponent<EquipmentSlot>().EquipmentType.Equals(DraggingItem.GetComponent<AttachedItem>().Item.ItemType))
+            {
+                //Debug.Log("Equipment");
+                Inventory.EquipItem(draggingItem.Item);
+            }
+            if (SlotType == SlotType.Hotbar)
+            {
+                //Debug.Log("Hotbar");
+                DraggingItem.CreateDuplicate(DraggingItemGameObject);
+                InventoryManager.Stackable(Inventory.Slots);
+            }
+            return true;
+        }
+        else
+        {
+            GameObject itemFromSlotGameObject = transform.GetChild(0).gameObject; ;
+            AttachedItem itemFromSlot = itemFromSlotGameObject.GetComponent<AttachedItem>();
+            bool sameItem = DraggingItem.Item.Id == itemFromSlot.Item.Id;
+            if (SlotType == SlotType.Inventory)
+            {
+                if (sameItem && GetComponentInChildren<AttachedItem>().Item.IsStackable)
+                {
+                    int stackSize = draggingItem.Item.StackSize;
+                    int stack;
+                    stack = itemFromSlot.Item.StackSize + stackSize;
+                    int rest = (stack) % itemFromSlot.Item.MaxStackSize;
+                    GameObject tempItem = itemFromSlotGameObject;
+                    if (stack <= itemFromSlot.Item.MaxStackSize)
+                    {
+                        itemFromSlot.Item.StackSize = stack;
+                        tempItem.GetComponent<AttachedItem>().UpdateStackSize();
+                        if (tempItem != null && tempItem.GetComponent<AttachedItem>().Duplicate != null)
+                        {
+                            tempItem.GetComponent<AttachedItem>().Duplicate.GetComponent<AttachedItem>().Item.StackSize = stack;
+                            tempItem.GetComponent<AttachedItem>().UpdateStackSize();
+                        }
+                        Destroy(draggingItemGameObject);
+                        return true;
+                    }
+                    if (stack > itemFromSlot.Item.MaxStackSize)
+                    {
+                        itemFromSlot.Item.StackSize = itemFromSlot.Item.MaxStackSize;
+                        tempItem.GetComponent<AttachedItem>().UpdateStackSize();
+                        if (tempItem != null && tempItem.GetComponent<AttachedItem>().Duplicate != null)
+                        {
+                            tempItem.GetComponent<AttachedItem>().Duplicate.GetComponent<AttachedItem>().Item.StackSize = stack;
+                            tempItem.GetComponent<AttachedItem>().UpdateStackSize();
+                        }
+                        draggingItem.Item.StackSize = rest;
+                        draggingItem.UpdateStackSize();
+                        return false;
+                    }
+                }
+                else
+                {
+                    if (!DraggingItem.Item.IsEquipment)
+                    {
+                        itemFromSlotGameObject.transform.SetParent(DraggingItem.GetComponent<AttachedItem>().LastSlot);
+                        itemFromSlotGameObject.GetComponent<RectTransform>().localPosition = Vector2.zero;
+                    }
+                    else if (itemFromSlot.GetComponent<AttachedItem>().Item.ItemType.Equals(DraggingItem.GetComponent<AttachedItem>().Item.ItemType))
+                    {
+                        itemFromSlotGameObject.transform.SetParent(DraggingItem.LastSlot);
+                        itemFromSlotGameObject.GetComponent<RectTransform>().localPosition = Vector2.zero;
+                    }
+                    else
+                    {
+                        DraggingItemGameObject.transform.SetParent(DraggingItem.LastSlot);
+                        DraggingItemGameObject.GetComponent<RectTransform>().localPosition = Vector2.zero;
+                    }
+                }
+                return true;
+            }
+            if (SlotType == SlotType.Equipment)
+            {
+                if (GetComponent<EquipmentSlot>().EquipmentType.Equals(DraggingItem.Item.ItemType))
+                {
+                    itemFromSlotGameObject.transform.SetParent(DraggingItem.LastSlot.transform);
+                    itemFromSlotGameObject.GetComponent<RectTransform>().localPosition = Vector2.zero;
+                }
+                else
+                {
+                    DraggingItemGameObject.transform.SetParent(DraggingItem.LastSlot.transform);
+                    DraggingItemGameObject.GetComponent<RectTransform>().localPosition = Vector2.zero;
+                }
+                return true;
+            }
+        }
+        return false;
     }
 
     public bool CheckItemFit(Item item, Slot slot)
