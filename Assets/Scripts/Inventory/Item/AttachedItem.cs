@@ -18,6 +18,7 @@ public class AttachedItem : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
     public InventoryTooltip Tooltip;
 
     public Transform LastSlot;
+    public Transform CurrentSlot;
     public Transform DraggingSlot;
 
     public static GameObject DraggingItem;

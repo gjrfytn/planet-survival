@@ -67,19 +67,22 @@ public class Slot : MonoBehaviour, IDropHandler {
             if (SlotType == SlotType.Inventory)
             {
                 //Debug.Log("Inventory");
+                return true;
             }
             if (SlotType == SlotType.Equipment && DraggingItem.GetComponent<AttachedItem>().Item.IsEquipment && GetComponent<EquipmentSlot>().EquipmentType.Equals(DraggingItem.GetComponent<AttachedItem>().Item.ItemType))
             {
                 //Debug.Log("Equipment");
                 Inventory.EquipItem(draggingItem.Item);
+                return true;
             }
             if (SlotType == SlotType.Hotbar)
             {
                 //Debug.Log("Hotbar");
                 DraggingItem.CreateDuplicate(DraggingItemGameObject);
                 InventoryManager.Stackable(Inventory.Slots);
+                return true;
             }
-            return true;
+            draggingItem.CurrentSlot = gameObject.transform;
         }
         else
         {
@@ -105,7 +108,6 @@ public class Slot : MonoBehaviour, IDropHandler {
                             tempItem.GetComponent<AttachedItem>().UpdateStackSize();
                         }
                         Destroy(draggingItemGameObject);
-                        return true;
                     }
                     if (stack > itemFromSlot.Item.MaxStackSize)
                     {
@@ -118,8 +120,8 @@ public class Slot : MonoBehaviour, IDropHandler {
                         }
                         draggingItem.Item.StackSize = rest;
                         draggingItem.UpdateStackSize();
-                        return false;
                     }
+                    return false;
                 }
                 else
                 {
@@ -127,19 +129,19 @@ public class Slot : MonoBehaviour, IDropHandler {
                     {
                         itemFromSlotGameObject.transform.SetParent(DraggingItem.GetComponent<AttachedItem>().LastSlot);
                         itemFromSlotGameObject.GetComponent<RectTransform>().localPosition = Vector2.zero;
-                    }
-                    else if (itemFromSlot.GetComponent<AttachedItem>().Item.ItemType.Equals(DraggingItem.GetComponent<AttachedItem>().Item.ItemType))
-                    {
-                        itemFromSlotGameObject.transform.SetParent(DraggingItem.LastSlot);
-                        itemFromSlotGameObject.GetComponent<RectTransform>().localPosition = Vector2.zero;
+                        return true;
                     }
                     else
                     {
-                        DraggingItemGameObject.transform.SetParent(DraggingItem.LastSlot);
-                        DraggingItemGameObject.GetComponent<RectTransform>().localPosition = Vector2.zero;
+                        if (itemFromSlot.GetComponent<AttachedItem>().Item.ItemType.Equals(DraggingItem.GetComponent<AttachedItem>().Item.ItemType))
+                        {
+                            itemFromSlotGameObject.transform.SetParent(DraggingItem.LastSlot);
+                            itemFromSlotGameObject.GetComponent<RectTransform>().localPosition = Vector2.zero;
+                            return true;
+                        }
                     }
                 }
-                return true;
+                return false;
             }
             if (SlotType == SlotType.Equipment)
             {
@@ -147,13 +149,8 @@ public class Slot : MonoBehaviour, IDropHandler {
                 {
                     itemFromSlotGameObject.transform.SetParent(DraggingItem.LastSlot.transform);
                     itemFromSlotGameObject.GetComponent<RectTransform>().localPosition = Vector2.zero;
+                    return true;
                 }
-                else
-                {
-                    DraggingItemGameObject.transform.SetParent(DraggingItem.LastSlot.transform);
-                    DraggingItemGameObject.GetComponent<RectTransform>().localPosition = Vector2.zero;
-                }
-                return true;
             }
         }
         return false;

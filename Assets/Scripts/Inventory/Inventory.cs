@@ -34,7 +34,6 @@ public class Inventory : MonoBehaviour, IDropHandler {
 
 	// Use this for initialization
 	void Start () {
-
         UpdateItemList();
 	}
 	

@@ -10,6 +10,7 @@ public class InventoryEditor : Editor
 
     private int ItemId;
     private int ItemStackSize = 1;
+    private ItemType ItemTypeToAdd;
 
     static void Init()
     {
@@ -27,24 +28,19 @@ public class InventoryEditor : Editor
     {
         serializedObject.Update();
         DrawDefaultInspector();
-
         EditorGUILayout.Space();
+        EditorGUILayout.BeginVertical("Box");
         GUILayout.Label("Items management");
-        EditorGUILayout.BeginHorizontal();
         AddItem();
-        EditorGUILayout.EndHorizontal();
-
-        EditorGUILayout.BeginHorizontal();
+        EditorGUILayout.Space();
         RemoveItems();
-        EditorGUILayout.EndHorizontal();
-
         EditorGUILayout.Space();
         GUILayout.Label("Slots management");
         EditorGUILayout.BeginHorizontal();
         CreateSlots();
         RemoveSlots();
         EditorGUILayout.EndHorizontal();
-
+        EditorGUILayout.EndVertical();
         serializedObject.ApplyModifiedProperties();
         SceneView.RepaintAll();
     }
@@ -52,11 +48,20 @@ public class InventoryEditor : Editor
     void AddItem()
     {
         ItemDatabase itemDatabase = (ItemDatabase)Resources.Load("Inventory/ItemDatabase", typeof(ItemDatabase)) as ItemDatabase;
+        EditorGUILayout.BeginHorizontal();
+        ItemTypeToAdd = (ItemType)EditorGUILayout.EnumPopup("Type of item: ", ItemTypeToAdd);
+        EditorGUILayout.EndHorizontal();
+
         string[] items = new string[itemDatabase.Items.Count];
         for (int i = 0; i < items.Length; i++)
         {
-            items[i] = itemDatabase.Items[i].Name;
+            if (itemDatabase.Items[i].ItemType.Equals(ItemTypeToAdd))
+            {
+                items[i] = itemDatabase.Items[i].Name;
+            }
         }
+
+        EditorGUILayout.BeginHorizontal();
         ItemId = EditorGUILayout.Popup("", ItemId, items, EditorStyles.popup);
         ItemStackSize = EditorGUILayout.IntField("", ItemStackSize, GUILayout.Width(40));
         if (ItemStackSize <= 0)
@@ -71,11 +76,13 @@ public class InventoryEditor : Editor
         }
         Inventory.UpdateItemList();
         GUI.color = Color.white;
+        EditorGUILayout.EndHorizontal();
     }
 
 
     void RemoveItems()
     {
+        EditorGUILayout.BeginHorizontal();
         GUI.color = Color.red;
         if (GUILayout.Button("Remove items"))
         {
@@ -83,6 +90,7 @@ public class InventoryEditor : Editor
         }
         Inventory.UpdateItemList();
         GUI.color = Color.white;
+        EditorGUILayout.EndHorizontal();
     }
 
     void CreateSlots()

@@ -49,6 +49,7 @@ public enum OtherItemType : byte
     Socket,
     Book,
     AudioRecord,
+    Otherwise,
 }
 
 public enum SlotType : byte

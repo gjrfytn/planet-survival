@@ -57,6 +57,8 @@ public class Item
     public float Armor;
     public int BlockAmount;
     public float BlockChance;
+    public int ColdResistance;
+    public int HeatResistance;
 
     //Consumable
     public int HealthRestore;
