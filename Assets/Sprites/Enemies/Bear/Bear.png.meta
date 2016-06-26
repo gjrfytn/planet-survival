@@ -1,0 +1,616 @@
+fileFormatVersion: 2
+guid: 9965691466ba2254d957d4e4fd789aa6
+timeCreated: 1466190749
+licenseType: Free
+TextureImporter:
+  fileIDToRecycleName:
+    21300000: Bear_0
+    21300002: Bear_1
+    21300004: Bear_2
+    21300006: Bear_3
+    21300008: Bear_4
+    21300010: Bear_5
+    21300012: Bear_6
+    21300014: Bear_7
+    21300016: Bear_8
+    21300018: Bear_9
+    21300020: Bear_10
+    21300022: Bear_11
+    21300024: Bear_12
+    21300026: Bear_13
+    21300028: Bear_14
+    21300030: Bear_15
+    21300032: Bear_16
+    21300034: Bear_17
+    21300036: Bear_18
+    21300038: Bear_19
+    21300040: Bear_20
+    21300042: Bear_21
+    21300044: Bear_22
+    21300046: Bear_23
+    21300048: Bear_24
+    21300050: Bear_25
+    21300052: Bear_26
+    21300054: Bear_27
+  serializedVersion: 2
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 1
+    linearTexture: 0
+    correctGamma: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+  isReadable: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 0
+  cubemapConvolution: 0
+  cubemapConvolutionSteps: 7
+  cubemapConvolutionExponent: 1.5
+  seamlessCubemap: 0
+  textureFormat: -1
+  maxTextureSize: 2048
+  textureSettings:
+    filterMode: -1
+    aniso: 16
+    mipBias: -1
+    wrapMode: 1
+  nPOTScale: 0
+  lightmap: 0
+  rGBM: 0
+  compressionQuality: 50
+  allowsAlphaSplitting: 0
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spritePixelsToUnits: 100
+  alphaIsTransparency: 1
+  textureType: 8
+  buildTargetSettings: []
+  spriteSheet:
+    sprites:
+    - name: Bear_0
+      rect:
+        serializedVersion: 2
+        x: 3
+        y: 306
+        width: 76
+        height: 52
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: 18, y: 26}
+        - {x: -26, y: 26}
+        - {x: -38, y: 19}
+        - {x: -38, y: -26}
+        - {x: 33, y: -26}
+        - {x: 38, y: -17}
+        - {x: 38, y: 11}
+        - {x: 33, y: 23}
+    - name: Bear_1
+      rect:
+        serializedVersion: 2
+        x: 87
+        y: 306
+        width: 77
+        height: 52
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: -31.5, y: 26}
+        - {x: -38.5, y: 24}
+        - {x: -38.5, y: -22}
+        - {x: -35.5, y: -26}
+        - {x: 24.5, y: -26}
+        - {x: 38.5, y: -13}
+        - {x: 38.5, y: 18}
+        - {x: 29.5, y: 26}
+    - name: Bear_2
+      rect:
+        serializedVersion: 2
+        x: 170
+        y: 306
+        width: 78
+        height: 52
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: 29, y: 26}
+        - {x: -30, y: 26}
+        - {x: -39, y: 23}
+        - {x: -39, y: -26}
+        - {x: 35, y: -26}
+        - {x: 39, y: -17}
+        - {x: 39, y: 10}
+        - {x: 34, y: 23}
+    - name: Bear_3
+      rect:
+        serializedVersion: 2
+        x: 255
+        y: 306
+        width: 78
+        height: 51
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: 39, y: 25.5}
+        - {x: -39, y: 25.5}
+        - {x: -39, y: -21.5}
+        - {x: -37, y: -25.5}
+        - {x: 28, y: -25.5}
+        - {x: 34, y: -23.5}
+        - {x: 39, y: -10.5}
+    - name: Bear_4
+      rect:
+        serializedVersion: 2
+        x: 338
+        y: 306
+        width: 78
+        height: 51
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: 13, y: 25.5}
+        - {x: -32, y: 25.5}
+        - {x: -38, y: 23.5}
+        - {x: -39, y: 19.5}
+        - {x: -39, y: -22.5}
+        - {x: -38, y: -25.5}
+        - {x: 26, y: -25.5}
+        - {x: 39, y: -14.5}
+        - {x: 39, y: 10.5}
+        - {x: 34, y: 20.5}
+    - name: Bear_5
+      rect:
+        serializedVersion: 2
+        x: 423
+        y: 306
+        width: 78
+        height: 51
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: 13, y: 25.5}
+        - {x: -32, y: 25.5}
+        - {x: -38, y: 23.5}
+        - {x: -39, y: 19.5}
+        - {x: -39, y: -22.5}
+        - {x: -38, y: -25.5}
+        - {x: 26, y: -25.5}
+        - {x: 39, y: -14.5}
+        - {x: 39, y: 10.5}
+        - {x: 34, y: 20.5}
+    - name: Bear_6
+      rect:
+        serializedVersion: 2
+        x: 3
+        y: 237
+        width: 76
+        height: 51
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: 31, y: 25.5}
+        - {x: -33, y: 25.5}
+        - {x: -38, y: 20.5}
+        - {x: -38, y: -25.5}
+        - {x: 32, y: -25.5}
+        - {x: 38, y: -10.5}
+        - {x: 38, y: 23.5}
+    - name: Bear_7
+      rect:
+        serializedVersion: 2
+        x: 86
+        y: 237
+        width: 78
+        height: 50
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: -39, y: 25}
+        - {x: -39, y: -25}
+        - {x: 39, y: -25}
+        - {x: 39, y: 25}
+    - name: Bear_8
+      rect:
+        serializedVersion: 2
+        x: 170
+        y: 237
+        width: 77
+        height: 52
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: 27.5, y: 26}
+        - {x: -29.5, y: 26}
+        - {x: -38.5, y: 23}
+        - {x: -38.5, y: -24}
+        - {x: -37.5, y: -26}
+        - {x: 24.5, y: -26}
+        - {x: 38.5, y: -19}
+        - {x: 38.5, y: 11}
+        - {x: 32.5, y: 22}
+    - name: Bear_9
+      rect:
+        serializedVersion: 2
+        x: 255
+        y: 237
+        width: 80
+        height: 51
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: -24, y: -25.5}
+        - {x: 31, y: -25.5}
+        - {x: 40, y: -15.5}
+        - {x: 40, y: 12.5}
+        - {x: 35, y: 22.5}
+        - {x: 23, y: 25.5}
+        - {x: -30, y: 25.5}
+        - {x: -40, y: 17.5}
+        - {x: -40, y: -25.5}
+        - {x: -25, y: -25.5}
+        - {x: -25, y: -20.5}
+        - {x: -25, y: -22.5}
+    - name: Bear_10
+      rect:
+        serializedVersion: 2
+        x: 342
+        y: 237
+        width: 82
+        height: 50
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: 35, y: 23}
+        - {x: 20, y: 25}
+        - {x: -26, y: 25}
+        - {x: -41, y: 20}
+        - {x: -41, y: -25}
+        - {x: 25, y: -25}
+        - {x: 41, y: -12}
+        - {x: 41, y: 10}
+    - name: Bear_11
+      rect:
+        serializedVersion: 2
+        x: 432
+        y: 237
+        width: 77
+        height: 51
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: -38.5, y: 25.5}
+        - {x: -38.5, y: -25.5}
+        - {x: 38.5, y: -25.5}
+        - {x: 38.5, y: 11.5}
+        - {x: 20.5, y: 25.5}
+    - name: Bear_12
+      rect:
+        serializedVersion: 2
+        x: 3
+        y: 174
+        width: 76
+        height: 51
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: 31, y: 25.5}
+        - {x: -33, y: 25.5}
+        - {x: -38, y: 20.5}
+        - {x: -38, y: -25.5}
+        - {x: 32, y: -25.5}
+        - {x: 38, y: -10.5}
+        - {x: 38, y: 23.5}
+    - name: Bear_13
+      rect:
+        serializedVersion: 2
+        x: 84
+        y: 174
+        width: 80
+        height: 49
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: -31, y: 24.5}
+        - {x: -40, y: 19.5}
+        - {x: -40, y: -16.5}
+        - {x: -39, y: -22.5}
+        - {x: -35, y: -24.5}
+        - {x: 37, y: -24.5}
+        - {x: 40, y: -18.5}
+        - {x: 40, y: 16.5}
+        - {x: 21, y: 24.5}
+    - name: Bear_14
+      rect:
+        serializedVersion: 2
+        x: 170
+        y: 174
+        width: 76
+        height: 47
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: 29, y: 23.5}
+        - {x: -38, y: 23.5}
+        - {x: -38, y: -15.5}
+        - {x: -36, y: -23.5}
+        - {x: 34, y: -23.5}
+        - {x: 38, y: -18.5}
+        - {x: 38, y: 21.5}
+    - name: Bear_15
+      rect:
+        serializedVersion: 2
+        x: 258
+        y: 174
+        width: 73
+        height: 46
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: -17.5, y: 23}
+        - {x: -36.5, y: 2}
+        - {x: -36.5, y: -23}
+        - {x: 29.5, y: -23}
+        - {x: 36.5, y: -22}
+        - {x: 36.5, y: 23}
+    - name: Bear_16
+      rect:
+        serializedVersion: 2
+        x: 342
+        y: 174
+        width: 69
+        height: 51
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: 10.5, y: 25.5}
+        - {x: -22.5, y: 25.5}
+        - {x: -26.5, y: 19.5}
+        - {x: -34.5, y: 0.5}
+        - {x: -34.5, y: -22.5}
+        - {x: -22.5, y: -25.5}
+        - {x: 34.5, y: -25.5}
+        - {x: 34.5, y: 3.5}
+        - {x: 25.5, y: 22.5}
+    - name: Bear_17
+      rect:
+        serializedVersion: 2
+        x: 418
+        y: 174
+        width: 74
+        height: 54
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: 19, y: 27}
+        - {x: -29, y: 27}
+        - {x: -37, y: 25}
+        - {x: -37, y: -16}
+        - {x: -35, y: -25}
+        - {x: -31, y: -27}
+        - {x: 35, y: -27}
+        - {x: 37, y: -17}
+        - {x: 37, y: 13}
+    - name: Bear_18
+      rect:
+        serializedVersion: 2
+        x: 3
+        y: 81
+        width: 69
+        height: 60
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: -22.5, y: 30}
+        - {x: -34.5, y: 25}
+        - {x: -34.5, y: -17}
+        - {x: -24.5, y: -30}
+        - {x: 28.5, y: -30}
+        - {x: 34.5, y: -25}
+        - {x: 34.5, y: 15}
+        - {x: 22.5, y: 30}
+    - name: Bear_19
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 80
+        width: 60
+        height: 77
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: -29, y: 38.5}
+        - {x: -30, y: 29.5}
+        - {x: -30, y: -29.5}
+        - {x: -20, y: -38.5}
+        - {x: 23, y: -38.5}
+        - {x: 30, y: -16.5}
+        - {x: 30, y: 38.5}
+    - name: Bear_20
+      rect:
+        serializedVersion: 2
+        x: 149
+        y: 80
+        width: 86
+        height: 69
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: 43, y: -34.5}
+        - {x: 43, y: 17.5}
+        - {x: 33, y: 30.5}
+        - {x: 16, y: 34.5}
+        - {x: -43, y: 34.5}
+        - {x: -43, y: -34.5}
+    - name: Bear_21
+      rect:
+        serializedVersion: 2
+        x: 241
+        y: 80
+        width: 63
+        height: 72
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: 6.5, y: 36}
+        - {x: -29.5, y: 36}
+        - {x: -31.5, y: 31}
+        - {x: -31.5, y: -25}
+        - {x: -26.5, y: -36}
+        - {x: 6.5, y: -36}
+        - {x: 31.5, y: -1}
+        - {x: 31.5, y: 30}
+        - {x: 23.5, y: 33}
+    - name: Bear_22
+      rect:
+        serializedVersion: 2
+        x: 309
+        y: 80
+        width: 71
+        height: 64
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: -29.5, y: 32}
+        - {x: -35.5, y: 30}
+        - {x: -35.5, y: -23}
+        - {x: -34.5, y: -28}
+        - {x: -34.5, y: -32}
+        - {x: 23.5, y: -32}
+        - {x: 35.5, y: -8}
+        - {x: 35.5, y: 26}
+        - {x: 26.5, y: 32}
+    - name: Bear_23
+      rect:
+        serializedVersion: 2
+        x: 386
+        y: 80
+        width: 74
+        height: 56
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: 26, y: 28}
+        - {x: -37, y: 28}
+        - {x: -37, y: -28}
+        - {x: 31, y: -28}
+        - {x: 37, y: -12}
+        - {x: 37, y: 20}
+    - name: Bear_24
+      rect:
+        serializedVersion: 2
+        x: 3
+        y: 10
+        width: 57
+        height: 57
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: 18.5, y: 28.5}
+        - {x: -19.5, y: 28.5}
+        - {x: -22.5, y: 27.5}
+        - {x: -28.5, y: 14.5}
+        - {x: -28.5, y: -28.5}
+        - {x: 12.5, y: -28.5}
+        - {x: 28.5, y: -14.5}
+        - {x: 28.5, y: 5.5}
+        - {x: 24.5, y: 24.5}
+    - name: Bear_25
+      rect:
+        serializedVersion: 2
+        x: 70
+        y: 10
+        width: 53
+        height: 54
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: 20.5, y: 21}
+        - {x: 14.5, y: 27}
+        - {x: -22.5, y: 27}
+        - {x: -26.5, y: 25}
+        - {x: -26.5, y: -18}
+        - {x: -22.5, y: -27}
+        - {x: 11.5, y: -27}
+        - {x: 24.5, y: -20}
+        - {x: 26.5, y: -18}
+        - {x: 26.5, y: 3}
+    - name: Bear_26
+      rect:
+        serializedVersion: 2
+        x: 131
+        y: 10
+        width: 84
+        height: 44
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: 33, y: 22}
+        - {x: -27, y: 22}
+        - {x: -39, y: 12}
+        - {x: -40, y: 9}
+        - {x: -42, y: 1}
+        - {x: -42, y: -22}
+        - {x: 25, y: -22}
+        - {x: 41, y: -7}
+        - {x: 42, y: -5}
+        - {x: 42, y: 15}
+    - name: Bear_27
+      rect:
+        serializedVersion: 2
+        x: 223
+        y: 3
+        width: 88
+        height: 39
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline:
+      - - {x: -30, y: 19.5}
+        - {x: -44, y: 5.5}
+        - {x: -44, y: -19.5}
+        - {x: 44, y: -19.5}
+        - {x: 44, y: 3.5}
+        - {x: 14, y: 19.5}
+    outline: []
+  spritePackingTag: 
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

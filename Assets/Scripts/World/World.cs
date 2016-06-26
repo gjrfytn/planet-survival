@@ -46,13 +46,11 @@ public class World : MonoBehaviour
     void OnEnable()
     {
         EventManager.PlayerMovedOnGlobal += OnPlayerGotoGlobalHex;
-        EventManager.TurnMade += RerenderBlueHexesOnLocal;
     }
 
     void OnDisable()
     {
         EventManager.PlayerMovedOnGlobal -= OnPlayerGotoGlobalHex;
-        EventManager.TurnMade -= RerenderBlueHexesOnLocal;
     }
 
     void Awake()
@@ -110,7 +108,7 @@ public class World : MonoBehaviour
 
         Player = GameObject.FindWithTag("Player").GetComponent<Player>();
         Camera.main.transform.position = new Vector3(Player.transform.position.x, Player.transform.position.y + Camera.main.transform.position.z * (Mathf.Tan((360 - Camera.main.transform.rotation.eulerAngles.x) / 57.3f)), Camera.main.transform.position.z);
-        Visualiser.RenderVisibleHexes(Player.GlobalPos, Player.ViewDistance, CashedChunks, ChunkY, ChunkX);
+		Visualiser.RenderVisibleHexes(Player.GlobalPos, Player.ViewRange, CashedChunks, ChunkY, ChunkX);
         for (byte i = 0; i < 6; ++i)
             Visualiser.HighlightHex(HexNavigHelper.GetNeighborMapCoords(Player.GlobalPos, (HexDirection)i));
     }
@@ -161,7 +159,7 @@ public class World : MonoBehaviour
             CurrentMap = CashedChunks[1, 1];
         }
 
-        Visualiser.RenderVisibleHexes(pos, Player.ViewDistance, CashedChunks, ChunkY, ChunkX);
+		Visualiser.RenderVisibleHexes(pos, Player.ViewRange, CashedChunks, ChunkY, ChunkX);
         Visualiser.DestroyAllBlues();//TODO Временно
         for (byte i = 0; i < 6; ++i)
             Visualiser.HighlightHex(HexNavigHelper.GetNeighborMapCoords(pos, (HexDirection)i));
@@ -180,6 +178,7 @@ public class World : MonoBehaviour
             SpawnRandomEnemy();
             Player.transform.position = WorldVisualiser.GetTransformPosFromMapPos(Player.Pos);
             Camera.main.transform.position = new Vector3(Player.transform.position.x, Player.transform.position.y, Camera.main.transform.position.z);
+			EventManager.OnLocalMapEnter();
         }
         else
         {
@@ -187,8 +186,9 @@ public class World : MonoBehaviour
             GotoGlobalMap();
             //EventManager.OnLocalMapLeave();
             Player.transform.position = WorldVisualiser.GetTransformPosFromMapPos(Player.GlobalPos);
+			EventManager.OnLocalMapLeave();
         }
-        EventManager.OnPlayerObjectMoved();
+        EventManager.OnPlayerObjectMove();
     }
 
     /// <summary>
@@ -210,7 +210,7 @@ public class World : MonoBehaviour
         EventManager.OnEntitySpawn(Player);
 
         Visualiser.RenderWholeMap(CurrentMap as LocalMap);
-        RerenderBlueHexesOnLocal();
+        //RerenderBlueHexesOnLocal();
     }
 
     /// <summary>
@@ -222,7 +222,7 @@ public class World : MonoBehaviour
         (CurrentMap as LocalMap).Deactivate();
         CurrentMap = CashedChunks[1, 1];
         Player.GlobalPos = GlobalMapPos;
-        Visualiser.RenderVisibleHexes(Player.GlobalPos, Player.ViewDistance, CashedChunks, ChunkY, ChunkX);
+		Visualiser.RenderVisibleHexes(Player.GlobalPos, Player.ViewRange, CashedChunks, ChunkY, ChunkX);
 
         Visualiser.DestroyAllBlues();
         for (byte i = 0; i < 6; ++i)
@@ -400,11 +400,14 @@ public class World : MonoBehaviour
     }
 
     void SpawnRandomEnemy()
-    {
-        LocalPos pos = new LocalPos((ushort)Random.Range(0, LocalMapSize.X), (ushort)Random.Range(0, LocalMapSize.Y));
+    { 
+        byte enemyCount=(byte)Random.Range(1,Enemies.Length+1);
+		for(byte i=0;i<enemyCount;++i)
+		{
         Creature enemy = (MonoBehaviour.Instantiate(Enemies[Random.Range(0, Enemies.Length)]) as Creature);
-        enemy.Pos = pos;
+			enemy.Pos = new LocalPos((ushort)Random.Range(0, LocalMapSize.X), (ushort)Random.Range(0, LocalMapSize.Y));
         EventManager.OnEntitySpawn(enemy);
+		}
     }
 
     public bool IsHexFree(LocalPos pos)
@@ -493,6 +496,7 @@ public class World : MonoBehaviour
 
     public void RerenderBlueHexesOnLocal()//C#6.0 EBD
     {
+		EventManager.OnBluesRender();
         Visualiser.RenderBluesHexes(Player.Pos, Player.RemainingMoves, CurrentMap as LocalMap);
     }
 }

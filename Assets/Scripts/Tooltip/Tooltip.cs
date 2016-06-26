@@ -5,6 +5,7 @@ using System.Collections;
 
 public class Tooltip : MonoBehaviour
 {
+	public Canvas Canvas;
 
     public GameObject TooltipPanel;
 

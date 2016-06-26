@@ -1,40 +1,43 @@
 ﻿using UnityEngine;
-using System.Collections;
+using System.Collections.Generic;
 
 public class BattleController : MonoBehaviour
 {
-    byte CreaturesPending;
+	List<LivingBeing> LBs=new List<LivingBeing>();
+	byte Index;
 
     void OnEnable()
     {
-        EventManager.PlayerMadeTurn += CreaturesTurn;
+		EventManager.LocalMapEntered+=Activate;
+		EventManager.LocalMapLeft+=Deactivate;
+
     }
 
     void OnDisable()
     {
-        EventManager.PlayerMadeTurn -= CreaturesTurn;
+		EventManager.LocalMapEntered-=Activate;
+		EventManager.LocalMapLeft-=Deactivate;
+
     }
 
-    void CreaturesTurn()//C# 6.0
-    {
-        EventManager.CreatureStartedTurn += CreatureDoingTurn;
-        EventManager.CreatureEndedTurn += CreatureMadeTurn;
-    }
+	void Activate()
+	{
+		EventManager.LivingBeingEndedTurn+=ProceedBattle;
+		LBs=(GameObject.FindWithTag("World").GetComponent<World>().CurrentMap as LocalMap).GetAllLivingBeings();
+		Index=0;
+		ProceedBattle();
+	}
 
-    void CreatureDoingTurn()//C# 6.0
-    {
-        CreaturesPending++;
-    }
+	void Deactivate()
+	{
+		EventManager.LivingBeingEndedTurn-=ProceedBattle;
+	}
 
-    void CreatureMadeTurn()
-    {
-        CreaturesPending--;
-
-        if (CreaturesPending == 0)
-        {
-            EventManager.CreatureStartedTurn -= CreatureDoingTurn;
-            EventManager.CreatureEndedTurn -= CreatureMadeTurn;
-            EventManager.OnTurn();
-        }
-    }
+	void ProceedBattle()
+	{
+		LBs.Sort((a,b)=>b.Initiative-a.Initiative);
+		if(Index==LBs.Count)
+			Index=0;
+		LBs[Index++].MakeTurn();
+	}
 }

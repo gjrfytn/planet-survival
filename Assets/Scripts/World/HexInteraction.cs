@@ -23,7 +23,7 @@ public class HexInteraction : MonoBehaviour
             EventManager.OnActionStart(travel);
         }
         else
-            GameObject.FindWithTag("Player").GetComponent<Player>().MoveTo((LocalPos)Pos/*, true*/);
+            GameObject.FindWithTag("Player").GetComponent<Player>().MoveTo((LocalPos)Pos);
     }
 
     public void OnMouseEnter()

@@ -4,23 +4,29 @@ public class SkipTurnButton : MonoBehaviour
 {
     void OnEnable()
     {
-        EventManager.PlayerMadeTurn += ToggleEnable;
-        EventManager.TurnMade += ToggleEnable;
+		EventManager.BluesRendered += Activate;
+		EventManager.BluesUnrendered += Deactivate;
     }
 
     void OnDisable()
     {
-        EventManager.PlayerMadeTurn -= ToggleEnable;
-        EventManager.TurnMade -= ToggleEnable;
+		EventManager.BluesRendered -= Activate;
+		EventManager.BluesUnrendered -= Deactivate;
     }
 
     public void SkipTurn()
     {
-        EventManager.OnPlayerTurn();
+		EventManager.OnBluesUnrender();
+		EventManager.OnLivingBeingEndTurn();
     }
 
-    public void ToggleEnable()
+    public void Activate()
     {
-        GetComponent<UnityEngine.UI.Button>().interactable = !GetComponent<UnityEngine.UI.Button>().interactable;
+		GetComponent<UnityEngine.UI.Button>().interactable = true;
     }
+
+	public void Deactivate()
+	{
+		GetComponent<UnityEngine.UI.Button>().interactable = false;
+	}
 }

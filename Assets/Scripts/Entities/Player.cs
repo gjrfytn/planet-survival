@@ -154,11 +154,6 @@ public class Player : LivingBeing
     bool CanDualWield_;
     public bool CanDualWield { get { return CanDualWield_; } private set { CanDualWield_ = value; } }
 
-    [Header("Дальность обзора")]
-    [SerializeField, Range(0, 255)]
-    byte ViewDistance_;
-    public byte ViewDistance { get { return ViewDistance_; } private set { ViewDistance_ = value; } }
-
     byte Level;
 
     float MoveTime;
@@ -166,18 +161,22 @@ public class Player : LivingBeing
     public byte RemainingMoves { get; private set; }
     LocalPos NextMovePoint;
 
+	EquipmentSlot BodyArmor;
+
+	[SerializeField]
+	Sprite NormalSprite;
+	[SerializeField]
+	Sprite FightingSprite;
+
     void OnEnable()
     {
         EventManager.ActionStarted += StartAction;
         EventManager.HourPassed += UpdateState;
         EventManager.ActionEnded += EndAction;
+		EventManager.LocalMapLeft+=StopMakingTurn;
 
         //Inventory
         Inventory.ItemUsed += UseItem;
-        Inventory.ItemEquipped += EquipArmor;
-        Inventory.ItemEquipped += EquipWeapon;
-        Inventory.ItemUnequipped += UnequipArmor;
-        Inventory.ItemUnequipped += UnequipWeapon;
     }
 
     void OnDisable()
@@ -185,13 +184,10 @@ public class Player : LivingBeing
         EventManager.ActionStarted -= StartAction;
         EventManager.HourPassed -= UpdateState;
         EventManager.ActionEnded -= EndAction;
+		EventManager.LocalMapLeft-=StopMakingTurn;
 
         //Inventory
         Inventory.ItemUsed -= UseItem;
-        Inventory.ItemEquipped -= EquipArmor;
-        Inventory.ItemEquipped -= EquipWeapon;
-        Inventory.ItemUnequipped -= UnequipArmor;
-        Inventory.ItemUnequipped -= UnequipWeapon;
     }
 
     protected override void Start()
@@ -204,13 +200,21 @@ public class Player : LivingBeing
         Water = MaxWater;
         Food = MaxFood;
         Stamina = MaxStamina;
-        Mental = MaxMental;
+		Mental = MaxMental;
 
-        RemainingMoves = Speed;
+		Equipment equipment=GameObject.FindWithTag("InventoryManager").GetComponent<InventoryManager>().Equipment;
+		foreach(GameObject slot in equipment.Slots)
+			if(slot.GetComponent<EquipmentSlot>().EquipmentType==ItemType.Chest)
+			{
+				BodyArmor=slot.GetComponent<EquipmentSlot>();
+				break;
+			}
     }
 
     void Update()
     {
+		if(MakingTurn)
+		{
         if (MoveTime > 0)
         {
             float tstep = MoveTime / Time.deltaTime;
@@ -227,19 +231,35 @@ public class Player : LivingBeing
                 transform.position = Vector2.MoveTowards(transform.position, WorldVisualiser.GetTransformPosFromMapPos(GlobalPos), dstep);
             }
 
-            EventManager.OnPlayerObjectMoved();
+            EventManager.OnPlayerObjectMove();
         }
         else if (Path.Count != 0)
         {
-            //LocalPos buf = Pos;
             NextMovePoint = Path.Pop();
-            //EventManager.OnCreatureMove(buf, Pos); //TODO name?
-
             MoveTime = MoveAnimTime;
         }
+		else if(RemainingMoves==0)
+		{
+				MakingTurn=false;
+			EventManager.OnLivingBeingEndTurn();
+		}
+		else
+			GameObject.FindWithTag("World").GetComponent<World>().RerenderBlueHexesOnLocal();
+		}
     }
 
-    public void MoveTo(LocalPos pos/*, bool inBattle*/)//TODO
+	public override void TakeDamage (byte damage, bool applyArmor)
+	{
+		//Debug.Assert(damage >= 0);
+		if(applyArmor&&BodyArmor.GetComponentInChildren<AttachedItem>()!=null)
+			damage=(byte)Mathf.RoundToInt(damage * (1 - BodyArmor.GetComponentInChildren<AttachedItem>().Item.Armor));
+		Health = (byte)(Health-damage > 0 ? Health-damage : 0);//TODO Если Health не float
+		EventManager.OnCreatureHit(this, damage);
+
+		GetComponent<SpriteRenderer>().sprite=FightingSprite;
+	}
+
+    public void MoveTo(LocalPos pos)
     {
         List<LocalPos> buf = Pathfinder.MakePath((GameObject.FindWithTag("World").GetComponent<World>().CurrentMap as LocalMap).GetBlockMatrix(), Pos, pos, false);//TODO Тут?
         buf.Reverse();
@@ -251,18 +271,12 @@ public class Player : LivingBeing
 
         EventManager.OnCreatureMove(pBuf, pos);
         RemainingMoves -= (byte)Path.Count;
-        if (RemainingMoves == 0)
-        {
-            RemainingMoves = Speed;
-            EventManager.OnPlayerTurn();
-            //EventManager.OnCreatureStartTurn();
-        }
-        else
-            GameObject.FindWithTag("World").GetComponent<World>().RerenderBlueHexesOnLocal();
+		EventManager.OnBluesUnrender();
     }
 
     public void MoveTo(GlobalPos pos, float moveAnimTime)
     {
+		MakingTurn=true;
         MoveTime = moveAnimTime;
         GlobalPos = pos;
         //EventManager.OnPlayerMove(mapCoords); //TODO Временно //Временно закоммент. см. HexInteraction 21
@@ -274,7 +288,12 @@ public class Player : LivingBeing
             target.TakeDamage((byte)damage, true);
         else
             EventManager.OnAttackMiss(transform.position);
-        RemainingMoves = Speed;
+        RemainingMoves = 0;
+		MakingTurn=false;
+		EventManager.OnBluesUnrender();
+		EventManager.OnLivingBeingEndTurn();
+
+		GetComponent<SpriteRenderer>().sprite=FightingSprite;
     }
 
     void StartAction(TimedAction action)
@@ -322,31 +341,27 @@ public class Player : LivingBeing
         return Weapon == null ? BaseWeapon : Weapon;
     }
 
-    public byte MaxEnergy;
-    public byte MaxDamage;
+	public override void MakeTurn ()
+	{
+		MakingTurn=true;
+		RemainingMoves = Speed;
+	}
 
-    public byte CurrentHealth;
-    public byte CurrentEnergy;
-    public byte CurrentArmor;
-    public byte CurrentDamage;
-
-
-
-
-
-
+	void StopMakingTurn()
+	{
+		MakingTurn=false;
+		RemainingMoves=0;
+	}
+		
+	//==============================
     public void UseItem(Item item)
     {
         for (int i = 0; i < item.ItemAttributes.Count; i++)
         {
             if (item.ItemAttributes[i].AttributeName == "Health")
-            {
-                if ((CurrentHealth + item.ItemAttributes[i].AttributeValue) > MaxHealth)
-                    CurrentHealth = MaxHealth;
-                else
-                    CurrentHealth += (byte)item.ItemAttributes[i].AttributeValue;
-            }
-            if (item.ItemAttributes[i].AttributeName == "Armor")
+				TakeHeal((byte)item.ItemAttributes[i].AttributeValue);
+            
+            /*if (item.ItemAttributes[i].AttributeName == "Armor")
             {
                 CurrentArmor += (byte)item.ItemAttributes[i].AttributeValue;
             }
@@ -356,63 +371,7 @@ public class Player : LivingBeing
                     CurrentDamage = MaxDamage;
                 else
                     CurrentDamage += (byte)item.ItemAttributes[i].AttributeValue;
-            }
+            }*/
         }
-    }
-
-    public void EquipArmor(Item item)
-    {
-        for (int i = 0; i < item.ItemAttributes.Count; i++)
-        {
-            if (item.ItemAttributes[i].AttributeName == "Health")
-            {
-                //MaxHealth += (byte)item.ItemAttributes[i].AttributeValue;
-            }
-            if (item.ItemAttributes[i].AttributeName == "Armor")
-            {
-                CurrentArmor += (byte)item.ItemAttributes[i].AttributeValue;
-            }
-        }
-        CurrentArmor += (byte)item.Armor;
-    }
-
-    public void UnequipArmor(Item item)
-    {
-        for (int i = 0; i < item.ItemAttributes.Count; i++)
-        {
-            if (item.ItemAttributes[i].AttributeName == "Health")
-            {
-                //MaxHealth -= (byte)item.ItemAttributes[i].AttributeValue;
-            }
-            if (item.ItemAttributes[i].AttributeName == "Armor")
-            {
-                CurrentArmor -= (byte)item.ItemAttributes[i].AttributeValue;
-            }
-        }
-        CurrentArmor -= (byte)item.Armor;
-    }
-
-    public void EquipWeapon(Item item)
-    {
-        for (int i = 0; i < item.ItemAttributes.Count; i++)
-        {
-            if (item.ItemAttributes[i].AttributeName == "Damage")
-            {
-                CurrentDamage += (byte)item.ItemAttributes[i].AttributeValue;
-            }
-        }
-        CurrentDamage += (byte)item.Damage;
-    }
-
-    public void UnequipWeapon(Item item)
-    {
-        for (int i = 0; i < item.ItemAttributes.Count; i++)
-        {
-            if (item.ItemAttributes[i].AttributeName == "Damage")
-            {
-                MaxDamage -= (byte)item.ItemAttributes[i].AttributeValue;
-            }
-        }
-        CurrentDamage -= (byte)item.Damage;
     }
 }

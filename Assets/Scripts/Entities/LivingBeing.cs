@@ -2,6 +2,23 @@
 
 public abstract class LivingBeing : Entity
 {
+	protected byte Health_;
+	public virtual byte Health
+	{
+		get
+		{
+			return Health_;
+		}
+		protected set
+		{
+			Health_ = value;
+			if (Health_ == 0/*TODO если float, то <=*/)
+				Destroy();
+		}
+	}
+
+	public bool Fighting{get;protected set;}
+
     [SerializeField]
     protected float MoveAnimTime;//TODO Вынести?
     [SerializeField, Range(0, 255)]
@@ -9,30 +26,21 @@ public abstract class LivingBeing : Entity
     public byte MaxHealth { get { return MaxHealth_; } private set { MaxHealth_ = value; } }
     [SerializeField]
     protected TempWeapon BaseWeapon;
-    [SerializeField, Range(0, 1)]
-    float BaseArmor;
     [SerializeField, Range(0, 255)]
     protected byte Speed;
+	protected bool MakingTurn;
     [SerializeField]
     ushort Experience;
 
+	[SerializeField, Range(0, 255)]
+	byte ViewRange_;
+	public byte ViewRange { get { return ViewRange_; } private set { ViewRange_ = value; } }
+	[SerializeField, Range(0, 255)]
+	byte Initiative_;
+	public byte Initiative { get { return Initiative_; } private set { Initiative_ = value; } }
+
     [SerializeField]
     Container Corpse;
-
-    protected byte Health_;
-    public virtual byte Health
-    {
-        get
-        {
-            return Health_;
-        }
-        protected set
-        {
-            Health_ = value;
-            if (Health_ == 0/*TODO если float, то <=*/)
-                Destroy();
-        }
-    }
 
     protected override void Start()
     {
@@ -41,13 +49,7 @@ public abstract class LivingBeing : Entity
         Health = MaxHealth; //TODO C# 6.0 инициализаторы свойств
     }
 
-    public void TakeDamage(byte damage, bool applyArmor)
-    {
-        //Debug.Assert(damage >= 0);
-        float buf = Health - damage * (1 - BaseArmor);
-        Health = (byte)(buf > 0 ? buf : 0);//TODO Если Health не float
-        EventManager.OnCreatureHit(this, damage);
-    }
+	public abstract void TakeDamage(byte damage, bool applyArmor);
 
     public void TakeHeal(byte heal)//C#6.0 EBD
     {
@@ -62,5 +64,8 @@ public abstract class LivingBeing : Entity
         Entity corpse = (Instantiate(Corpse, transform.position, Quaternion.identity) as Entity);
         corpse.Pos = Pos;
         EventManager.OnEntitySpawn(corpse);
+		EventManager.OnCreatureDeath();
     }
+
+	public abstract void MakeTurn();
 }

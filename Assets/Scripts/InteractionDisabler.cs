@@ -4,21 +4,21 @@ public class InteractionDisabler : MonoBehaviour
 {
     void OnEnable()
     {
-        EventManager.ActionStarted += Toggle1;
-        EventManager.ActionEnded += Toggle2;
-        EventManager.PlayerMadeTurn += Toggle2;
-        EventManager.TurnMade += Toggle2;
+		EventManager.ActionStarted += Deactivate2;
+		EventManager.ActionEnded += Activate;
+		EventManager.BluesRendered += Activate;
+		EventManager.BluesUnrendered += Deactivate1;
     }
 
     void OnDisable()
     {
-        EventManager.ActionStarted -= Toggle1;
-        EventManager.ActionEnded -= Toggle2;
-        EventManager.PlayerMadeTurn -= Toggle2;
-        EventManager.TurnMade -= Toggle2;
+		EventManager.ActionStarted -= Deactivate2;
+		EventManager.ActionEnded -= Activate;
+		EventManager.BluesRendered -= Activate;
+		EventManager.BluesUnrendered -= Deactivate1;
     }
 
-    void Toggle1(Action unused = null)
+    void Activate()
     {
         //foreach(Behaviour b in GetComponents<Behaviour>())
         //	b.enabled=false;
@@ -26,21 +26,34 @@ public class InteractionDisabler : MonoBehaviour
 
         //TODO Ждём C# 6.0
         if (GetComponent<SpriteRenderer>() != null)
-            GetComponent<SpriteRenderer>().enabled = !GetComponent<SpriteRenderer>().enabled;
+            GetComponent<SpriteRenderer>().enabled=true;
         if (GetComponent<Collider2D>() != null)
-            GetComponent<Collider2D>().enabled = !GetComponent<Collider2D>().enabled;
+			GetComponent<Collider2D>().enabled = true;
     }
 
-    void Toggle2()
-    {
-        //foreach(Behaviour b in GetComponents<Behaviour>())
-        //	b.enabled=false;
-        //GetComponent<DuringActionDisabler>().enabled=true;
+	void Deactivate1()
+	{
+		//foreach(Behaviour b in GetComponents<Behaviour>())
+		//	b.enabled=false;
+		//GetComponent<DuringActionDisabler>().enabled=true;
 
-        //TODO Ждём C# 6.0
-        if (GetComponent<SpriteRenderer>() != null)
-            GetComponent<SpriteRenderer>().enabled = !GetComponent<SpriteRenderer>().enabled;
-        if (GetComponent<Collider2D>() != null)
-            GetComponent<Collider2D>().enabled = !GetComponent<Collider2D>().enabled;
-    }
+		//TODO Ждём C# 6.0
+		if (GetComponent<SpriteRenderer>() != null)
+			GetComponent<SpriteRenderer>().enabled =false;
+		if (GetComponent<Collider2D>() != null)
+			GetComponent<Collider2D>().enabled = false;
+	}
+
+	void Deactivate2(TimedAction unused=null)
+	{
+		//foreach(Behaviour b in GetComponents<Behaviour>())
+		//	b.enabled=false;
+		//GetComponent<DuringActionDisabler>().enabled=true;
+
+		//TODO Ждём C# 6.0
+		if (GetComponent<SpriteRenderer>() != null)
+			GetComponent<SpriteRenderer>().enabled =false;
+		if (GetComponent<Collider2D>() != null)
+			GetComponent<Collider2D>().enabled = false;
+	}
 }

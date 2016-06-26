@@ -17,6 +17,12 @@ public class Creature : LivingBeing
 
     public AggrTarget AggressiveTo;
 
+	[SerializeField, Range(0, 1)]
+	float BaseArmor;
+
+	[SerializeField]
+	DefenceAction DefenceAction;
+
     LocalMap Map;
     LocalPos TargetPos;
     AI_State State;
@@ -31,16 +37,6 @@ public class Creature : LivingBeing
 
     Animator Animator;
 
-    void OnEnable()
-    {
-        EventManager.PlayerMadeTurn += MakeTurn;
-    }
-
-    void OnDisable()
-    {
-        EventManager.PlayerMadeTurn -= MakeTurn;
-    }
-
     void Awake()
     {
         Map = GameObject.FindWithTag("World").GetComponent<World>().CurrentMap as LocalMap;
@@ -49,6 +45,8 @@ public class Creature : LivingBeing
 
     void Update()
     {
+		if(MakingTurn)
+		{
         if (MoveTime > 0)
         {
             float tstep = MoveTime / Time.deltaTime;
@@ -72,11 +70,25 @@ public class Creature : LivingBeing
             Animator.SetBool("Moving", false);
 
             if (RemainingMoves == 0)
-                EventManager.OnCreatureEndTurn();
+				{
+					MakingTurn=false;
+				EventManager.OnLivingBeingEndTurn();
+				}
             else
                 Think();
         }
+		}
     }
+
+	public override void TakeDamage (byte damage, bool applyArmor)
+	{
+		//Debug.Assert(damage >= 0);
+		if(DefenceAction.TryPerform(ref damage))
+			Animator.SetTrigger("Defence");
+		damage=(byte)Mathf.RoundToInt(damage * (1 - BaseArmor));
+		Health = (byte)(Health - damage > 0 ? Health - damage : 0);
+		EventManager.OnCreatureHit(this, damage);
+	}
 
     public void MoveTo(LocalPos pos)
     {
@@ -107,6 +119,11 @@ public class Creature : LivingBeing
         if (Path.Count == 0)
         {
             List<LocalPos> buf = Pathfinder.MakePath(Map.GetBlockMatrix(), Pos, TargetPos, true);
+			if(buf==null)
+			{
+				Idle(); //?
+				return;
+			}
             buf.Reverse();
             Path = new Stack<LocalPos>(buf);
             Path.Pop();
@@ -124,6 +141,11 @@ public class Creature : LivingBeing
             if (pathIsObsolete)
             {
                 List<LocalPos> buf = Pathfinder.MakePath(Map.GetBlockMatrix(), Pos, TargetPos, true);
+				if(buf==null)
+				{
+					Idle(); //?
+					return;
+				}
                 buf.Reverse();
                 Path = new Stack<LocalPos>(buf);
                 Path.Pop();
@@ -167,18 +189,23 @@ public class Creature : LivingBeing
         switch (AggressiveTo)
         {
             case AggrTarget.PLAYER:
-                return GameObject.FindWithTag("Player").GetComponent<Player>();
+			Player player=GameObject.FindWithTag("Player").GetComponent<Player>();
+			if(HexNavigHelper.Distance(Pos,player.Pos,true)<ViewRange)
+			return player;
+				else
+				return null;
             case AggrTarget.EVERYBODY:
                 List<LivingBeing> buf = Map.GetAllLivingBeings();
                 buf.Remove(this);
-                return buf.Find(lb1 => HexNavigHelper.Distance(Pos, lb1.Pos, true) == buf.Min(lb2 => HexNavigHelper.Distance(Pos, lb2.Pos, true)));
+			byte closestDist=(byte)buf.Min(lb2 => HexNavigHelper.Distance(Pos, lb2.Pos, true));
+			return closestDist<ViewRange?buf.Find(lb1 => HexNavigHelper.Distance(Pos, lb1.Pos, true) == closestDist):null;
         }
         return null;
     }
 
-    void MakeTurn()
+	public override void MakeTurn()
     {
-        EventManager.OnCreatureStartTurn();
+		MakingTurn=true;
         Think();
     }
 
@@ -192,12 +219,21 @@ public class Creature : LivingBeing
                     LivingBeing target = FindTarget();
                     if (target != null)
                     {
+					Fighting=true;
                         Attack(target);
                         Think();
                     }
+				else
+				{
+					MakingTurn=false;
+					EventManager.OnLivingBeingEndTurn();
+				}
                 }
-                else
-                    EventManager.OnCreatureEndTurn();
+			else
+			{
+				MakingTurn=false;
+			EventManager.OnLivingBeingEndTurn();
+			}
                 break;
             case AI_State.MOVE:
                 if (TargetPos == Pos)
@@ -220,7 +256,8 @@ public class Creature : LivingBeing
                         Path.Clear();
                         PerformAttack(Target, BaseWeapon.NormalHitDamage, 0.75f);//TODO Временно normal, 0.85f
                         RemainingMoves = 0;
-                        EventManager.OnCreatureEndTurn();
+					MakingTurn=false;
+					EventManager.OnLivingBeingEndTurn();
                     }
                     else
                         Move();

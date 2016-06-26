@@ -76,7 +76,6 @@ public class EntityAction : MonoBehaviour
             BattleAction ba = btn.Action as BattleAction;
             GameObject.FindWithTag("Player").GetComponent<Player>().Attack(GetComponent<LivingBeing>(), ba.Damage, ba.Accuracy);
             EventManager.PopupButtonClicked -= ButtonClick;
-            EventManager.OnPlayerTurn();
             Clicked = false;
         }
     }
