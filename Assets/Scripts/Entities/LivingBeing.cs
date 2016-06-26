@@ -2,22 +2,22 @@
 
 public abstract class LivingBeing : Entity
 {
-	protected byte Health_;
-	public virtual byte Health
-	{
-		get
-		{
-			return Health_;
-		}
-		protected set
-		{
-			Health_ = value;
-			if (Health_ == 0/*TODO если float, то <=*/)
-				Destroy();
-		}
-	}
+    protected byte Health_;
+    public virtual byte Health
+    {
+        get
+        {
+            return Health_;
+        }
+        protected set
+        {
+            Health_ = value;
+            if (Health_ == 0/*TODO если float, то <=*/)
+                Destroy();
+        }
+    }
 
-	public bool Fighting{get;protected set;}
+    public bool Fighting { get; protected set; }
 
     [SerializeField]
     protected float MoveAnimTime;//TODO Вынести?
@@ -28,16 +28,16 @@ public abstract class LivingBeing : Entity
     protected TempWeapon BaseWeapon;
     [SerializeField, Range(0, 255)]
     protected byte Speed;
-	protected bool MakingTurn;
+    protected bool MakingTurn;
     [SerializeField]
     ushort Experience;
 
-	[SerializeField, Range(0, 255)]
-	byte ViewRange_;
-	public byte ViewRange { get { return ViewRange_; } private set { ViewRange_ = value; } }
-	[SerializeField, Range(0, 255)]
-	byte Initiative_;
-	public byte Initiative { get { return Initiative_; } private set { Initiative_ = value; } }
+    [SerializeField, Range(0, 255)]
+    byte ViewRange_;
+    public byte ViewRange { get { return ViewRange_; } private set { ViewRange_ = value; } }
+    [SerializeField, Range(0, 255)]
+    byte Initiative_;
+    public byte Initiative { get { return Initiative_; } private set { Initiative_ = value; } }
 
     [SerializeField]
     Container Corpse;
@@ -49,7 +49,7 @@ public abstract class LivingBeing : Entity
         Health = MaxHealth; //TODO C# 6.0 инициализаторы свойств
     }
 
-	public abstract void TakeDamage(byte damage, bool applyArmor);
+    public abstract void TakeDamage(byte damage, bool applyArmor);
 
     public void TakeHeal(byte heal)//C#6.0 EBD
     {
@@ -64,8 +64,8 @@ public abstract class LivingBeing : Entity
         Entity corpse = (Instantiate(Corpse, transform.position, Quaternion.identity) as Entity);
         corpse.Pos = Pos;
         EventManager.OnEntitySpawn(corpse);
-		EventManager.OnCreatureDeath();
+        EventManager.OnCreatureDeath();
     }
 
-	public abstract void MakeTurn();
+    public abstract void MakeTurn();
 }

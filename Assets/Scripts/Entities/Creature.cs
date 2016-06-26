@@ -17,11 +17,11 @@ public class Creature : LivingBeing
 
     public AggrTarget AggressiveTo;
 
-	[SerializeField, Range(0, 1)]
-	float BaseArmor;
+    [SerializeField, Range(0, 1)]
+    float BaseArmor;
 
-	[SerializeField]
-	DefenceAction DefenceAction;
+    [SerializeField]
+    DefenceAction DefenceAction;
 
     LocalMap Map;
     LocalPos TargetPos;
@@ -45,50 +45,50 @@ public class Creature : LivingBeing
 
     void Update()
     {
-		if(MakingTurn)
-		{
-        if (MoveTime > 0)
+        if (MakingTurn)
         {
-            float tstep = MoveTime / Time.deltaTime;
-            MoveTime -= Time.deltaTime;
+            if (MoveTime > 0)
+            {
+                float tstep = MoveTime / Time.deltaTime;
+                MoveTime -= Time.deltaTime;
 
-            float dstep = Vector2.Distance(transform.position, WorldVisualiser.GetTransformPosFromMapPos(NextMovePoint)) / tstep;
-            transform.position = Vector2.MoveTowards(transform.position, WorldVisualiser.GetTransformPosFromMapPos(NextMovePoint), dstep);
-        }
-        else if (MovePath.Count != 0)
-        {
-            MoveTime = MoveAnimTime;
-            NextMovePoint = MovePath.Pop();
+                float dstep = Vector2.Distance(transform.position, WorldVisualiser.GetTransformPosFromMapPos(NextMovePoint)) / tstep;
+                transform.position = Vector2.MoveTowards(transform.position, WorldVisualiser.GetTransformPosFromMapPos(NextMovePoint), dstep);
+            }
+            else if (MovePath.Count != 0)
+            {
+                MoveTime = MoveAnimTime;
+                NextMovePoint = MovePath.Pop();
 
-            if (transform.position.x - WorldVisualiser.GetTransformPosFromMapPos(NextMovePoint).x > 0)
-                transform.rotation = new Quaternion(0, 180, 0, 0);
+                if (transform.position.x - WorldVisualiser.GetTransformPosFromMapPos(NextMovePoint).x > 0)
+                    transform.rotation = new Quaternion(0, 180, 0, 0);
+                else
+                    transform.rotation = Quaternion.identity;
+            }
             else
-                transform.rotation = Quaternion.identity;
-        }
-        else
-        {
-            Animator.SetBool("Moving", false);
+            {
+                Animator.SetBool("Moving", false);
 
-            if (RemainingMoves == 0)
-				{
-					MakingTurn=false;
-				EventManager.OnLivingBeingEndTurn();
-				}
-            else
-                Think();
+                if (RemainingMoves == 0)
+                {
+                    MakingTurn = false;
+                    EventManager.OnLivingBeingEndTurn();
+                }
+                else
+                    Think();
+            }
         }
-		}
     }
 
-	public override void TakeDamage (byte damage, bool applyArmor)
-	{
-		//Debug.Assert(damage >= 0);
-		if(DefenceAction.TryPerform(ref damage))
-			Animator.SetTrigger("Defence");
-		damage=(byte)Mathf.RoundToInt(damage * (1 - BaseArmor));
-		Health = (byte)(Health - damage > 0 ? Health - damage : 0);
-		EventManager.OnCreatureHit(this, damage);
-	}
+    public override void TakeDamage(byte damage, bool applyArmor)
+    {
+        //Debug.Assert(damage >= 0);
+        if (DefenceAction.TryPerform(ref damage))
+            Animator.SetTrigger("Defence");
+        damage = (byte)Mathf.RoundToInt(damage * (1 - BaseArmor));
+        Health = (byte)(Health - damage > 0 ? Health - damage : 0);
+        EventManager.OnCreatureHit(this, damage);
+    }
 
     public void MoveTo(LocalPos pos)
     {
@@ -119,11 +119,11 @@ public class Creature : LivingBeing
         if (Path.Count == 0)
         {
             List<LocalPos> buf = Pathfinder.MakePath(Map.GetBlockMatrix(), Pos, TargetPos, true);
-			if(buf==null)
-			{
-				Idle(); //?
-				return;
-			}
+            if (buf == null)
+            {
+                Idle(); //?
+                return;
+            }
             buf.Reverse();
             Path = new Stack<LocalPos>(buf);
             Path.Pop();
@@ -141,11 +141,11 @@ public class Creature : LivingBeing
             if (pathIsObsolete)
             {
                 List<LocalPos> buf = Pathfinder.MakePath(Map.GetBlockMatrix(), Pos, TargetPos, true);
-				if(buf==null)
-				{
-					Idle(); //?
-					return;
-				}
+                if (buf == null)
+                {
+                    Idle(); //?
+                    return;
+                }
                 buf.Reverse();
                 Path = new Stack<LocalPos>(buf);
                 Path.Pop();
@@ -189,23 +189,23 @@ public class Creature : LivingBeing
         switch (AggressiveTo)
         {
             case AggrTarget.PLAYER:
-			Player player=GameObject.FindWithTag("Player").GetComponent<Player>();
-			if(HexNavigHelper.Distance(Pos,player.Pos,true)<ViewRange)
-			return player;
-				else
-				return null;
+                Player player = GameObject.FindWithTag("Player").GetComponent<Player>();
+                if (HexNavigHelper.Distance(Pos, player.Pos, true) < ViewRange)
+                    return player;
+                else
+                    return null;
             case AggrTarget.EVERYBODY:
                 List<LivingBeing> buf = Map.GetAllLivingBeings();
                 buf.Remove(this);
-			byte closestDist=(byte)buf.Min(lb2 => HexNavigHelper.Distance(Pos, lb2.Pos, true));
-			return closestDist<ViewRange?buf.Find(lb1 => HexNavigHelper.Distance(Pos, lb1.Pos, true) == closestDist):null;
+                byte closestDist = (byte)buf.Min(lb2 => HexNavigHelper.Distance(Pos, lb2.Pos, true));
+                return closestDist < ViewRange ? buf.Find(lb1 => HexNavigHelper.Distance(Pos, lb1.Pos, true) == closestDist) : null;
         }
         return null;
     }
 
-	public override void MakeTurn()
+    public override void MakeTurn()
     {
-		MakingTurn=true;
+        MakingTurn = true;
         Think();
     }
 
@@ -219,21 +219,21 @@ public class Creature : LivingBeing
                     LivingBeing target = FindTarget();
                     if (target != null)
                     {
-					Fighting=true;
+                        Fighting = true;
                         Attack(target);
                         Think();
                     }
-				else
-				{
-					MakingTurn=false;
-					EventManager.OnLivingBeingEndTurn();
-				}
+                    else
+                    {
+                        MakingTurn = false;
+                        EventManager.OnLivingBeingEndTurn();
+                    }
                 }
-			else
-			{
-				MakingTurn=false;
-			EventManager.OnLivingBeingEndTurn();
-			}
+                else
+                {
+                    MakingTurn = false;
+                    EventManager.OnLivingBeingEndTurn();
+                }
                 break;
             case AI_State.MOVE:
                 if (TargetPos == Pos)
@@ -256,8 +256,8 @@ public class Creature : LivingBeing
                         Path.Clear();
                         PerformAttack(Target, BaseWeapon.NormalHitDamage, 0.75f);//TODO Временно normal, 0.85f
                         RemainingMoves = 0;
-					MakingTurn=false;
-					EventManager.OnLivingBeingEndTurn();
+                        MakingTurn = false;
+                        EventManager.OnLivingBeingEndTurn();
                     }
                     else
                         Move();

@@ -75,8 +75,8 @@ public class WorldVisualiser : MonoBehaviour
     [SerializeField]
     GlobalMapSettings GlobalMapParam;
     [SerializeField]
-	LocalMapSettings LocalMapParam_;
-	public LocalMapSettings LocalMapParam{get{return LocalMapParam_;}private set{LocalMapParam_=value;}}
+    LocalMapSettings LocalMapParam_;
+    public LocalMapSettings LocalMapParam { get { return LocalMapParam_; } private set { LocalMapParam_ = value; } }
     [SerializeField]
     Material DiffuseMaterial;
     [SerializeField]
@@ -705,14 +705,14 @@ public class WorldVisualiser : MonoBehaviour
         }
     }
 
-	public ushort GetSpriteID(TerrainType terrain, byte index)
-	{
-		ushort id = 0;
-		foreach(Terrain terr in LocalMapParam.Terrains)
-			if(terr.TerrainType == terrain)
-				return (ushort)(id + index);
-			else
-				id += (ushort)terr.Sprites.Length;
-		throw new System.ArgumentException("Terrain not found.","terrain");
-	}
+    public ushort GetSpriteID(TerrainType terrain, byte index)
+    {
+        ushort id = 0;
+        foreach (Terrain terr in LocalMapParam.Terrains)
+            if (terr.TerrainType == terrain)
+                return (ushort)(id + index);
+            else
+                id += (ushort)terr.Sprites.Length;
+        throw new System.ArgumentException("Terrain not found.", "terrain");
+    }
 }

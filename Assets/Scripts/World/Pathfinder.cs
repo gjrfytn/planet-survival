@@ -21,7 +21,7 @@ public static class Pathfinder
             LocalPos cur = queue[0].Coord;
             blockMatrix[cur.Y, cur.X] = true;
             path.Add(cur);
-			if (queue[0].Dist == 0)
+            if (queue[0].Dist == 0)
                 return path;
             else
             {

@@ -161,19 +161,19 @@ public class Player : LivingBeing
     public byte RemainingMoves { get; private set; }
     LocalPos NextMovePoint;
 
-	EquipmentSlot BodyArmor;
+    EquipmentSlot BodyArmor;
 
-	[SerializeField]
-	Sprite NormalSprite;
-	[SerializeField]
-	Sprite FightingSprite;
+    [SerializeField]
+    Sprite NormalSprite;
+    [SerializeField]
+    Sprite FightingSprite;
 
     void OnEnable()
     {
         EventManager.ActionStarted += StartAction;
         EventManager.HourPassed += UpdateState;
         EventManager.ActionEnded += EndAction;
-		EventManager.LocalMapLeft+=StopMakingTurn;
+        EventManager.LocalMapLeft += StopMakingTurn;
 
         //Inventory
         Inventory.ItemUsed += UseItem;
@@ -184,7 +184,7 @@ public class Player : LivingBeing
         EventManager.ActionStarted -= StartAction;
         EventManager.HourPassed -= UpdateState;
         EventManager.ActionEnded -= EndAction;
-		EventManager.LocalMapLeft-=StopMakingTurn;
+        EventManager.LocalMapLeft -= StopMakingTurn;
 
         //Inventory
         Inventory.ItemUsed -= UseItem;
@@ -200,64 +200,64 @@ public class Player : LivingBeing
         Water = MaxWater;
         Food = MaxFood;
         Stamina = MaxStamina;
-		Mental = MaxMental;
+        Mental = MaxMental;
 
-		Equipment equipment=GameObject.FindWithTag("InventoryManager").GetComponent<InventoryManager>().Equipment;
-		foreach(GameObject slot in equipment.Slots)
-			if(slot.GetComponent<EquipmentSlot>().EquipmentType==ItemType.Chest)
-			{
-				BodyArmor=slot.GetComponent<EquipmentSlot>();
-				break;
-			}
+        Equipment equipment = GameObject.FindWithTag("InventoryManager").GetComponent<InventoryManager>().Equipment;
+        foreach (GameObject slot in equipment.Slots)
+            if (slot.GetComponent<EquipmentSlot>().EquipmentType == ItemType.Chest)
+            {
+                BodyArmor = slot.GetComponent<EquipmentSlot>();
+                break;
+            }
     }
 
     void Update()
     {
-		if(MakingTurn)
-		{
-        if (MoveTime > 0)
+        if (MakingTurn)
         {
-            float tstep = MoveTime / Time.deltaTime;
-            MoveTime -= Time.deltaTime;
-            //TODO Возможно стоит сохранять значение из GetTransformPosFromMapPos(MapCoords,World.IsCurrentMapLocal())), так как это улучшит(?) производительность
-            if (GameObject.FindWithTag("World").GetComponent<World>().IsCurrentMapLocal())
+            if (MoveTime > 0)
             {
-                float dstep = Vector2.Distance(transform.position, WorldVisualiser.GetTransformPosFromMapPos(NextMovePoint)) / tstep;
-                transform.position = Vector2.MoveTowards(transform.position, WorldVisualiser.GetTransformPosFromMapPos(NextMovePoint), dstep);
+                float tstep = MoveTime / Time.deltaTime;
+                MoveTime -= Time.deltaTime;
+                //TODO Возможно стоит сохранять значение из GetTransformPosFromMapPos(MapCoords,World.IsCurrentMapLocal())), так как это улучшит(?) производительность
+                if (GameObject.FindWithTag("World").GetComponent<World>().IsCurrentMapLocal())
+                {
+                    float dstep = Vector2.Distance(transform.position, WorldVisualiser.GetTransformPosFromMapPos(NextMovePoint)) / tstep;
+                    transform.position = Vector2.MoveTowards(transform.position, WorldVisualiser.GetTransformPosFromMapPos(NextMovePoint), dstep);
+                }
+                else
+                {
+                    float dstep = Vector2.Distance(transform.position, WorldVisualiser.GetTransformPosFromMapPos(GlobalPos)) / tstep;
+                    transform.position = Vector2.MoveTowards(transform.position, WorldVisualiser.GetTransformPosFromMapPos(GlobalPos), dstep);
+                }
+
+                EventManager.OnPlayerObjectMove();
+            }
+            else if (Path.Count != 0)
+            {
+                NextMovePoint = Path.Pop();
+                MoveTime = MoveAnimTime;
+            }
+            else if (RemainingMoves == 0)
+            {
+                MakingTurn = false;
+                EventManager.OnLivingBeingEndTurn();
             }
             else
-            {
-                float dstep = Vector2.Distance(transform.position, WorldVisualiser.GetTransformPosFromMapPos(GlobalPos)) / tstep;
-                transform.position = Vector2.MoveTowards(transform.position, WorldVisualiser.GetTransformPosFromMapPos(GlobalPos), dstep);
-            }
-
-            EventManager.OnPlayerObjectMove();
+                GameObject.FindWithTag("World").GetComponent<World>().RerenderBlueHexesOnLocal();
         }
-        else if (Path.Count != 0)
-        {
-            NextMovePoint = Path.Pop();
-            MoveTime = MoveAnimTime;
-        }
-		else if(RemainingMoves==0)
-		{
-				MakingTurn=false;
-			EventManager.OnLivingBeingEndTurn();
-		}
-		else
-			GameObject.FindWithTag("World").GetComponent<World>().RerenderBlueHexesOnLocal();
-		}
     }
 
-	public override void TakeDamage (byte damage, bool applyArmor)
-	{
-		//Debug.Assert(damage >= 0);
-		if(applyArmor&&BodyArmor.GetComponentInChildren<AttachedItem>()!=null)
-			damage=(byte)Mathf.RoundToInt(damage * (1 - BodyArmor.GetComponentInChildren<AttachedItem>().Item.Armor));
-		Health = (byte)(Health-damage > 0 ? Health-damage : 0);//TODO Если Health не float
-		EventManager.OnCreatureHit(this, damage);
+    public override void TakeDamage(byte damage, bool applyArmor)
+    {
+        //Debug.Assert(damage >= 0);
+        if (applyArmor && BodyArmor.GetComponentInChildren<AttachedItem>() != null)
+            damage = (byte)Mathf.RoundToInt(damage * (1 - BodyArmor.GetComponentInChildren<AttachedItem>().Item.Armor));
+        Health = (byte)(Health - damage > 0 ? Health - damage : 0);//TODO Если Health не float
+        EventManager.OnCreatureHit(this, damage);
 
-		GetComponent<SpriteRenderer>().sprite=FightingSprite;
-	}
+        GetComponent<SpriteRenderer>().sprite = FightingSprite;
+    }
 
     public void MoveTo(LocalPos pos)
     {
@@ -271,12 +271,12 @@ public class Player : LivingBeing
 
         EventManager.OnCreatureMove(pBuf, pos);
         RemainingMoves -= (byte)Path.Count;
-		EventManager.OnBluesUnrender();
+        EventManager.OnBluesUnrender();
     }
 
     public void MoveTo(GlobalPos pos, float moveAnimTime)
     {
-		MakingTurn=true;
+        MakingTurn = true;
         MoveTime = moveAnimTime;
         GlobalPos = pos;
         //EventManager.OnPlayerMove(mapCoords); //TODO Временно //Временно закоммент. см. HexInteraction 21
@@ -289,11 +289,11 @@ public class Player : LivingBeing
         else
             EventManager.OnAttackMiss(transform.position);
         RemainingMoves = 0;
-		MakingTurn=false;
-		EventManager.OnBluesUnrender();
-		EventManager.OnLivingBeingEndTurn();
+        MakingTurn = false;
+        EventManager.OnBluesUnrender();
+        EventManager.OnLivingBeingEndTurn();
 
-		GetComponent<SpriteRenderer>().sprite=FightingSprite;
+        GetComponent<SpriteRenderer>().sprite = FightingSprite;
     }
 
     void StartAction(TimedAction action)
@@ -341,26 +341,26 @@ public class Player : LivingBeing
         return Weapon == null ? BaseWeapon : Weapon;
     }
 
-	public override void MakeTurn ()
-	{
-		MakingTurn=true;
-		RemainingMoves = Speed;
-	}
+    public override void MakeTurn()
+    {
+        MakingTurn = true;
+        RemainingMoves = Speed;
+    }
 
-	void StopMakingTurn()
-	{
-		MakingTurn=false;
-		RemainingMoves=0;
-	}
-		
-	//==============================
+    void StopMakingTurn()
+    {
+        MakingTurn = false;
+        RemainingMoves = 0;
+    }
+
+    //==============================
     public void UseItem(Item item)
     {
         for (int i = 0; i < item.ItemAttributes.Count; i++)
         {
             if (item.ItemAttributes[i].AttributeName == "Health")
-				TakeHeal((byte)item.ItemAttributes[i].AttributeValue);
-            
+                TakeHeal((byte)item.ItemAttributes[i].AttributeValue);
+
             /*if (item.ItemAttributes[i].AttributeName == "Armor")
             {
                 CurrentArmor += (byte)item.ItemAttributes[i].AttributeValue;

@@ -34,9 +34,9 @@ public static class EventManager
         PlayerMovedOnGlobal(pos);
     }
 
-	public static void OnLivingBeingEndTurn()//C#6.0 EBD
+    public static void OnLivingBeingEndTurn()//C#6.0 EBD
     {
-		LivingBeingEndedTurn();
+        LivingBeingEndedTurn();
     }
 
     public static event TwoLocalPosDelegate CreatureMoved = delegate { }; //TODO Возможно, это событие будет ненужно потом.
@@ -107,65 +107,65 @@ public static class EventManager
 
     public static event EntityDelegate EntitySpawned = delegate { };
     public static event EntityDelegate EntityDestroyed = delegate { };
-	public static event VoidDelegate CreatureDied = delegate { };
+    public static event VoidDelegate CreatureDied = delegate { };
 
-	public static void OnEntitySpawn(Entity e)//C#6.0 EBD
+    public static void OnEntitySpawn(Entity e)//C#6.0 EBD
     {
         EntitySpawned(e);
     }
 
-	public static void OnEntityDestroy(Entity e)//C#6.0 EBD
-	{
-		EntityDestroyed(e);
-	}
+    public static void OnEntityDestroy(Entity e)//C#6.0 EBD
+    {
+        EntityDestroyed(e);
+    }
 
-	public static void OnCreatureDeath()//C#6.0 EBD
-	{
-		CreatureDied();
-	}
+    public static void OnCreatureDeath()//C#6.0 EBD
+    {
+        CreatureDied();
+    }
 
     public static event Vector2AndActionArrayDelegate PopupButtonsCalled = delegate { };
     public static event PopupButtonDelegate PopupButtonClicked = delegate { };
     public static event VoidDelegate PopupButtonsExpelled = delegate { };
 
-	public static void OnPopupButtonsCall(Vector2 v, Action[] a)//C#6.0 EBD
+    public static void OnPopupButtonsCall(Vector2 v, Action[] a)//C#6.0 EBD
     {
         PopupButtonsCalled(v, a);
     }
 
-	public static void OnPopupButtonClick(PopupButton pb)//C#6.0 EBD
+    public static void OnPopupButtonClick(PopupButton pb)//C#6.0 EBD
     {
         PopupButtonClicked(pb);
     }
 
-	public static void OnPopupButtonExpel()//C#6.0 EBD
+    public static void OnPopupButtonExpel()//C#6.0 EBD
     {
         PopupButtonsExpelled();
     }
 
-	public static event VoidDelegate LocalMapEntered=delegate {};
-	public static event VoidDelegate LocalMapLeft=delegate {};
+    public static event VoidDelegate LocalMapEntered = delegate { };
+    public static event VoidDelegate LocalMapLeft = delegate { };
 
-	public static void OnLocalMapEnter()//C#6.0 EBD
-	{
-		LocalMapEntered();
-	}
+    public static void OnLocalMapEnter()//C#6.0 EBD
+    {
+        LocalMapEntered();
+    }
 
-	public static void OnLocalMapLeave()//C#6.0 EBD
-	{
-		LocalMapLeft();
-	}
+    public static void OnLocalMapLeave()//C#6.0 EBD
+    {
+        LocalMapLeft();
+    }
 
-	public static event VoidDelegate BluesRendered = delegate { };
-	public static event VoidDelegate BluesUnrendered = delegate { };
+    public static event VoidDelegate BluesRendered = delegate { };
+    public static event VoidDelegate BluesUnrendered = delegate { };
 
-	public static void OnBluesRender()//C#6.0 EBD
-	{
-		BluesRendered();
-	}
+    public static void OnBluesRender()//C#6.0 EBD
+    {
+        BluesRendered();
+    }
 
-	public static void OnBluesUnrender()//C#6.0 EBD
-	{
-		BluesUnrendered();
-	}
+    public static void OnBluesUnrender()//C#6.0 EBD
+    {
+        BluesUnrendered();
+    }
 }
