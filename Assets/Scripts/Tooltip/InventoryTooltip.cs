@@ -30,6 +30,27 @@ public class InventoryTooltip : Tooltip
     {
         if (InventoryManager.EnableTooltip)
         {
+            if (RectTransform.localPosition.x < 0)
+            {
+                if (RectTransform.localPosition.y < 0)
+                {
+                    RectTransform.pivot = new Vector2(0, 0);
+                }
+                else
+                {
+                    RectTransform.pivot = new Vector2(0, 1);
+                }
+            }
+            else {
+                if (RectTransform.localPosition.y < 0)
+                {
+                    RectTransform.pivot = new Vector2(1, 0);
+                }
+                else
+                {
+                    RectTransform.pivot = new Vector2(1, 1);
+                }
+            }
             TooltipPanel.SetActive(true);
             RectTransform.localPosition = new Vector2();
             HeaderText.text = Item.Name;

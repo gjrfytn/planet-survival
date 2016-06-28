@@ -3,7 +3,13 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using System.Collections;
 
-public class AttachedItem : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler, IPointerDownHandler, IBeginDragHandler, IDragHandler, IEndDragHandler
+public class AttachedItem : MonoBehaviour, 
+    IPointerEnterHandler, 
+    IPointerExitHandler, 
+    IPointerClickHandler,  
+    IBeginDragHandler, 
+    IDragHandler, 
+    IEndDragHandler
 {
 
     public Item Item;
@@ -105,11 +111,6 @@ public class AttachedItem : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
     public void OnPointerExit(PointerEventData data)
     {
         Tooltip.DeactivateTooltip();
-    }
-
-    public void OnPointerDown(PointerEventData data)
-    {
-
     }
 
     public void OnPointerClick(PointerEventData data)
@@ -335,6 +336,7 @@ public class AttachedItem : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
                 Destroy(gameObject);
                 Debug.Log("Предмет выброшен");
             }
+            DraggingItem = null;
             Inventory.UpdateItemList();
         }
     }

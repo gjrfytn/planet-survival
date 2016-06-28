@@ -13,7 +13,10 @@ public class Hotbar : MonoBehaviour {
 	
         for(int i = 0; i < SlotContainer.childCount; i++)
         {
-            Slots.Add(SlotContainer.GetChild(i).gameObject);
+            if (SlotContainer.GetChild(i).GetComponent<Slot>().SlotType == SlotType.Hotbar)
+            {
+                Slots.Add(SlotContainer.GetChild(i).gameObject);
+            }
         }
 	}
 	

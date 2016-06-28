@@ -41,6 +41,7 @@ public class Slot : MonoBehaviour, IDropHandler {
         {
             DraggingItemGameObject = AttachedItem.DraggingItem;
             DraggingItem = DraggingItemGameObject.GetComponent<AttachedItem>();
+            DraggingItem.CurrentSlot = gameObject.transform;
 
             bool addItemIntoSlot = AddItemIntoSlot();
             if(addItemIntoSlot)

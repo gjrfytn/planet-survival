@@ -14,10 +14,8 @@ public class InventoryManager : MonoBehaviour {
     public Hotbar Hotbar;
 
     [Header("Panels & buttons")]
-    public bool EnableTooltip;
     public InventoryTooltip Tooltip;
     //public GameObject BackpackPanel;
-    public bool EnableInfoPanel;
     public ItemInfoPanel ItemInfoPanel; // На будущее. Замена тултипов для сенсорных экранов
     public GameObject SplitPanel; 
     public GameObject DropPanel;
@@ -27,6 +25,11 @@ public class InventoryManager : MonoBehaviour {
     public GameObject SlotPrefab;
     public GameObject EquipmentSlotPrefab;
     public GameObject ItemPrefab;
+
+    [Header("Options")]
+    public bool EnableTooltip;
+    public bool EnableInfoPanel;
+
     [Header("Other")] // Неудачное название
     public GameObject DraggingSlot;
 

@@ -12,6 +12,9 @@ public class InventoryEditor : Editor
     private int ItemStackSize = 1;
     private ItemType ItemTypeToAdd;
 
+    byte width;
+    byte height;
+
     static void Init()
     {
 
@@ -36,10 +39,10 @@ public class InventoryEditor : Editor
         RemoveItems();
         EditorGUILayout.Space();
         GUILayout.Label("Slots management");
-        EditorGUILayout.BeginHorizontal();
+        EditorGUILayout.BeginVertical();
         CreateSlots();
         RemoveSlots();
-        EditorGUILayout.EndHorizontal();
+        EditorGUILayout.EndVertical();
         EditorGUILayout.EndVertical();
         serializedObject.ApplyModifiedProperties();
         SceneView.RepaintAll();
@@ -55,12 +58,15 @@ public class InventoryEditor : Editor
         string[] items = new string[itemDatabase.Items.Count];
         for (int i = 0; i < items.Length; i++)
         {
-            if (itemDatabase.Items[i].ItemType.Equals(ItemTypeToAdd))
+            if (itemDatabase.Items[i].ItemType == ItemTypeToAdd)
             {
                 items[i] = itemDatabase.Items[i].Name;
             }
-        }
+            else
+            {
 
+            }
+        }
         EditorGUILayout.BeginHorizontal();
         ItemId = EditorGUILayout.Popup("", ItemId, items, EditorStyles.popup);
         ItemStackSize = EditorGUILayout.IntField("", ItemStackSize, GUILayout.Width(40));
@@ -95,9 +101,15 @@ public class InventoryEditor : Editor
 
     void CreateSlots()
     {
+        //EditorGUILayout.BeginHorizontal();
+        width = (byte)EditorGUILayout.IntSlider("Width: ", width, 1, byte.MaxValue);
+        height = (byte)EditorGUILayout.IntSlider("Height: ", height, 1, byte.MaxValue);
+        //EditorGUILayout.EndHorizontal();
         if (GUILayout.Button("Create slots"))
         {
-            Inventory.CreateSlots(Inventory.Height, Inventory.Width);
+            Inventory.Width = width;
+            Inventory.Height = height;
+            Inventory.CreateSlots(height, width);
         }
     }
 

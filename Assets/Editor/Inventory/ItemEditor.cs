@@ -20,6 +20,7 @@ public class ItemEditor : EditorWindow {
     int AttributeAmount;
     string ItemToSearch = string.Empty;
 
+    List<Item> ItemBuffer; // TODO
 
     static ItemDatabase ItemDatabase;
 
@@ -152,10 +153,6 @@ public class ItemEditor : EditorWindow {
         else if (SelectedAction == SelectAction.ManageCraftingItem)
         {
            // ManageCraftingItem();
-        }
-        else if(SelectedAction == SelectAction.ManageItem && ItemToSearch != "")
-        {
-
         }
 
         SerObj.ApplyModifiedProperties();
@@ -478,7 +475,7 @@ public class ItemEditor : EditorWindow {
                 ItemToManage.DroppedItem = (GameObject)EditorGUILayout.ObjectField("Model: ", ItemToManage.DroppedItem, typeof(GameObject), false);
                 ItemToManage.CustomObject = (GameObject)EditorGUILayout.ObjectField("Custom object: ", ItemToManage.CustomObject, typeof(GameObject), false);
 
-                if (Item.IsEquipment)
+                if (ItemToManage.IsEquipment)
                 {
                     if (ItemToManage.ItemType == ItemType.Weapon)
                     {
@@ -511,9 +508,9 @@ public class ItemEditor : EditorWindow {
                         ItemToManage.LevelReq = (byte)EditorGUILayout.IntField("Item level requirement: ", ItemToManage.LevelReq);
 
                         GUILayout.BeginHorizontal();
-
                         ItemToManage.Armor = EditorGUILayout.FloatField("Armor: ", ItemToManage.Armor);
-
+                        ItemToManage.ColdResistance = EditorGUILayout.IntField("Cold resistance: ", ItemToManage.ColdResistance);
+                        ItemToManage.HeatResistance = EditorGUILayout.IntField("Heat resistance: ", ItemToManage.HeatResistance);
                         GUILayout.EndHorizontal();
                     }
                 }

@@ -8,8 +8,10 @@ public class Inventory : MonoBehaviour, IDropHandler {
 
     public InventoryManager InventoryManager;
 
+    [HideInInspector]
     [Range(1,255)]
     public byte Width;
+    [HideInInspector]
     [Range(1,255)]
     public byte Height;
 

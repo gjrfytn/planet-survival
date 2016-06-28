@@ -29,17 +29,11 @@ public class Equipment : MonoBehaviour, IDropHandler {
         Player = GameObject.FindGameObjectWithTag("Player").GetComponent<Player>();
         AttachedItem.Equipment = GetComponent<Equipment>();
 
-        for (int i = 0; i < SlotContainer.childCount; i++)
+        /*for (int i = 0; i < SlotContainer.childCount; i++)
         {
             Slots.Add(SlotContainer.GetChild(i).gameObject);
-        }
+        }*/
     }
-
-    /*public void ItemStats()
-    {
-        ArmorText.text = Player.CurrentArmor.ToString();
-        DamageText.text = Player.CurrentDamage.ToString();
-    }*/
 
     public void CreateEquipmentSlots()
     {
