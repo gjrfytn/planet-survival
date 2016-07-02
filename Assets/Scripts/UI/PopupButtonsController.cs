@@ -19,21 +19,21 @@ public class PopupButtonsController : MonoBehaviour
     [SerializeField]
     Transform CameraCanvas;
 
-    List<PopupButton> Buttons = new List<PopupButton>();
+    Dictionary<PopupButton, Action> Buttons = new Dictionary<PopupButton, Action>();
     bool ButtonsShowed;
 
     void OnEnable()
     {
         EventManager.PopupButtonsCalled += ShowButtons;
-        EventManager.PopupButtonClicked += ButtonClick;
-        EventManager.PopupButtonsExpelled += HideButtons;
+        //EventManager.PopupButtonClicked += ButtonClick;
+        //EventManager.PopupButtonsExpelled += HideButtons;
     }
 
     void OnDisable()
     {
         EventManager.PopupButtonsCalled -= ShowButtons;
-        EventManager.PopupButtonClicked -= ButtonClick;
-        EventManager.PopupButtonsExpelled -= HideButtons;
+        //EventManager.PopupButtonClicked -= ButtonClick;
+        //EventManager.PopupButtonsExpelled -= HideButtons;
     }
 
     void Start()
@@ -45,7 +45,9 @@ public class PopupButtonsController : MonoBehaviour
     {
         if (ButtonsShowed)
         {
-            Buttons.ForEach(Destroy);
+            //Buttons.ForEach(Destroy);
+            foreach (PopupButton pb in Buttons.Keys)
+                Destroy(pb.gameObject);
             Buttons.Clear();
         }
         ButtonsShowed = true;
@@ -62,15 +64,16 @@ public class PopupButtonsController : MonoBehaviour
         float radAngle = Angle;
         for (byte i = 0; i < actions.Length; ++i)
         {
-            Buttons.Add((Instantiate(Button, Vector3.zero, Quaternion.identity) as GameObject).GetComponent<PopupButton>());
-            Buttons[i].Action = actions[i];
-            Buttons[i].GetComponent<Image>().sprite = actions[i].Sprite;
-            Buttons[i].transform.SetParent(CameraCanvas);
-            Buttons[i].transform.localScale = Vector3.one;
+            PopupButton button = (Instantiate(Button, Vector3.zero, Quaternion.identity) as GameObject).GetComponent<PopupButton>();
+            button.Controller = this;
+            button.GetComponent<Image>().sprite = actions[i].Sprite;
+            button.transform.SetParent(CameraCanvas);
+            button.transform.localScale = Vector3.one;
             float angle = radAngle * (i + 1);
-            Buttons[i].transform.position = origin;
-            StartCoroutine(MoveHelper.Fly(Buttons[i].gameObject, new Vector2(origin.x + axis.x * Mathf.Cos(angle) - axis.y * Mathf.Sin(angle), origin.y + axis.x * Mathf.Sin(angle) + axis.y * Mathf.Cos(angle)), FlyTime));
-            Buttons[i].GetComponent<Fader>().FadeIn(FadeInTime);
+            button.transform.position = origin;
+            StartCoroutine(MoveHelper.Fly(button.gameObject, new Vector2(origin.x + axis.x * Mathf.Cos(angle) - axis.y * Mathf.Sin(angle), origin.y + axis.x * Mathf.Sin(angle) + axis.y * Mathf.Cos(angle)), FlyTime));
+            button.GetComponent<Fader>().FadeIn(FadeInTime);
+            Buttons.Add(button, actions[i]);
             radAngle *= -1;
         }
     }
@@ -78,14 +81,19 @@ public class PopupButtonsController : MonoBehaviour
     void HideButtons()
     {
         ButtonsShowed = false;
-        Buttons.ForEach(b => Destroy(b.gameObject));
+        //Buttons.ForEach(b => Destroy(b.gameObject));
+        foreach (PopupButton pb in Buttons.Keys)
+            Destroy(pb.gameObject);
         Buttons.Clear();
     }
 
     public void ButtonClick(PopupButton btn)
     {
+        EventManager.OnActionChoose(Buttons[btn]);
         Buttons.Remove(btn);
-        Buttons.ForEach(b => Destroy(b.gameObject));
+        //Buttons.ForEach(b => Destroy(b.gameObject));
+        foreach (PopupButton pb in Buttons.Keys)
+            Destroy(pb.gameObject);
         Buttons.Clear();
         btn.GetComponent<Button>().transition = UnityEngine.UI.Selectable.Transition.None;///
         btn.GetComponent<Button>().interactable = false;///

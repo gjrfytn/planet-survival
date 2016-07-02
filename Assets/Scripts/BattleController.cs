@@ -35,7 +35,7 @@ public class BattleController : MonoBehaviour
 
     void ProceedBattle()
     {
-        LBs.Sort((a, b) => b.Initiative - a.Initiative);
+        System.Linq.Enumerable.OrderByDescending(LBs, lb => lb.Initiative); //List<T>.Sort - нестабильный
         if (Index == LBs.Count)
             Index = 0;
         LBs[Index++].MakeTurn();

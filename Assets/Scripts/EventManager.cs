@@ -12,6 +12,9 @@ public static class EventManager
     public delegate void LivBeAndByteDelegate(LivingBeing lb, byte b);
     public delegate void EntityDelegate(Entity e);
     public delegate void PopupButtonDelegate(PopupButton pb);
+    public delegate void PlDefenceActsDelegate(DefenceAction[] acts);
+    public delegate void PlDefenceActDelegate(DefenceAction a);
+    public delegate void ActionDelegate(Action a);
 
     public static event VoidDelegate UIShowed = delegate { };
     public static event VoidDelegate UIHided = delegate { };
@@ -125,22 +128,10 @@ public static class EventManager
     }
 
     public static event Vector2AndActionArrayDelegate PopupButtonsCalled = delegate { };
-    public static event PopupButtonDelegate PopupButtonClicked = delegate { };
-    public static event VoidDelegate PopupButtonsExpelled = delegate { };
 
     public static void OnPopupButtonsCall(Vector2 v, Action[] a)//C#6.0 EBD
     {
         PopupButtonsCalled(v, a);
-    }
-
-    public static void OnPopupButtonClick(PopupButton pb)//C#6.0 EBD
-    {
-        PopupButtonClicked(pb);
-    }
-
-    public static void OnPopupButtonExpel()//C#6.0 EBD
-    {
-        PopupButtonsExpelled();
     }
 
     public static event VoidDelegate LocalMapEntered = delegate { };
@@ -167,5 +158,19 @@ public static class EventManager
     public static void OnBluesUnrender()//C#6.0 EBD
     {
         BluesUnrendered();
+    }
+
+    public static event ActionDelegate ActionChosen = delegate { };
+
+    public static void OnActionChoose(Action a)//C#6.0 EBD
+    {
+        ActionChosen(a);
+    }
+
+    public static event VoidDelegate PlayerDefended = delegate { };
+
+    public static void OnPlayerDefence()//C#6.0 EBD
+    {
+        PlayerDefended();
     }
 }

@@ -1,11 +1,8 @@
 ﻿using UnityEngine;
 
-public class DefenceAction : MonoBehaviour
+[System.Serializable]
+public class DefenceAction : Action
 {
-    [SerializeField]
-    float StaminaCost;
-    [SerializeField, Range(0, 1)]
-    float Chance;
     [SerializeField, Range(0, 1)]
     float DamageResist;
 

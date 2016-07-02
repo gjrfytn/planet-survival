@@ -1,11 +1,10 @@
-﻿using UnityEngine;
-
-public class PopupButton : MonoBehaviour
+﻿
+public class PopupButton : UnityEngine.MonoBehaviour
 {
-    public Action Action;
+    public PopupButtonsController Controller;
 
     public void Click()//C# 6.0
     {
-        EventManager.OnPopupButtonClick(this);
+        Controller.ButtonClick(this);
     }
 }

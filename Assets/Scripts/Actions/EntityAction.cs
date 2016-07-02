@@ -7,8 +7,6 @@ public class EntityAction : MonoBehaviour
 
     Action[] AllActions;
 
-    bool Clicked;
-
     Player Player;
 
     void Start()
@@ -33,30 +31,30 @@ public class EntityAction : MonoBehaviour
 
     void OnMouseUpAsButton()
     {
-        if (Clicked)
+        //if (Clicked)
+        //{
+        //    EventManager.PopupButtonClicked -= ButtonClick;
+        //    EventManager.OnPopupButtonExpel();
+        //}
+        // else
+        //{
+        //    EventManager.PopupButtonClicked += ButtonClick;
+
+        Action[] filteredActions;
+        if ((GetComponent<Creature>().AggressiveTo & Creature.AggrTarget.PLAYER) != Creature.AggrTarget.NONE)
         {
-            EventManager.PopupButtonClicked -= ButtonClick;
-            EventManager.OnPopupButtonExpel();
+            TempWeapon weapon = Player.GetWeapon();
+            filteredActions = new Action[]{
+					new AttackAction(){Target=GetComponent<LivingBeing>(),Sprite=weapon.NormalHitSprite,Damage=weapon.NormalHitDamage,StaminaCost=weapon.NormalHitStaminaCost,Accuracy=0.75f},
+					new AttackAction(){Target=GetComponent<LivingBeing>(),Sprite=weapon.PowerHitSprite,Damage=weapon.PowerHitDamage,StaminaCost=weapon.PowerHitStaminaCost,Accuracy=0.5f},
+					new AttackAction(){Target=GetComponent<LivingBeing>(),Sprite=weapon.RareHitSprite,Damage=weapon.RareHitDamage,StaminaCost=weapon.RareHitStaminaCost,Accuracy=0.25f}
+				};
         }
         else
-        {
-            EventManager.PopupButtonClicked += ButtonClick;
-
-            Action[] filteredActions;
-            if ((GetComponent<Creature>().AggressiveTo & Creature.AggrTarget.PLAYER) != Creature.AggrTarget.NONE)
-            {
-                TempWeapon weapon = Player.GetWeapon();
-                filteredActions = new Action[]{
-					new BattleAction(){Sprite=weapon.NormalHitSprite,Damage=weapon.NormalHitDamage,StaminaCost=weapon.NormalHitStaminaCost,Accuracy=0.75f},
-					new BattleAction(){Sprite=weapon.PowerHitSprite,Damage=weapon.PowerHitDamage,StaminaCost=weapon.PowerHitStaminaCost,Accuracy=0.5f},
-					new BattleAction(){Sprite=weapon.RareHitSprite,Damage=weapon.RareHitDamage,StaminaCost=weapon.RareHitStaminaCost,Accuracy=0.25f}
-				};
-            }
-            else
-                filteredActions = AllActions;
-            EventManager.OnPopupButtonsCall(transform.position, filteredActions);
-        }
-        Clicked = !Clicked;
+            filteredActions = AllActions;
+        EventManager.OnPopupButtonsCall(transform.position, filteredActions);
+        //}
+        //Clicked = !Clicked;
     }
 
     void OnMouseEnter()
@@ -71,12 +69,11 @@ public class EntityAction : MonoBehaviour
 
     void ButtonClick(PopupButton btn)
     {
-        if (Clicked)
-        {
-            BattleAction ba = btn.Action as BattleAction;
-            GameObject.FindWithTag("Player").GetComponent<Player>().Attack(GetComponent<LivingBeing>(), ba.Damage, ba.Accuracy);
-            EventManager.PopupButtonClicked -= ButtonClick;
-            Clicked = false;
-        }
+        //if (Clicked)
+        //{
+        //    EventManager.PopupButtonClicked -= ButtonClick;
+        //    Clicked = false;
+        //	EventManager.OnActionChoose(btn.Action);
+        //}
     }
 }

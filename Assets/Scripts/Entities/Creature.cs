@@ -170,18 +170,32 @@ public class Creature : LivingBeing
         Animator.SetBool("Moving", true);
     }
 
-    void PerformAttack(LivingBeing target, float damage, float accuracy)
+    void StartAttack(float damage, float accuracy)
     {
+        RemainingMoves = 0;
+        MakingTurn = false;
         if (Random.value < accuracy)
-            target.TakeDamage((byte)damage, true);
+        {
+            EventManager.PlayerDefended += FinishAttack;
+            Target.TakeDamage((byte)damage, true);
+        }
         else
+        {
             EventManager.OnAttackMiss(transform.position);
+            EventManager.OnLivingBeingEndTurn();
+        }
+    }
 
+    void FinishAttack()
+    {
+        EventManager.PlayerDefended -= FinishAttack;
         Animator.SetTrigger("Attack");
-        if (transform.position.x - WorldVisualiser.GetTransformPosFromMapPos(target.Pos).x > 0)
+        if (transform.position.x - WorldVisualiser.GetTransformPosFromMapPos(Target.Pos).x > 0)
             transform.rotation = new Quaternion(0, 180, 0, 0);
         else
             transform.rotation = Quaternion.identity;
+
+        EventManager.OnLivingBeingEndTurn();
     }
 
     LivingBeing FindTarget()
@@ -254,10 +268,7 @@ public class Creature : LivingBeing
                     if (HexNavigHelper.IsMapCoordsAdjacent(TargetPos, Pos, true))
                     {
                         Path.Clear();
-                        PerformAttack(Target, BaseWeapon.NormalHitDamage, 0.75f);//TODO Временно normal, 0.85f
-                        RemainingMoves = 0;
-                        MakingTurn = false;
-                        EventManager.OnLivingBeingEndTurn();
+                        StartAttack(BaseWeapon.NormalHitDamage, 0.75f);//TODO Временно normal, 0.85f
                     }
                     else
                         Move();

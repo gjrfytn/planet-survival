@@ -20,7 +20,7 @@ public class HexInteraction : MonoBehaviour
             TerrainType terrType = World.GetHexTerrain(Pos);
             TimedAction travel = GameObject.FindWithTag("World").GetComponent<Terrains>().GetTerrainProperties(terrType);
             GameObject.FindWithTag("Player").GetComponent<Player>().MoveTo(Pos, travel.Duration * GameTime.GameMinToRealSec);
-            EventManager.OnActionStart(travel);
+            EventManager.OnActionChoose(travel);
         }
         else
             GameObject.FindWithTag("Player").GetComponent<Player>().MoveTo((LocalPos)Pos);

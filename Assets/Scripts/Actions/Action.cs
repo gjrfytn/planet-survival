@@ -1,25 +1,20 @@
 ﻿using UnityEngine;
 
-public abstract class Action
+/*public abstract class Action
 {
     public TempItem[] RequiredItems;
 
     public Sprite Sprite;
-}
+}*/
 
-[System.Serializable]
-public sealed class BattleAction : Action
+public abstract class Action
 {
-    public float Damage;
-    public float Accuracy;
-    public float StaminaCost;
-}
-
-[System.Serializable]
-public sealed class TimedAction : Action
-{
-    public ushort Duration;
-    public float WaterConsumption;
-    public float FoodConsumption;
+    public Sprite Sprite;
+    //[SerializeField]
+    //Sprite Sprite_;
+    //public Sprite Sprite{get{return Sprite_;}private set{Sprite_=value;}}
+    [SerializeField, Range(0, 1)]
+    protected float Chance;
+    [SerializeField]
     public float StaminaConsumption;
 }

@@ -92,7 +92,7 @@ public class AttachedItem : MonoBehaviour,
     {
 
         Item = GetComponentInChildren<AttachedItem>().Item;
-        Tooltip.ActivateInventoryTooltip(Item);
+        //Tooltip.ActivateInventoryTooltip(Item); //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         Vector3[] slotCorners = new Vector3[4];
         GetComponent<RectTransform>().GetWorldCorners(slotCorners);

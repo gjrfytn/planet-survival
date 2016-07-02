@@ -167,13 +167,15 @@ public class Player : LivingBeing
     Sprite NormalSprite;
     [SerializeField]
     Sprite FightingSprite;
+    [SerializeField]
+    DefenceAction[] DefenceActions;
 
     void OnEnable()
     {
-        EventManager.ActionStarted += StartAction;
         EventManager.HourPassed += UpdateState;
         EventManager.ActionEnded += EndAction;
         EventManager.LocalMapLeft += StopMakingTurn;
+        EventManager.ActionChosen += PerformAction;
 
         //Inventory
         Inventory.ItemUsed += UseItem;
@@ -181,10 +183,10 @@ public class Player : LivingBeing
 
     void OnDisable()
     {
-        EventManager.ActionStarted -= StartAction;
         EventManager.HourPassed -= UpdateState;
         EventManager.ActionEnded -= EndAction;
         EventManager.LocalMapLeft -= StopMakingTurn;
+        EventManager.ActionChosen -= PerformAction;
 
         //Inventory
         Inventory.ItemUsed -= UseItem;
@@ -251,12 +253,12 @@ public class Player : LivingBeing
     public override void TakeDamage(byte damage, bool applyArmor)
     {
         //Debug.Assert(damage >= 0);
-        if (applyArmor && BodyArmor.GetComponentInChildren<AttachedItem>() != null)
-            damage = (byte)Mathf.RoundToInt(damage * (1 - BodyArmor.GetComponentInChildren<AttachedItem>().Item.Armor));
-        Health = (byte)(Health - damage > 0 ? Health - damage : 0);//TODO Если Health не float
-        EventManager.OnCreatureHit(this, damage);
+
+        DamageTemp = damage;
+        ApplyArmorTemp = applyArmor;
 
         GetComponent<SpriteRenderer>().sprite = FightingSprite;
+        EventManager.OnPopupButtonsCall(transform.position, DefenceActions);
     }
 
     public void MoveTo(LocalPos pos)
@@ -282,7 +284,7 @@ public class Player : LivingBeing
         //EventManager.OnPlayerMove(mapCoords); //TODO Временно //Временно закоммент. см. HexInteraction 21
     }
 
-    public void Attack(LivingBeing target, float damage, float accuracy)//C#6.0 EBD
+    void Attack(LivingBeing target, float damage, float accuracy)//C#6.0 EBD
     {
         if (Random.value < accuracy)
             target.TakeDamage((byte)damage, true);
@@ -294,11 +296,6 @@ public class Player : LivingBeing
         EventManager.OnLivingBeingEndTurn();
 
         GetComponent<SpriteRenderer>().sprite = FightingSprite;
-    }
-
-    void StartAction(TimedAction action)
-    {
-        CurrentAction = action;
     }
 
     void UpdateState()
@@ -351,6 +348,35 @@ public class Player : LivingBeing
     {
         MakingTurn = false;
         RemainingMoves = 0;
+    }
+
+    byte DamageTemp;
+    bool ApplyArmorTemp;
+
+    void PerformAction(Action action)
+    {
+        if (action is TimedAction)
+        {
+            TimedAction ta = action as TimedAction;
+            CurrentAction = ta;
+            EventManager.OnActionStart(ta);
+        }
+        else if (action is DefenceAction)
+        {
+            (action as DefenceAction).TryPerform(ref DamageTemp);
+            //if (ApplyArmorTemp && BodyArmor.GetComponentInChildren<AttachedItem>() != null)
+            //DamageTemp = (byte)Mathf.RoundToInt(DamageTemp * (1 - BodyArmor.GetComponentInChildren<AttachedItem>().Item.Armor));
+            DamageTemp = (byte)Mathf.RoundToInt(DamageTemp);
+            Health = (byte)(Health - DamageTemp > 0 ? Health - DamageTemp : 0);//TODO Если Health не float
+
+            EventManager.OnCreatureHit(this, DamageTemp);
+            EventManager.OnPlayerDefence();
+        }
+        else if (action is AttackAction)
+        {
+            AttackAction aa = action as AttackAction;
+            Attack(aa.Target, aa.Damage, aa.Accuracy);
+        }
     }
 
     //==============================
