@@ -92,8 +92,7 @@ public class AttachedItem : MonoBehaviour,
     {
 
         Item = GetComponentInChildren<AttachedItem>().Item;
-        Tooltip.Item = Item;
-        Tooltip.ActivateInventoryTooltip();
+        Tooltip.ActivateInventoryTooltip(Item);
 
         Vector3[] slotCorners = new Vector3[4];
         GetComponent<RectTransform>().GetWorldCorners(slotCorners);
@@ -329,9 +328,15 @@ public class AttachedItem : MonoBehaviour,
             if (gameObject.transform.parent == DraggingSlot)
             {
                 GameObject dropItem = (GameObject)Instantiate(Item.DroppedItem);
+                if (dropItem.GetComponent<SpriteRenderer>().sprite == null)
+                {
+                    dropItem.GetComponent<SpriteRenderer>().sprite = Item.Icon;
+                }
                 dropItem.AddComponent<PickUpItem>();
                 dropItem.GetComponent<PickUpItem>().Item = Item;
-                dropItem.transform.localPosition = GameObject.FindGameObjectWithTag("Player").transform.localPosition;
+                dropItem.AddComponent<BoxCollider2D>();
+                dropItem.GetComponent<BoxCollider2D>().isTrigger = true;
+                //dropItem.transform.localPosition = GameObject.FindGameObjectWithTag("Player").transform.localPosition;
                 Inventory.UpdateItemList();
                 Destroy(gameObject);
                 Debug.Log("Предмет выброшен");
