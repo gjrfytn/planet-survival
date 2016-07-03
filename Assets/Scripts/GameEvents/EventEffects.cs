@@ -12,7 +12,7 @@ public class EventEffects : MonoBehaviour
         Effects = new Dictionary<string, EffectApplier>
 		{
 			{"enemy",new EffectApplier(world.EnemyAttack)},
-			{"damage",new ByteAndBoolEffectApplier(player.TakeDamage)},
+			{"damage",new ByteAnd2BoolEffectApplier(player.TakeDamage)},
 			{"heal",new ByteEffectApplier(player.TakeHeal)}
 		};
     }
@@ -27,8 +27,8 @@ public class EventEffects : MonoBehaviour
         (Effects[tag] as ByteEffectApplier).Execute(value);
     }
 
-    public static void ApplyEffect(string tag, byte value1, bool value2)//C#6.0 EBD
+    public static void ApplyEffect(string tag, byte value1, bool value2, bool value3)//C#6.0 EBD
     {
-        (Effects[tag] as ByteAndBoolEffectApplier).Execute(value1, value2);
+        (Effects[tag] as ByteAnd2BoolEffectApplier).Execute(value1, value2, value3);
     }
 }

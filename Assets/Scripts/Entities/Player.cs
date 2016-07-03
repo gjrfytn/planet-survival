@@ -170,6 +170,8 @@ public class Player : LivingBeing
     [SerializeField]
     DefenceAction[] DefenceActions;
 
+    bool DefendedInTurn;
+
     void OnEnable()
     {
         EventManager.HourPassed += UpdateState;
@@ -250,7 +252,7 @@ public class Player : LivingBeing
         }
     }
 
-    public override void TakeDamage(byte damage, bool applyArmor)
+    public override void TakeDamage(byte damage, bool applyArmor, bool applyDefenceAction)
     {
         //Debug.Assert(damage >= 0);
 
@@ -258,7 +260,24 @@ public class Player : LivingBeing
         ApplyArmorTemp = applyArmor;
 
         GetComponent<SpriteRenderer>().sprite = FightingSprite;
-        EventManager.OnPopupButtonsCall(transform.position, DefenceActions);
+        if (applyDefenceAction && !DefendedInTurn)
+        {
+            EventManager.OnPopupButtonsCall(transform.position, DefenceActions, true);
+            DefendedInTurn = true;
+        }
+        else
+            ApplyDamage(damage, applyArmor);
+    }
+
+    void ApplyDamage(byte damage, bool applyArmor)
+    {
+        //if (applyArmor && BodyArmor.GetComponentInChildren<AttachedItem>() != null)
+        //DamageTemp = (byte)Mathf.RoundToInt(DamageTemp * (1 - BodyArmor.GetComponentInChildren<AttachedItem>().Item.Armor));
+        DamageTemp = (byte)Mathf.RoundToInt(DamageTemp);
+        Health = (byte)(Health - DamageTemp > 0 ? Health - DamageTemp : 0);//TODO Если Health не float
+
+        EventManager.OnCreatureHit(this, DamageTemp);
+        EventManager.OnPlayerDefence();
     }
 
     public void MoveTo(LocalPos pos)
@@ -287,7 +306,7 @@ public class Player : LivingBeing
     void Attack(LivingBeing target, float damage, float accuracy)//C#6.0 EBD
     {
         if (Random.value < accuracy)
-            target.TakeDamage((byte)damage, true);
+            target.TakeDamage((byte)damage, true, true);
         else
             EventManager.OnAttackMiss(transform.position);
         RemainingMoves = 0;
@@ -342,6 +361,7 @@ public class Player : LivingBeing
     {
         MakingTurn = true;
         RemainingMoves = Speed;
+        DefendedInTurn = false;
     }
 
     void StopMakingTurn()
@@ -364,13 +384,7 @@ public class Player : LivingBeing
         else if (action is DefenceAction)
         {
             (action as DefenceAction).TryPerform(ref DamageTemp);
-            //if (ApplyArmorTemp && BodyArmor.GetComponentInChildren<AttachedItem>() != null)
-            //DamageTemp = (byte)Mathf.RoundToInt(DamageTemp * (1 - BodyArmor.GetComponentInChildren<AttachedItem>().Item.Armor));
-            DamageTemp = (byte)Mathf.RoundToInt(DamageTemp);
-            Health = (byte)(Health - DamageTemp > 0 ? Health - DamageTemp : 0);//TODO Если Health не float
-
-            EventManager.OnCreatureHit(this, DamageTemp);
-            EventManager.OnPlayerDefence();
+            ApplyDamage(DamageTemp, ApplyArmorTemp);
         }
         else if (action is AttackAction)
         {

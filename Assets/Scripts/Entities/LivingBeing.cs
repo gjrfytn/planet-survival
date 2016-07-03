@@ -49,7 +49,7 @@ public abstract class LivingBeing : Entity
         Health = MaxHealth; //TODO C# 6.0 инициализаторы свойств
     }
 
-    public abstract void TakeDamage(byte damage, bool applyArmor);
+    public abstract void TakeDamage(byte damage, bool applyArmor, bool applyDefenceAction);
 
     public void TakeHeal(byte heal)//C#6.0 EBD
     {

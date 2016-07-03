@@ -80,10 +80,10 @@ public class Creature : LivingBeing
         }
     }
 
-    public override void TakeDamage(byte damage, bool applyArmor)
+    public override void TakeDamage(byte damage, bool applyArmor, bool applyDefenceAction)
     {
         //Debug.Assert(damage >= 0);
-        if (DefenceAction.TryPerform(ref damage))
+        if (applyDefenceAction && DefenceAction.TryPerform(ref damage))
             Animator.SetTrigger("Defence");
         damage = (byte)Mathf.RoundToInt(damage * (1 - BaseArmor));
         Health = (byte)(Health - damage > 0 ? Health - damage : 0);
@@ -177,7 +177,7 @@ public class Creature : LivingBeing
         if (Random.value < accuracy)
         {
             EventManager.PlayerDefended += FinishAttack;
-            Target.TakeDamage((byte)damage, true);
+            Target.TakeDamage((byte)damage, true, true);
         }
         else
         {

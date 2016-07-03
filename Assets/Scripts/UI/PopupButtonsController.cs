@@ -21,19 +21,16 @@ public class PopupButtonsController : MonoBehaviour
 
     Dictionary<PopupButton, Action> Buttons = new Dictionary<PopupButton, Action>();
     bool ButtonsShowed;
+    bool Modal;
 
     void OnEnable()
     {
         EventManager.PopupButtonsCalled += ShowButtons;
-        //EventManager.PopupButtonClicked += ButtonClick;
-        //EventManager.PopupButtonsExpelled += HideButtons;
     }
 
     void OnDisable()
     {
         EventManager.PopupButtonsCalled -= ShowButtons;
-        //EventManager.PopupButtonClicked -= ButtonClick;
-        //EventManager.PopupButtonsExpelled -= HideButtons;
     }
 
     void Start()
@@ -41,15 +38,18 @@ public class PopupButtonsController : MonoBehaviour
         Angle *= Mathf.Deg2Rad;
     }
 
-    void ShowButtons(Vector2 origin, Action[] actions)
+    void ShowButtons(Vector2 origin, Action[] actions, bool modal)
     {
         if (ButtonsShowed)
         {
-            //Buttons.ForEach(Destroy);
+            if (Modal)
+                return;
+
             foreach (PopupButton pb in Buttons.Keys)
                 Destroy(pb.gameObject);
             Buttons.Clear();
         }
+        Modal = modal;
         ButtonsShowed = true;
 
         Vector2 screenPos = Camera.main.WorldToScreenPoint(transform.position);
@@ -78,20 +78,10 @@ public class PopupButtonsController : MonoBehaviour
         }
     }
 
-    void HideButtons()
-    {
-        ButtonsShowed = false;
-        //Buttons.ForEach(b => Destroy(b.gameObject));
-        foreach (PopupButton pb in Buttons.Keys)
-            Destroy(pb.gameObject);
-        Buttons.Clear();
-    }
-
     public void ButtonClick(PopupButton btn)
     {
-        EventManager.OnActionChoose(Buttons[btn]);
+        Action buf = Buttons[btn];
         Buttons.Remove(btn);
-        //Buttons.ForEach(b => Destroy(b.gameObject));
         foreach (PopupButton pb in Buttons.Keys)
             Destroy(pb.gameObject);
         Buttons.Clear();
@@ -99,5 +89,7 @@ public class PopupButtonsController : MonoBehaviour
         btn.GetComponent<Button>().interactable = false;///
         btn.GetComponent<Fader>().FadeAndDestroyObject(0.3f);
         ButtonsShowed = false;
+
+        EventManager.OnActionChoose(buf);
     }
 }

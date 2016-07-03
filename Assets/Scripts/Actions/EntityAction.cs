@@ -31,15 +31,6 @@ public class EntityAction : MonoBehaviour
 
     void OnMouseUpAsButton()
     {
-        //if (Clicked)
-        //{
-        //    EventManager.PopupButtonClicked -= ButtonClick;
-        //    EventManager.OnPopupButtonExpel();
-        //}
-        // else
-        //{
-        //    EventManager.PopupButtonClicked += ButtonClick;
-
         Action[] filteredActions;
         if ((GetComponent<Creature>().AggressiveTo & Creature.AggrTarget.PLAYER) != Creature.AggrTarget.NONE)
         {
@@ -52,9 +43,7 @@ public class EntityAction : MonoBehaviour
         }
         else
             filteredActions = AllActions;
-        EventManager.OnPopupButtonsCall(transform.position, filteredActions);
-        //}
-        //Clicked = !Clicked;
+        EventManager.OnPopupButtonsCall(transform.position, filteredActions, false);
     }
 
     void OnMouseEnter()
@@ -65,15 +54,5 @@ public class EntityAction : MonoBehaviour
     void OnMouseExit()
     {
         GetComponent<SpriteRenderer>().material.color = GetComponent<SpriteRenderer>().material.color * 0.833f;
-    }
-
-    void ButtonClick(PopupButton btn)
-    {
-        //if (Clicked)
-        //{
-        //    EventManager.PopupButtonClicked -= ButtonClick;
-        //    Clicked = false;
-        //	EventManager.OnActionChoose(btn.Action);
-        //}
     }
 }

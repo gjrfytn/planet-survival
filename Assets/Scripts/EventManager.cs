@@ -7,7 +7,7 @@ public static class EventManager
     public delegate void Vector2Delegate(Vector2 p);
     public delegate void GlobalPosDelegate(GlobalPos p);
     public delegate void TimedActionDelegate(TimedAction a);
-    public delegate void Vector2AndActionArrayDelegate(Vector2 v, Action[] a);
+    public delegate void Vector2AndActionArrayAndBoolDelegate(Vector2 v, Action[] a, bool b);
     public delegate void TwoLocalPosDelegate(LocalPos p1, LocalPos p2);
     public delegate void LivBeAndByteDelegate(LivingBeing lb, byte b);
     public delegate void EntityDelegate(Entity e);
@@ -127,11 +127,11 @@ public static class EventManager
         CreatureDied();
     }
 
-    public static event Vector2AndActionArrayDelegate PopupButtonsCalled = delegate { };
+    public static event Vector2AndActionArrayAndBoolDelegate PopupButtonsCalled = delegate { };
 
-    public static void OnPopupButtonsCall(Vector2 v, Action[] a)//C#6.0 EBD
+    public static void OnPopupButtonsCall(Vector2 v, Action[] a, bool modal)//C#6.0 EBD
     {
-        PopupButtonsCalled(v, a);
+        PopupButtonsCalled(v, a, modal);
     }
 
     public static event VoidDelegate LocalMapEntered = delegate { };
