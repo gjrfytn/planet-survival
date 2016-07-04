@@ -389,7 +389,7 @@ public class Player : LivingBeing
         else if (action is AttackAction)
         {
             AttackAction aa = action as AttackAction;
-            Attack(aa.Target, aa.Damage, aa.Accuracy);
+            Attack(aa.Target, GetWeapon().Damage * aa.DamageMultiplier, aa.Chance);
         }
     }
 

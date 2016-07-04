@@ -268,7 +268,7 @@ public class Creature : LivingBeing
                     if (HexNavigHelper.IsMapCoordsAdjacent(TargetPos, Pos, true))
                     {
                         Path.Clear();
-                        StartAttack(BaseWeapon.NormalHitDamage, 0.75f);//TODO Временно normal, 0.85f
+                        StartAttack(BaseWeapon.Damage, 0.75f);//TODO Временно 0.85f
                     }
                     else
                         Move();

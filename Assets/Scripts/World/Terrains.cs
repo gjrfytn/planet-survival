@@ -31,7 +31,8 @@ public class Terrains : MonoBehaviour
 
     public TimedAction GetTerrainProperties(TerrainType type)
     {
-        TimedAction prop = new TimedAction();
+        GameObject buf = new GameObject(); //!
+        TimedAction prop = buf.AddComponent<TimedAction>();
         foreach (TerrainProperties p in TerrainsArray)
             if ((p.Terrain & type) != TerrainType.NONE)
             {

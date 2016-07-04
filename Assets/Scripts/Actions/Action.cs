@@ -7,14 +7,13 @@
     public Sprite Sprite;
 }*/
 
-public abstract class Action
+public abstract class Action : MonoBehaviour
 {
     public Sprite Sprite;
     //[SerializeField]
     //Sprite Sprite_;
     //public Sprite Sprite{get{return Sprite_;}private set{Sprite_=value;}}
-    [SerializeField, Range(0, 1)]
-    protected float Chance;
-    [SerializeField]
+    [Range(0, 1)]
+    public float Chance;
     public float StaminaConsumption;
 }
