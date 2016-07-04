@@ -161,7 +161,15 @@ public class Player : LivingBeing
     public byte RemainingMoves { get; private set; }
     LocalPos NextMovePoint;
 
-    EquipmentSlot BodyArmor;
+    EquipmentSlot WeaponSlot;
+    public Item Weapon
+    {
+        get
+        {
+            return WeaponSlot.GetComponentInChildren<AttachedItem>() != null ? WeaponSlot.GetComponentInChildren<AttachedItem>().Item : BaseWeapon;
+        }
+    }
+    EquipmentSlot BodyArmorSlot;
 
     [SerializeField]
     Sprite NormalSprite;
@@ -208,11 +216,10 @@ public class Player : LivingBeing
 
         Equipment equipment = GameObject.FindWithTag("InventoryManager").GetComponent<InventoryManager>().Equipment;
         foreach (GameObject slot in equipment.Slots)
-            if (slot.GetComponent<EquipmentSlot>().EquipmentType == ItemType.Chest)
-            {
-                BodyArmor = slot.GetComponent<EquipmentSlot>();
-                break;
-            }
+            if (slot.GetComponent<EquipmentSlot>().EquipmentType == ItemType.Weapon)
+                WeaponSlot = slot.GetComponent<EquipmentSlot>();
+            else if (slot.GetComponent<EquipmentSlot>().EquipmentType == ItemType.Chest)
+                BodyArmorSlot = slot.GetComponent<EquipmentSlot>();
     }
 
     void Update()
@@ -271,9 +278,8 @@ public class Player : LivingBeing
 
     void ApplyDamage(byte damage, bool applyArmor)
     {
-        //if (applyArmor && BodyArmor.GetComponentInChildren<AttachedItem>() != null)
-        //DamageTemp = (byte)Mathf.RoundToInt(DamageTemp * (1 - BodyArmor.GetComponentInChildren<AttachedItem>().Item.Armor));
-        DamageTemp = (byte)Mathf.RoundToInt(DamageTemp);
+        if (applyArmor && BodyArmorSlot.GetComponentInChildren<AttachedItem>() != null)
+            DamageTemp = (byte)Mathf.RoundToInt(DamageTemp * (1 - BodyArmorSlot.GetComponentInChildren<AttachedItem>().Item.Armor));
         Health = (byte)(Health - DamageTemp > 0 ? Health - DamageTemp : 0);//TODO Если Health не float
 
         EventManager.OnCreatureHit(this, DamageTemp);
@@ -350,13 +356,6 @@ public class Player : LivingBeing
         Stamina = Mathf.Clamp(Stamina + value, 0, MaxStamina);
     }
 
-    public TempWeapon Weapon;
-
-    public TempWeapon GetWeapon()
-    {
-        return Weapon == null ? BaseWeapon : Weapon;
-    }
-
     public override void MakeTurn()
     {
         MakingTurn = true;
@@ -389,7 +388,7 @@ public class Player : LivingBeing
         else if (action is AttackAction)
         {
             AttackAction aa = action as AttackAction;
-            Attack(aa.Target, GetWeapon().Damage * aa.DamageMultiplier, aa.Chance);
+            Attack(aa.Target, Weapon.Damage * aa.DamageMultiplier, aa.Chance);
         }
     }
 

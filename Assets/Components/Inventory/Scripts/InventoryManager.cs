@@ -95,9 +95,7 @@ public class InventoryManager : MonoBehaviour {
             {
                 if (sameItem && itemFromSlot.Item.IsStackable)
                 {
-                    int stackSize = draggingItem.Item.StackSize;
-                    int stack = itemFromSlot.Item.StackSize + stackSize;
-                    int rest = (stack) % itemFromSlot.Item.MaxStackSize;
+					int stack = itemFromSlot.Item.StackSize + draggingItem.Item.StackSize;
                     //GameObject tempItem = itemFromSlotGameObject;
 
                     if (stack <= itemFromSlot.Item.MaxStackSize)
@@ -110,9 +108,10 @@ public class InventoryManager : MonoBehaviour {
                             itemFromSlot.UpdateStackSize();
                         }
                         Destroy(draggingItemGameObject);
-                        return false;
+
+						return true;
                     }
-                    if (stack >= itemFromSlot.Item.MaxStackSize)
+					else
                     {
                         itemFromSlot.Item.StackSize = itemFromSlot.Item.MaxStackSize;
                         itemFromSlot.UpdateStackSize();
@@ -121,12 +120,10 @@ public class InventoryManager : MonoBehaviour {
                             itemFromSlot.Duplicate.GetComponent<AttachedItem>().Item.StackSize = stack;
                             itemFromSlot.UpdateStackSize();
                         }
-                        draggingItem.Item.StackSize = rest;
-                        draggingItem.UpdateStackSize();
+						draggingItem.Item.StackSize = stack % itemFromSlot.Item.MaxStackSize;
+                        draggingItem.UpdateStackSize();        
 
-                        itemFromSlotGameObject.transform.SetParent(draggingItem.LastSlot);
-                        itemFromSlotGameObject.GetComponent<RectTransform>().localPosition = Vector2.zero;
-                        return true;
+						return false;
                     }
                 }
                 else

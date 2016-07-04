@@ -25,7 +25,7 @@ public abstract class LivingBeing : Entity
     byte MaxHealth_;
     public byte MaxHealth { get { return MaxHealth_; } private set { MaxHealth_ = value; } }
     [SerializeField]
-    protected TempWeapon BaseWeapon;
+    protected Item BaseWeapon;
     [SerializeField, Range(0, 255)]
     protected byte Speed;
     protected bool MakingTurn;

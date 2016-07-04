@@ -33,13 +33,39 @@ public class EntityActions : MonoBehaviour
     {
         foreach (Action a in AllActions)
             if (a is AttackAction)
+            {
+                (a as AttackAction).WeaponSprite = Player.Weapon.Icon;
                 (a as AttackAction).Target = GetComponent<LivingBeing>();
+            }
         Action[] filteredActions;
         if (GetComponent<Creature>() != null && (GetComponent<Creature>().AggressiveTo & Creature.AggrTarget.PLAYER) != Creature.AggrTarget.NONE)
             filteredActions = AllActions.Where(a => a is AttackAction).ToArray();
         else
             filteredActions = AllActions;
         EventManager.OnPopupButtonsCall(transform.position, filteredActions, false);
+    }
+
+    void OnMouseOver()
+    {
+        if (Input.GetMouseButtonUp(0) && AttachedItem.DraggingItem != null)
+        {
+            Item item = AttachedItem.DraggingItem.GetComponent<AttachedItem>().Item;
+            foreach (Action a in AllActions)
+                if (a is AttackAction)
+                {
+                    (a as AttackAction).WeaponSprite = item.Icon;
+                    (a as AttackAction).Target = GetComponent<LivingBeing>();
+                }
+            Action[] filteredActions;
+            if (GetComponent<Creature>() != null && (GetComponent<Creature>().AggressiveTo & Creature.AggrTarget.PLAYER) != Creature.AggrTarget.NONE)
+                filteredActions = AllActions.Where(a => a is AttackAction).ToArray();
+            else
+                filteredActions = AllActions;
+
+            filteredActions = filteredActions.Where(a => a.RequiredItemActionTypes.Length == 0 || a.RequiredItemActionTypes.Contains(item.ItemActionType)).ToArray();
+
+            EventManager.OnPopupButtonsCall(transform.position, filteredActions, false);
+        }
     }
 
     void OnMouseEnter()

@@ -5,7 +5,6 @@ using System.Collections.Generic;
 [System.Serializable]
 public class Item
 {
-
     public string Name;
 
     public int Id;
@@ -38,6 +37,8 @@ public class Item
     public bool TwoHanded;
 
     public ItemType ItemType;
+
+	public ItemActionType ItemActionType;
 
     public int Cooldown; //Задержка перед использованием
 
