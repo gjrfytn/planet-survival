@@ -26,7 +26,7 @@ public class InventoryTooltip : Tooltip
 
     }
 
-    public void ActivateInventoryTooltip()
+    public void ActivateInventoryTooltip(Item item)
     {
         if (InventoryManager.EnableTooltip)
         {
@@ -53,10 +53,10 @@ public class InventoryTooltip : Tooltip
             }
             TooltipPanel.SetActive(true);
             RectTransform.localPosition = new Vector2();
-            HeaderText.text = Item.Name;
-            DescriptionText.text = Item.Description;
-            Image.sprite = Item.Icon;
-            QualityColor.color = InventoryManager.FindColor(Item);
+            HeaderText.text = item.Name;
+            DescriptionText.text = item.Description;
+            Image.sprite = item.Icon;
+            QualityColor.color = InventoryManager.FindColor(item);
         }
     }
 
