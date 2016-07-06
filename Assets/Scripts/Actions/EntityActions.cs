@@ -31,10 +31,21 @@ public class EntityActions : MonoBehaviour
 
     void OnMouseUpAsButton()
     {
+        EventManager.OnPopupButtonsCall(transform.position, FilterActions(Player.Weapon), false);
+    }
+
+    void OnMouseOver()
+    {
+        if (Input.GetMouseButtonUp(0) && AttachedItem.DraggingItem != null)
+            EventManager.OnPopupButtonsCall(transform.position, FilterActions(AttachedItem.DraggingItem.GetComponent<AttachedItem>().Item), false);
+    }
+
+    Action[] FilterActions(Item item)
+    {
         foreach (Action a in AllActions)
             if (a is AttackAction)
             {
-                (a as AttackAction).WeaponSprite = Player.Weapon.Icon;
+                a.AdditionalSprite = item.Icon;
                 (a as AttackAction).Target = GetComponent<LivingBeing>();
             }
         Action[] filteredActions;
@@ -42,30 +53,8 @@ public class EntityActions : MonoBehaviour
             filteredActions = AllActions.Where(a => a is AttackAction).ToArray();
         else
             filteredActions = AllActions;
-        EventManager.OnPopupButtonsCall(transform.position, filteredActions, false);
-    }
 
-    void OnMouseOver()
-    {
-        if (Input.GetMouseButtonUp(0) && AttachedItem.DraggingItem != null)
-        {
-            Item item = AttachedItem.DraggingItem.GetComponent<AttachedItem>().Item;
-            foreach (Action a in AllActions)
-                if (a is AttackAction)
-                {
-                    (a as AttackAction).WeaponSprite = item.Icon;
-                    (a as AttackAction).Target = GetComponent<LivingBeing>();
-                }
-            Action[] filteredActions;
-            if (GetComponent<Creature>() != null && (GetComponent<Creature>().AggressiveTo & Creature.AggrTarget.PLAYER) != Creature.AggrTarget.NONE)
-                filteredActions = AllActions.Where(a => a is AttackAction).ToArray();
-            else
-                filteredActions = AllActions;
-
-            filteredActions = filteredActions.Where(a => a.RequiredItemActionTypes.Length == 0 || a.RequiredItemActionTypes.Contains(item.ItemActionType)).ToArray();
-
-            EventManager.OnPopupButtonsCall(transform.position, filteredActions, false);
-        }
+        return filteredActions.Where(a => a.RequiredItemActionTypes.Length == 0 || a.RequiredItemActionTypes.Contains(item.ItemActionType)).ToArray();
     }
 
     void OnMouseEnter()

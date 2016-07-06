@@ -64,7 +64,7 @@ public abstract class LivingBeing : Entity
         Entity corpse = (Instantiate(Corpse, transform.position, Quaternion.identity) as Entity);
         corpse.Pos = Pos;
         EventManager.OnEntitySpawn(corpse);
-        EventManager.OnCreatureDeath();
+        EventManager.OnCreatureDeath(this);
     }
 
     public abstract void MakeTurn();

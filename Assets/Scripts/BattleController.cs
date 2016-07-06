@@ -10,14 +10,14 @@ public class BattleController : MonoBehaviour
     {
         EventManager.LocalMapEntered += Activate;
         EventManager.LocalMapLeft += Deactivate;
-
+        EventManager.CreatureDied += ExcludeLivingBeing;
     }
 
     void OnDisable()
     {
         EventManager.LocalMapEntered -= Activate;
         EventManager.LocalMapLeft -= Deactivate;
-
+        EventManager.CreatureDied -= ExcludeLivingBeing;
     }
 
     void Activate()
@@ -36,8 +36,13 @@ public class BattleController : MonoBehaviour
     void ProceedBattle()
     {
         System.Linq.Enumerable.OrderByDescending(LBs, lb => lb.Initiative); //List<T>.Sort - нестабильный
-        if (Index == LBs.Count)
+        if (Index >= LBs.Count)
             Index = 0;
         LBs[Index++].MakeTurn();
+    }
+
+    void ExcludeLivingBeing(LivingBeing lb)
+    {
+        LBs.Remove(lb);
     }
 }

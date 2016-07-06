@@ -120,7 +120,7 @@ public class InventoryManager : MonoBehaviour {
                             itemFromSlot.Duplicate.GetComponent<AttachedItem>().Item.StackSize = stack;
                             itemFromSlot.UpdateStackSize();
                         }
-						draggingItem.Item.StackSize = stack % itemFromSlot.Item.MaxStackSize;
+						draggingItem.Item.StackSize = stack - itemFromSlot.Item.MaxStackSize;
                         draggingItem.UpdateStackSize();        
 
 						return false;

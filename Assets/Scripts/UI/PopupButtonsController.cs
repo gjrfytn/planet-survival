@@ -69,6 +69,13 @@ public class PopupButtonsController : MonoBehaviour
             button.GetComponent<Image>().sprite = actions[i].Sprite;
             button.transform.SetParent(CameraCanvas);
             button.transform.localScale = Vector3.one;
+            if (actions[i].AdditionalSprite != null)
+            {
+                GameObject additionalSprite = new GameObject("AdditionalSprite");
+                additionalSprite.AddComponent<Image>().sprite = actions[i].AdditionalSprite;
+                additionalSprite.GetComponent<Image>().rectTransform.sizeDelta = button.GetComponent<Image>().rectTransform.sizeDelta;
+                additionalSprite.transform.SetParent(button.transform, false);
+            }
             float angle = radAngle * (i + 1);
             button.transform.position = origin;
             StartCoroutine(MoveHelper.Fly(button.gameObject, new Vector2(origin.x + axis.x * Mathf.Cos(angle) - axis.y * Mathf.Sin(angle), origin.y + axis.x * Mathf.Sin(angle) + axis.y * Mathf.Cos(angle)), FlyTime));

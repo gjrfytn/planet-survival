@@ -9,6 +9,7 @@ public static class EventManager
     public delegate void TimedActionDelegate(TimedAction a);
     public delegate void Vector2AndActionArrayAndBoolDelegate(Vector2 v, Action[] a, bool b);
     public delegate void TwoLocalPosDelegate(LocalPos p1, LocalPos p2);
+    public delegate void LivingBeingDelegate(LivingBeing lb);
     public delegate void LivBeAndByteDelegate(LivingBeing lb, byte b);
     public delegate void EntityDelegate(Entity e);
     public delegate void PopupButtonDelegate(PopupButton pb);
@@ -110,7 +111,7 @@ public static class EventManager
 
     public static event EntityDelegate EntitySpawned = delegate { };
     public static event EntityDelegate EntityDestroyed = delegate { };
-    public static event VoidDelegate CreatureDied = delegate { };
+    public static event LivingBeingDelegate CreatureDied = delegate { };
 
     public static void OnEntitySpawn(Entity e)//C#6.0 EBD
     {
@@ -122,9 +123,9 @@ public static class EventManager
         EntityDestroyed(e);
     }
 
-    public static void OnCreatureDeath()//C#6.0 EBD
+    public static void OnCreatureDeath(LivingBeing lb)//C#6.0 EBD
     {
-        CreatureDied();
+        CreatureDied(lb);
     }
 
     public static event Vector2AndActionArrayAndBoolDelegate PopupButtonsCalled = delegate { };
