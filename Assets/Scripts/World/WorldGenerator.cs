@@ -288,50 +288,44 @@ public static class WorldGenerator
         }
     }
 
-    public static TerrainType[,] CreateTerrainmap(float[,] matrix, LocalTerrainSettings terrainParam)
+	public static void CreateTerrainmap(ref TerrainType[,] terrainmap ,float[,] matrix, LocalTerrainSettings terrainParam)
     {
-        ushort height = (ushort)matrix.GetLength(0);
-        ushort width = (ushort)matrix.GetLength(1);
-
-        TerrainType[,] map = new TerrainType[height, width];
+		ushort height = (ushort)terrainmap.GetLength(0);
+		ushort width = (ushort)terrainmap.GetLength(1);
 
         for (ushort y = 0; y < height; ++y)
             for (ushort x = 0; x < width; ++x)
                 if (matrix[y, x] < terrainParam.Terrains[0].StartingHeight)
-                    map[y, x] = terrainParam.BottommostTerrain.TerrainType;
+					terrainmap[y, x]|= terrainParam.BottommostTerrain.TerrainType;
                 else if (matrix[y, x] >= terrainParam.Terrains[terrainParam.Terrains.Length - 1].StartingHeight)
-                    map[y, x] = terrainParam.Terrains[terrainParam.Terrains.Length - 1].TerrainType;
+					terrainmap[y, x] |= terrainParam.Terrains[terrainParam.Terrains.Length - 1].TerrainType;
                 else
                     for (byte i = 1; i < terrainParam.Terrains.Length; ++i)
                         if (matrix[y, x] < terrainParam.Terrains[i].StartingHeight)
                         {
-                            map[y, x] = terrainParam.Terrains[i - 1].TerrainType;
+							terrainmap[y, x] |= terrainParam.Terrains[i - 1].TerrainType;
                             break;
                         }
-        return map;
     }
 
-    public static TerrainType[,] CreateTerrainmap(float[,] matrix, GlobalTerrainSettings terrainParam)
+	public static void CreateTerrainmap(ref TerrainType[,] terrainmap ,float[,] matrix, GlobalTerrainSettings terrainParam)
     {
-        ushort height = (ushort)matrix.GetLength(0);
-        ushort width = (ushort)matrix.GetLength(1);
-
-        TerrainType[,] map = new TerrainType[height, width];
+		ushort height = (ushort)terrainmap.GetLength(0);
+		ushort width = (ushort)terrainmap.GetLength(1);
 
         for (ushort y = 0; y < height; ++y)
             for (ushort x = 0; x < width; ++x)
                 if (matrix[y, x] < terrainParam.Terrains[0].StartingHeight)
-                    map[y, x] = terrainParam.BottommostTerrain;
+					terrainmap[y, x] |= terrainParam.BottommostTerrain;
                 else if (matrix[y, x] >= terrainParam.Terrains[terrainParam.Terrains.Length - 1].StartingHeight)
-                    map[y, x] = terrainParam.Terrains[terrainParam.Terrains.Length - 1].TerrainType;
+					terrainmap[y, x] |= terrainParam.Terrains[terrainParam.Terrains.Length - 1].TerrainType;
                 else
                     for (byte i = 1; i < terrainParam.Terrains.Length; ++i)
                         if (matrix[y, x] < terrainParam.Terrains[i].StartingHeight)
                         {
-                            map[y, x] = terrainParam.Terrains[i - 1].TerrainType;
+							terrainmap[y, x] |= terrainParam.Terrains[i - 1].TerrainType;
                             break;
                         }
-        return map;
     }
 
     public static void CreateVegetation(ref LocalMap map, LocalTerrainSettings terrainParam, float vegetationValue)

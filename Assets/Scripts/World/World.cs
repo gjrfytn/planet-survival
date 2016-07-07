@@ -259,7 +259,7 @@ public class World : MonoBehaviour
                 buf2[y, x] = buf[y, x].Value;
                 buf[y, x] = null;
             }
-        map.TerrainMatrix = WorldGenerator.CreateTerrainmap(buf2, LocalMapTerrainParam);
+		WorldGenerator.CreateTerrainmap(ref map.TerrainMatrix,buf2, LocalMapTerrainParam);
         WorldGenerator.CreateVegetation(ref map, LocalMapTerrainParam, forest);
 
         return map;
@@ -477,7 +477,7 @@ public class World : MonoBehaviour
         chunk.Rivers = WorldGenerator.CreateRivers(chunk.HeightMatrix, ref chunk.TerrainMatrix, GlobalMapTerrainParam.RiversParam);
         chunk.Clusters = WorldGenerator.CreateClusters(ref chunk, GlobalMapTerrainParam.ClustersParam);
         chunk.Roads = WorldGenerator.CreateRoads(chunk.HeightMatrix, ref chunk.TerrainMatrix, chunk.Clusters, GlobalMapTerrainParam.RoadsParam);
-        chunk.TerrainMatrix = WorldGenerator.CreateTerrainmap(chunk.HeightMatrix, GlobalMapTerrainParam);
+		WorldGenerator.CreateTerrainmap(ref chunk.TerrainMatrix,chunk.HeightMatrix, GlobalMapTerrainParam);
         return chunk;
     }
 

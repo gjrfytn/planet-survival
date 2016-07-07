@@ -405,7 +405,7 @@ public class WorldVisualiser : MonoBehaviour
     {
         byte id = 0;
         for (byte i = 0; i < GlobalMapParam.Terrains.Length; ++i)
-            if (map.TerrainMatrix[pos.Y, pos.X] == GlobalMapParam.Terrains[i].TerrainType)
+			if ((map.TerrainMatrix[pos.Y, pos.X] & GlobalMapParam.Terrains[i].TerrainType) != TerrainType.NONE)
             {
                 for (byte j = 0; j < i; ++j, id += (byte)GlobalMapParam.Terrains[j].Sprites.Length) ;
                 id += (byte)Random.Range(0, GlobalMapParam.Terrains[i].Sprites.Length);
@@ -419,7 +419,7 @@ public class WorldVisualiser : MonoBehaviour
     {
         byte id = 0;
         for (byte i = 0; i < LocalMapParam.Terrains.Length; ++i)
-            if (map.TerrainMatrix[pos.Y, pos.X] == LocalMapParam.Terrains[i].TerrainType)
+			if ((map.TerrainMatrix[pos.Y, pos.X] & LocalMapParam.Terrains[i].TerrainType)!= TerrainType.NONE)
             {
                 for (byte j = 0; j < i; ++j, id += (byte)LocalMapParam.Terrains[j].Sprites.Length) ;
                 id += (byte)Random.Range(0, LocalMapParam.Terrains[i].Sprites.Length);

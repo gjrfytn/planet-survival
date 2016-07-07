@@ -3,6 +3,8 @@ using System.Collections.Generic;
 
 public class Terrains : MonoBehaviour
 {
+	GameObject TravelCashe;
+
     [System.Serializable]
     class TerrainProperties
     {
@@ -29,10 +31,19 @@ public class Terrains : MonoBehaviour
         }
     }
 
+	void Start()
+	{
+		TravelCashe=new GameObject("TravelCashe");
+		TravelCashe.AddComponent<TimedAction>();
+	}
+
     public TimedAction GetTerrainProperties(TerrainType type)
     {
-        GameObject buf = new GameObject(); //!
-        TimedAction prop = buf.AddComponent<TimedAction>();
+		TimedAction prop = TravelCashe.GetComponent<TimedAction>();
+		prop.Duration=0;
+		prop.WaterConsumption=0;
+		prop.FoodConsumption=0;
+		prop.StaminaConsumption=0;
         foreach (TerrainProperties p in TerrainsArray)
             if ((p.Terrain & type) != TerrainType.NONE)
             {
