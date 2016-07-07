@@ -76,7 +76,7 @@ public class InventoryManager : MonoBehaviour
             {
                 return true;
             }
-            if (slot.SlotType == SlotType.Equipment && draggingItem.Item.IsEquipment & slot.GetComponent<EquipmentSlot>().EquipmentType.Equals(draggingItem.Item.ItemType))
+            if (slot.SlotType == SlotType.Equipment && draggingItem.Item.IsEquipment && slot.GetComponent<EquipmentSlot>().EquipmentType.Equals(draggingItem.Item.ItemType))
             {
                 InventoryEvents.EquipItem(draggingItem.Item);
                 return true;
