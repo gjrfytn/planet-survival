@@ -188,7 +188,7 @@ public class Player : LivingBeing
         EventManager.ActionChosen += PerformAction;
 
         //Inventory
-        Inventory.ItemUsed += UseItem;
+        InventoryEvents.ItemUsed += UseItem;
     }
 
     void OnDisable()
@@ -199,7 +199,7 @@ public class Player : LivingBeing
         EventManager.ActionChosen -= PerformAction;
 
         //Inventory
-        Inventory.ItemUsed -= UseItem;
+        InventoryEvents.ItemUsed -= UseItem;
     }
 
     protected override void Start()

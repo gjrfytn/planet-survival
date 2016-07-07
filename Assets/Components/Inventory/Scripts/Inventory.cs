@@ -22,12 +22,6 @@ public class Inventory : MonoBehaviour, IDropHandler {
     [SerializeField]
     public List<Item> ItemsInInventory = new List<Item>();
 
-
-    public delegate void ItemDelegate(Item item);
-    public static event ItemDelegate ItemUsed;
-    public static event ItemDelegate ItemEquipped;
-    public static event ItemDelegate ItemUnequipped;
-
     void Awake()
     {
 
@@ -45,29 +39,6 @@ public class Inventory : MonoBehaviour, IDropHandler {
 	}
 
 
-    public void UseItem(Item item)
-    {
-        if (ItemUsed != null)
-        {
-            ItemUsed(item);
-        }
-    }
-
-    public void EquipItem(Item item)
-    {
-        if(ItemEquipped != null)
-        {
-            ItemEquipped(item);
-        }
-    }
-
-    public void UnequipItem(Item item)
-    {
-        if (ItemUnequipped != null)
-        {
-            ItemUnequipped(item);
-        }
-    }
 
     ///<summary>
     ///Обновляет список предметов в инвентаре
@@ -315,7 +286,7 @@ public class Inventory : MonoBehaviour, IDropHandler {
             {
                 if (draggingItem.GetComponent<AttachedItem>().LastSlot.GetComponent<Slot>().SlotType == SlotType.Equipment)
                 {
-                    InventoryManager.Inventory.EquipItem(draggingItem.GetComponent<AttachedItem>().Item);
+                    InventoryEvents.EquipItem(draggingItem.GetComponent<AttachedItem>().Item);
                 }
             }
             if (draggingItem.GetComponent<AttachedItem>().LastSlot.GetComponent<Slot>().SlotType == SlotType.Hotbar)

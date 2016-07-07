@@ -10,6 +10,15 @@ public class UIController : MonoBehaviour
     [SerializeField]
     GameObject DebugUI;
 
+    //=====================
+    CursorMode CursorMode = CursorMode.Auto;
+    public Texture2D CursorImage;
+    void Awake()
+    {
+        Cursor.SetCursor(CursorImage, Vector2.zero, CursorMode);
+    }
+    //=====================
+
     void Update()
     {
         if (Input.GetKeyDown(KeyCode.D))
@@ -27,22 +36,15 @@ public class UIController : MonoBehaviour
         AudioListener.volume = SoundMuted ? 0 : soundScrollbar.GetComponent<Scrollbar>().value;
     }
 
-    public void OnExitButtonClick(GameObject button)
+    public void OnExitButtonClick()
     {
         Application.Quit();
     }
 
-    public void OnStartGameButtonClick(GameObject button)
+    public void LoadLevel(string levelName)
     {
-        UnityEngine.SceneManagement.SceneManager.LoadScene("Game");
+        UnityEngine.SceneManagement.SceneManager.LoadScene(levelName);
     }
-
-
-    public void BackToMenuButtonClick(GameObject button)
-    {
-        UnityEngine.SceneManagement.SceneManager.LoadScene("Menu");
-    }
-
     public void OnSoundScrollbarScroll(GameObject soundScrollbar)
     {
         if (!SoundMuted)

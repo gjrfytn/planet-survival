@@ -13,7 +13,7 @@ public class Storage : MonoBehaviour {
 
     ItemDatabase ItemDatabase;
     InventoryManager InventoryManager;
-    Inventory Inventory;
+    //Inventory Inventory;
     //Tooltip Tooltip;
     //GameObject Player;
 	// Use this for initialization
@@ -22,7 +22,7 @@ public class Storage : MonoBehaviour {
         //Player = GameObject.FindGameObjectWithTag("Player");
         InventoryManager = GameObject.FindGameObjectWithTag("InvetoryManager").GetComponent<InventoryManager>();
         ItemDatabase = InventoryManager.ItemDatabase;
-        Inventory = InventoryManager.Inventory;
+        //Inventory = InventoryManager.Inventory;
 
 	}
 

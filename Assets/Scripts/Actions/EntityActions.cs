@@ -37,7 +37,24 @@ public class EntityActions : MonoBehaviour
     void OnMouseOver()
     {
         if (Input.GetMouseButtonUp(0) && AttachedItem.DraggingItem != null)
+        {
             EventManager.OnPopupButtonsCall(transform.position, FilterActions(AttachedItem.DraggingItem.GetComponent<AttachedItem>().Item), false);
+
+            GameObject draggingItem = AttachedItem.DraggingItem;
+            if (draggingItem.GetComponent<AttachedItem>().Item.IsEquipment)
+            {
+                if (draggingItem.GetComponent<AttachedItem>().LastSlot.GetComponent<Slot>().SlotType == SlotType.Equipment)
+                {
+                    //InventoryManager.Inventory.EquipItem(draggingItem.GetComponent<AttachedItem>().Item);
+                }
+            }
+            if (draggingItem.GetComponent<AttachedItem>().LastSlot.GetComponent<Slot>().SlotType == SlotType.Hotbar)
+            {
+                draggingItem.GetComponent<AttachedItem>().CreateDuplicate(draggingItem);
+            }
+            draggingItem.transform.SetParent(draggingItem.GetComponent<AttachedItem>().LastSlot);
+            draggingItem.GetComponent<RectTransform>().localPosition = Vector3.zero;
+        }
     }
 
     Action[] FilterActions(Item item)

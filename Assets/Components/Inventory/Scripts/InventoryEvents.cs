@@ -1,20 +1,55 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class InventoryEvents : MonoBehaviour
+public static class InventoryEvents
 {
-    //DropDownItem
-    //PickUpitem
 
-    // Use this for initialization
-    void Start()
+    public delegate void ItemDelegate(Item item);
+
+    public static event ItemDelegate ItemUsed;
+    public static event ItemDelegate ItemEquipped;
+    public static event ItemDelegate ItemUnequipped;
+    public static event ItemDelegate ItemDropped;
+    public static event ItemDelegate ItemPickedUp;
+
+    public static void UseItem(Item item)
     {
-
+        if (ItemUsed != null)
+        {
+            ItemUsed(item);
+        }
     }
 
-    // Update is called once per frame
-    void Update()
+    public static void EquipItem(Item item)
     {
+        if (ItemEquipped != null)
+        {
+            ItemEquipped(item);
+        }
+    }
 
+    public static void UnequipItem(Item item)
+    {
+        if (ItemUnequipped != null)
+        {
+            ItemUnequipped(item);
+        }
+    }
+
+    //Временно
+    public static void DropItem(Item item)
+    {
+        if(ItemDropped != null)
+        {
+            ItemDropped(item);
+        }
+    }
+
+    public static void PickUpItem(Item item)
+    {
+        if (ItemPickedUp != null)
+        {
+            ItemPickedUp(item);
+        }
     }
 }

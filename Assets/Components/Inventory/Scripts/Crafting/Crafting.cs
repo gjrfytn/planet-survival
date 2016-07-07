@@ -5,9 +5,9 @@ using System.Collections.Generic;
 
 public class Crafting : MonoBehaviour {
 
-    public InventoryManager InventoryManager;
-    public Inventory Inventory;
-    public ItemDatabase ItemDatabase;
+    private InventoryManager InventoryManager;
+    private Inventory Inventory;
+    private ItemDatabase ItemDatabase;
     public CraftedItem SelectedItem;
     public List<CraftedItem> AbleToCraftItems;
 

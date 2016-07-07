@@ -72,7 +72,7 @@ public class AttachedItem : MonoBehaviour,
             StackSize.enabled = true;
             if (Duplicate != null)
             {
-                Duplicate.GetComponent<AttachedItem>().StackSize = Duplicate.transform.GetComponentInChildren<Text>();
+                Duplicate.GetComponent<AttachedItem>().StackSize = Duplicate.GetComponentInChildren<Text>();
                 Duplicate.GetComponent<AttachedItem>().StackSize.text = Item.StackSize.ToString();
                 Duplicate.GetComponent<AttachedItem>().StackSize.enabled = true;
             }
@@ -117,159 +117,7 @@ public class AttachedItem : MonoBehaviour,
 
         if (data.button == PointerEventData.InputButton.Right)
         {
-            if (Item.UseSound != null)
-            {
-                InventoryManager.GetComponent<AudioSource>().PlayOneShot(Item.UseSound);
-            }
-            //ActionButtons.SetActive(true);
-            //ActionButtons.GetComponent<RectTransform>().position = GetComponent<RectTransform>().position;
-            if (Item.IsEquipment)
-            {
-                #region IsEquipment
-                for (int i = 0; i < Equipment.Slots.Count; i++)
-                {
-                    if (Equipment.Slots[i].GetComponent<EquipmentSlot>().EquipmentType.Equals(Item.ItemType) || Item.ItemType == ItemType.Socket)
-                    {
-                        if (Equipment.Slots[i].transform.childCount == 0)
-                        {
-                            if (GetComponentInParent<EquipmentSlot>() != null)
-                            {
-
-                            }
-                            else
-                            {
-                                Inventory.EquipItem(Item);
-                            }
-                            gameObject.transform.SetParent(Equipment.Slots[i].gameObject.transform);
-                            gameObject.GetComponent<RectTransform>().localPosition = Vector3.zero;
-
-                            Inventory.UpdateItemList();
-                            if (Duplicate != null)
-                            {
-                                Destroy(Duplicate);
-                            }
-                            break;
-
-                        }
-                        if (Equipment.Slots[i].transform.childCount != 0)
-                        {
-                            GameObject equippedItem = Equipment.Slots[i].transform.GetChild(0).gameObject;
-                            Item itemFromSlot = equippedItem.GetComponent<AttachedItem>().Item;
-                            if (Item.ItemType == ItemType.Backpack)
-                            {
-                                //
-                            }
-                            else
-                            {
-                                Inventory.EquipItem(Item);
-                                Inventory.UnequipItem(equippedItem.GetComponent<AttachedItem>().Item);
-                            }
-                            if (this == null)
-                            {
-                                GameObject dropItem = (GameObject)Instantiate(itemFromSlot.DroppedItem);
-                                dropItem.AddComponent<PickUpItem>();
-                                dropItem.GetComponent<PickUpItem>().Item = itemFromSlot;
-                                dropItem.transform.localPosition = GameObject.FindGameObjectWithTag("Player").transform.localPosition;
-                                Inventory.UpdateItemList();
-                            }
-                            else
-                            {
-                                //Inventory.EquipItem(Item);
-                                //Inventory.UnequipItem(equippedItem.GetComponent<AttachedItem>().Item);
-                                equippedItem.transform.SetParent(transform.parent);
-                                equippedItem.GetComponent<RectTransform>().localPosition = Vector3.zero;
-                                if (gameObject.GetComponentInParent<Slot>().SlotType == SlotType.Hotbar)
-                                {
-                                    CreateDuplicate(equippedItem);
-                                }
-                                if (gameObject.GetComponentInParent<Slot>().SlotType == SlotType.Equipment)
-                                {
-                                    // Нужно реализовать это условие по другому
-                                    if (Inventory.ItemsInInventory.Count < (Inventory.Width * Inventory.Height))
-                                    {
-                                        if (Tooltip != null)
-                                        {
-                                            Tooltip.DeactivateTooltip();
-                                        }
-                                        Inventory.UnequipItem(equippedItem.GetComponent<AttachedItem>().Item);
-
-                                        Inventory.AddItem(Item.Id, Item.StackSize);
-                                        Inventory.UpdateItemList();
-                                        InventoryManager.Stackable(Inventory.Slots);
-                                        Destroy(gameObject);
-                                    }
-                                }
-                                gameObject.transform.SetParent(Equipment.Slots[i].gameObject.transform);
-                                gameObject.GetComponent<RectTransform>().localPosition = Vector3.zero;
-                            }
-
-                            if (Duplicate != null)
-                            {
-                                Destroy(Duplicate);
-                            }
-
-                            Inventory.UpdateItemList();
-                            break;
-                        }
-
-                    }
-                }
-                #endregion
-            }
-            else if(Item.IsConsumable)
-            {
-                Item duplicateItem = null;
-
-                    if (Duplicate != null)
-                    {
-                        duplicateItem = Duplicate.GetComponent<AttachedItem>().Item;
-                    }
-                    Inventory.UseItem(Item);
-                    Item.StackSize--;
-                    UpdateStackSize();
-                    if (duplicateItem != null)
-                    {
-                        Duplicate.GetComponent<AttachedItem>().Item.StackSize--;
-                        UpdateStackSize();
-                        if (Item.StackSize <= 0)
-                        {
-                            if (Tooltip != null)
-                            {
-                                Tooltip.DeactivateTooltip();
-                            }
-                            Inventory.RemoveItem(Item);
-                            Destroy(Duplicate);
-                        }
-                    }
-                    if (Item.StackSize <= 0)
-                    {
-                        if (Tooltip != null)
-                        {
-                            Tooltip.DeactivateTooltip();
-                        }
-                        Destroy(gameObject);
-                    }
-            }
-            else
-            {
-                //Item duplicateItem = null;
-
-                if (Item.ItemType == ItemType.Book)
-                {
-                    //
-                }
-                if(Item.ItemType == ItemType.AudioPlayer)
-                {
-                    GameObject audioPlayer = Instantiate(Item.CustomObject);
-                    audioPlayer.name = "AudioPlayer";
-                    audioPlayer.transform.SetParent(InventoryManager.transform);
-                    audioPlayer.GetComponent<RectTransform>().localPosition = Vector3.zero;
-                }
-            }
-            if (Tooltip != null)
-            {
-                Tooltip.DeactivateTooltip();
-            }
+            UseItem(Item);
         }
         else if (data.button == PointerEventData.InputButton.Left) //Поменять
         {
@@ -288,7 +136,7 @@ public class AttachedItem : MonoBehaviour,
 
             if (transform.parent.GetComponent<Slot>().SlotType == SlotType.Equipment)
             {
-                Inventory.UnequipItem(Item);
+                InventoryEvents.UnequipItem(Item);
             }
         }
     }
@@ -336,6 +184,7 @@ public class AttachedItem : MonoBehaviour,
                 dropItem.GetComponent<PickUpItem>().Item = Item;
                 dropItem.AddComponent<BoxCollider2D>();
                 dropItem.GetComponent<BoxCollider2D>().isTrigger = true;
+                InventoryEvents.DropItem(Item);
                 //dropItem.transform.localPosition = GameObject.FindGameObjectWithTag("Player").transform.localPosition;
                 Inventory.UpdateItemList();
                 Destroy(gameObject);
@@ -343,6 +192,163 @@ public class AttachedItem : MonoBehaviour,
             }
             DraggingItem = null;
             Inventory.UpdateItemList();
+        }
+    }
+
+    public void UseItem(Item item)
+    {
+        if (Item.UseSound != null)
+        {
+            InventoryManager.GetComponent<AudioSource>().PlayOneShot(Item.UseSound);
+        }
+        //ActionButtons.SetActive(true);
+        //ActionButtons.GetComponent<RectTransform>().position = GetComponent<RectTransform>().position;
+        if (Item.IsEquipment)
+        {
+            #region IsEquipment
+            for (int i = 0; i < Equipment.Slots.Count; i++)
+            {
+                if (Equipment.Slots[i].GetComponent<EquipmentSlot>().EquipmentType.Equals(Item.ItemType) || Item.ItemType == ItemType.Socket)
+                {
+                    if (Equipment.Slots[i].transform.childCount == 0)
+                    {
+                        if (GetComponentInParent<EquipmentSlot>() != null)
+                        {
+
+                        }
+                        else
+                        {
+                            InventoryEvents.EquipItem(Item);
+                        }
+                        gameObject.transform.SetParent(Equipment.Slots[i].gameObject.transform);
+                        gameObject.GetComponent<RectTransform>().localPosition = Vector3.zero;
+
+                        Inventory.UpdateItemList();
+                        if (Duplicate != null)
+                        {
+                            Destroy(Duplicate);
+                        }
+                        break;
+
+                    }
+                    if (Equipment.Slots[i].transform.childCount != 0)
+                    {
+                        GameObject equippedItem = Equipment.Slots[i].transform.GetChild(0).gameObject;
+                        Item itemFromSlot = equippedItem.GetComponent<AttachedItem>().Item;
+                        if (Item.ItemType == ItemType.Backpack)
+                        {
+                            //
+                        }
+                        else
+                        {
+                            InventoryEvents.EquipItem(Item);
+                            InventoryEvents.UnequipItem(equippedItem.GetComponent<AttachedItem>().Item);
+                        }
+                        if (this == null)
+                        {
+                            GameObject dropItem = (GameObject)Instantiate(itemFromSlot.DroppedItem);
+                            dropItem.AddComponent<PickUpItem>();
+                            dropItem.GetComponent<PickUpItem>().Item = itemFromSlot;
+                            dropItem.transform.localPosition = GameObject.FindGameObjectWithTag("Player").transform.localPosition;
+                            Inventory.UpdateItemList();
+                        }
+                        else
+                        {
+                            //Inventory.EquipItem(Item);
+                            //Inventory.UnequipItem(equippedItem.GetComponent<AttachedItem>().Item);
+                            equippedItem.transform.SetParent(transform.parent);
+                            equippedItem.GetComponent<RectTransform>().localPosition = Vector3.zero;
+                            if (gameObject.GetComponentInParent<Slot>().SlotType == SlotType.Hotbar)
+                            {
+                                CreateDuplicate(equippedItem);
+                            }
+                            if (gameObject.GetComponentInParent<Slot>().SlotType == SlotType.Equipment)
+                            {
+                                // Нужно реализовать это условие по другому
+                                if (Inventory.ItemsInInventory.Count < (Inventory.Width * Inventory.Height))
+                                {
+                                    if (Tooltip != null)
+                                    {
+                                        Tooltip.DeactivateTooltip();
+                                    }
+                                    InventoryEvents.UnequipItem(equippedItem.GetComponent<AttachedItem>().Item);
+
+                                    Inventory.AddItem(Item.Id, Item.StackSize);
+                                    Inventory.UpdateItemList();
+                                    InventoryManager.Stackable(Inventory.Slots);
+                                    Destroy(gameObject);
+                                }
+                            }
+                            gameObject.transform.SetParent(Equipment.Slots[i].gameObject.transform);
+                            gameObject.GetComponent<RectTransform>().localPosition = Vector3.zero;
+                        }
+
+                        if (Duplicate != null)
+                        {
+                            Destroy(Duplicate);
+                        }
+
+                        Inventory.UpdateItemList();
+                        break;
+                    }
+
+                }
+            }
+            #endregion
+        }
+        else if (Item.IsConsumable)
+        {
+            Item duplicateItem = null;
+
+            if (Duplicate != null)
+            {
+                duplicateItem = Duplicate.GetComponent<AttachedItem>().Item;
+            }
+            InventoryEvents.UseItem(Item);
+            Item.StackSize--;
+            UpdateStackSize();
+            if (duplicateItem != null)
+            {
+                Duplicate.GetComponent<AttachedItem>().Item.StackSize--;
+                UpdateStackSize();
+                if (Item.StackSize <= 0)
+                {
+                    if (Tooltip != null)
+                    {
+                        Tooltip.DeactivateTooltip();
+                    }
+                    Inventory.RemoveItem(Item);
+                    Destroy(Duplicate);
+                }
+            }
+            if (Item.StackSize <= 0)
+            {
+                if (Tooltip != null)
+                {
+                    Tooltip.DeactivateTooltip();
+                }
+                Destroy(gameObject);
+            }
+        }
+        else
+        {
+            //Item duplicateItem = null;
+
+            if (Item.ItemType == ItemType.Book)
+            {
+                //
+            }
+            if (Item.ItemType == ItemType.AudioPlayer)
+            {
+                GameObject audioPlayer = Instantiate(Item.CustomObject);
+                audioPlayer.name = "AudioPlayer";
+                audioPlayer.transform.SetParent(InventoryManager.transform);
+                audioPlayer.GetComponent<RectTransform>().localPosition = Vector3.zero;
+            }
+        }
+        if (Tooltip != null)
+        {
+            Tooltip.DeactivateTooltip();
         }
     }
 }

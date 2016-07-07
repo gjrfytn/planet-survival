@@ -3,7 +3,8 @@ using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
 
-public class InventoryManager : MonoBehaviour {
+public class InventoryManager : MonoBehaviour
+{
 
     public ItemDatabase ItemDatabase;
 
@@ -17,7 +18,7 @@ public class InventoryManager : MonoBehaviour {
     public InventoryTooltip Tooltip;
     //public GameObject BackpackPanel;
     public ItemInfoPanel ItemInfoPanel; // На будущее. Замена тултипов для сенсорных экранов
-    public GameObject SplitPanel; 
+    public GameObject SplitPanel;
     public GameObject DropPanel;
     public GameObject ItemActionButtons; // TODO Вслпывающие кнопки при нажатии правой кнопки мыши на предмете
 
@@ -47,15 +48,17 @@ public class InventoryManager : MonoBehaviour {
 
 
 
-	// Use this for initialization
-	void Start () {
-	
-	}
-	
-	// Update is called once per frame
-	void Update () {
-	
-	}
+    // Use this for initialization
+    void Start()
+    {
+
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+
+    }
 
     public void InfoPanel(Item item)
     {
@@ -73,9 +76,9 @@ public class InventoryManager : MonoBehaviour {
             {
                 return true;
             }
-            if (slot.SlotType == SlotType.Equipment && draggingItem.Item.IsEquipment && slot.GetComponent<EquipmentSlot>().EquipmentType.Equals(draggingItem.Item.ItemType))
+            if (slot.SlotType == SlotType.Equipment && draggingItem.Item.IsEquipment & slot.GetComponent<EquipmentSlot>().EquipmentType.Equals(draggingItem.Item.ItemType))
             {
-                Inventory.EquipItem(draggingItem.Item);
+                InventoryEvents.EquipItem(draggingItem.Item);
                 return true;
             }
             if (slot.SlotType == SlotType.Hotbar)
@@ -95,7 +98,7 @@ public class InventoryManager : MonoBehaviour {
             {
                 if (sameItem && itemFromSlot.Item.IsStackable)
                 {
-					int stack = itemFromSlot.Item.StackSize + draggingItem.Item.StackSize;
+                    int stack = itemFromSlot.Item.StackSize + draggingItem.Item.StackSize;
                     //GameObject tempItem = itemFromSlotGameObject;
 
                     if (stack <= itemFromSlot.Item.MaxStackSize)
@@ -109,9 +112,9 @@ public class InventoryManager : MonoBehaviour {
                         }
                         Destroy(draggingItemGameObject);
 
-						return true;
+                        return true;
                     }
-					else
+                    else
                     {
                         itemFromSlot.Item.StackSize = itemFromSlot.Item.MaxStackSize;
                         itemFromSlot.UpdateStackSize();
@@ -120,10 +123,10 @@ public class InventoryManager : MonoBehaviour {
                             itemFromSlot.Duplicate.GetComponent<AttachedItem>().Item.StackSize = stack;
                             itemFromSlot.UpdateStackSize();
                         }
-						draggingItem.Item.StackSize = stack - itemFromSlot.Item.MaxStackSize;
-                        draggingItem.UpdateStackSize();        
+                        draggingItem.Item.StackSize = stack - itemFromSlot.Item.MaxStackSize;
+                        draggingItem.UpdateStackSize();
 
-						return false;
+                        return false;
                     }
                 }
                 else
@@ -154,6 +157,7 @@ public class InventoryManager : MonoBehaviour {
                     itemFromSlotGameObject.GetComponent<RectTransform>().localPosition = Vector2.zero;
                     return true;
                 }
+                return false;
             }
         }
         return false;

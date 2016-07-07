@@ -5,7 +5,7 @@ using System.Collections;
 public class DropItem : MonoBehaviour, IDropHandler {
 
     InventoryManager InventoryManager;
-    Inventory Inventory;
+    //Inventory Inventory;
     GameObject DropPanel;
     GameObject DraggingItem;
 
@@ -13,7 +13,7 @@ public class DropItem : MonoBehaviour, IDropHandler {
     void Start () {
 
         InventoryManager = GameObject.FindGameObjectWithTag("InventoryManager").GetComponent<InventoryManager>();
-        Inventory = InventoryManager.Inventory;
+        //Inventory = InventoryManager.Inventory;
         DropPanel = InventoryManager.DropPanel;
 
 	}

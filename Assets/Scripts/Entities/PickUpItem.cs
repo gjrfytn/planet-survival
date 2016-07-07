@@ -9,7 +9,7 @@ public class PickUpItem : Entity {
     private InventoryManager InventoryManager;
     private Inventory Inventory;
 
-    InventoryTooltip Tooltip;
+    //InventoryTooltip Tooltip;
     Player Player;
 
 	// Use this for initialization
@@ -19,7 +19,7 @@ public class PickUpItem : Entity {
         Player = GameObject.FindGameObjectWithTag("Player").GetComponent<Player>();
         InventoryManager = GameObject.FindGameObjectWithTag("InventoryManager").GetComponent<InventoryManager>();
         Inventory = InventoryManager.Inventory;
-        Tooltip = InventoryManager.Tooltip;
+        //Tooltip = InventoryManager.Tooltip;
         World world = GameObject.FindGameObjectWithTag("World").GetComponent<World>();
 
         if (world.IsCurrentMapLocal())
@@ -47,12 +47,13 @@ public class PickUpItem : Entity {
             bool check = Inventory.CheckIfItemAlreadyExist(Item.Id, Item.StackSize);
             if (check)
             {
+                InventoryEvents.PickUpItem(Item);
                 Destroy(gameObject);
                 InventoryManager.Stackable(Inventory.Slots);
             }
-
             else if (Inventory.ItemsInInventory.Count < (Inventory.Width * Inventory.Height))
             {
+                InventoryEvents.PickUpItem(Item);
                 Inventory.AddItem(Item.Id, Item.StackSize);
                 Inventory.UpdateItemList();
                 InventoryManager.Stackable(Inventory.Slots);

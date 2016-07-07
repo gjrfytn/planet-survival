@@ -4,7 +4,7 @@ using System.Collections;
 
 public class SplitItem : MonoBehaviour {
 
-    private Inventory Inventory;
+    //private Inventory Inventory;
     private int SplitSize;
 
     public InputField InputField;
@@ -12,7 +12,7 @@ public class SplitItem : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 
-        Inventory = GameObject.FindGameObjectWithTag("InventoryManager").GetComponent<InventoryManager>().Inventory;
+        //Inventory = GameObject.FindGameObjectWithTag("InventoryManager").GetComponent<InventoryManager>().Inventory;
         /*SplitSize = 1;
         Slider.minValue = 1;
         Slider.maxValue = ;//

@@ -8,9 +8,9 @@ public class Chest : Entity {
     public byte MinItemsInChest = 1;
     public byte MaxItemsInChest;
 
-    ItemDatabase ItemDatabase;
+    //ItemDatabase ItemDatabase;
     InventoryManager InventoryManager;
-    Inventory Inventory;
+    //Inventory Inventory;
     //Tooltip Tooltip;
     //GameObject Player;
     // Use this for initialization
@@ -19,8 +19,8 @@ public class Chest : Entity {
         base.Start();
         //Player = GameObject.FindGameObjectWithTag("Player");
         InventoryManager = GameObject.FindGameObjectWithTag("InvetoryManager").GetComponent<InventoryManager>();
-        ItemDatabase = InventoryManager.ItemDatabase;
-        Inventory = InventoryManager.Inventory;
+        //ItemDatabase = InventoryManager.ItemDatabase;
+        //Inventory = InventoryManager.Inventory;
 
         MaxItemsInChest = ChestSize;
 

@@ -186,13 +186,14 @@ public class ItemEditor : EditorWindow {
 
         if(Item.DroppedItem == null)
         {
-            Item.DroppedItem = (GameObject)Resources.Load("Inventory/Items/DefaultDropItem");
+            Item.DroppedItem = (GameObject)Resources.Load("Inventory/DefaultDropItem");
         }
         Item.DroppedItem = (GameObject)EditorGUILayout.ObjectField("Dropped item: ", Item.DroppedItem, typeof(GameObject), false);
 
         Item.CustomObject = (GameObject)EditorGUILayout.ObjectField("Custom object: ", Item.CustomObject, typeof(GameObject), false);
 
         Item.Cooldown = EditorGUILayout.IntField("Cooldown: ", Item.Cooldown);
+
         GUILayout.Space(20);
         if (!IsOther)
         {
@@ -207,6 +208,7 @@ public class ItemEditor : EditorWindow {
         {
             Item.IsStackable = false;
             EquipmentItemTypeToCreate = (EquipmentItemType)EditorGUILayout.EnumPopup("Equipment type: ", EquipmentItemTypeToCreate);
+            Item.ItemActionType = (ItemActionType)EditorGUILayout.EnumPopup("Item action type: ", Item.ItemActionType);
 
             string[] itemTypes = System.Enum.GetNames(typeof(ItemType));
 
@@ -361,7 +363,7 @@ public class ItemEditor : EditorWindow {
                         ItemToManage = ItemDatabase.Items[i];
                         string[] itemTypes = System.Enum.GetNames(typeof(ItemType));
 
-                        string[] equipmentItemTypes = System.Enum.GetNames(typeof(ItemType));
+                        //string[] equipmentItemTypes = System.Enum.GetNames(typeof(ItemType));
 
                         for (int k = 0; k < itemTypes.Length; k++)
                         {
@@ -376,28 +378,6 @@ public class ItemEditor : EditorWindow {
                     if (GUILayout.Button(ItemDatabase.Items[i].Name))
                     {
                         ItemToManage = ItemDatabase.Items[i];
-                        /*string[] itemTypes = System.Enum.GetNames(typeof(ItemType));
-
-                        for (int k = 0; k < itemTypes.Length; k++)
-                        {
-                            if (itemTypes[k] == ItemToManage.ItemType.ToString())
-                            {
-                                if (ItemToManage.ItemType == ItemType.Weapon)
-                                {
-                                    break;
-                                }
-                                else if (ItemToManage.ItemType != ItemType.Potion && ItemToManage.ItemType != ItemType.Socket)
-                                {
-                                    //EquipmentItemTypeToCreate = (EquipmentItemType)System.Enum.Parse(typeof(EquipmentItemType), itemTypes[k]);
-                                    break;
-                                }
-                                else
-                                {
-
-                                    break;
-                                }
-                            }
-                        }*/
                     }
                     GUI.color = Color.red;
 
@@ -446,6 +426,7 @@ public class ItemEditor : EditorWindow {
 
                 ItemToManage.Name = EditorGUILayout.TextField("Item name: ", ItemToManage.Name);
                 ItemToManage.ItemType = (ItemType)EditorGUILayout.EnumPopup("Item type: ", ItemToManage.ItemType);
+                ItemToManage.ItemActionType = (ItemActionType)EditorGUILayout.EnumPopup("Item action type: ", ItemToManage.ItemActionType);
                 /*EditorGUILayout.BeginHorizontal();
                 ItemToManage.Width = (byte)EditorGUILayout.IntSlider("Item width: ", ItemToManage.Width, 0, 255);
                 ItemToManage.Height = (byte)EditorGUILayout.IntSlider("Item height: ", ItemToManage.Height, 0, 255);
@@ -495,7 +476,7 @@ public class ItemEditor : EditorWindow {
                         GUILayout.EndHorizontal();
                     }
                 }
-                else if(IsOther)
+                else
                 {
 
                     ItemToManage.UseSound = (AudioClip)EditorGUILayout.ObjectField("Use sound: ", ItemToManage.UseSound, typeof(AudioClip), false);
@@ -514,6 +495,7 @@ public class ItemEditor : EditorWindow {
 
                     }
                 }
+                ItemToManage.Description = EditorGUILayout.TextField("Description: ", ItemToManage.Description);
                 GUILayout.EndScrollView();
             }
         }

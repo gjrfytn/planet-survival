@@ -1,19 +1,23 @@
 ﻿using UnityEditor;
 using UnityEngine;
+using System.Linq;
 using System.Collections;
+using System.Collections.Generic;
 
 [CustomEditor(typeof(Inventory))]
 public class InventoryEditor : Editor
 {
     Inventory Inventory;
-    //InventoryManager InventoryManager;
+    InventoryManager InventoryManager;
 
+    private Item Item;
     private int ItemId;
     private int ItemStackSize = 1;
     private ItemType ItemTypeToAdd;
-
+    string label;
     byte width;
     byte height;
+    bool foldout = false;
 
     static void Init()
     {
@@ -23,7 +27,7 @@ public class InventoryEditor : Editor
     void OnEnable()
     {
         Inventory = target as Inventory;
-
+        InventoryManager = GameObject.FindGameObjectWithTag("InventoryManager").GetComponent<InventoryManager>();
     }
 
 
@@ -48,26 +52,51 @@ public class InventoryEditor : Editor
         SceneView.RepaintAll();
     }
 
+
     void AddItem()
     {
         ItemDatabase itemDatabase = (ItemDatabase)Resources.Load("Inventory/ItemDatabase", typeof(ItemDatabase)) as ItemDatabase;
-        EditorGUILayout.BeginHorizontal();
-        ItemTypeToAdd = (ItemType)EditorGUILayout.EnumPopup("Type of item: ", ItemTypeToAdd);
-        EditorGUILayout.EndHorizontal();
 
-        string[] items = new string[itemDatabase.Items.Count];
-        for (int i = 0; i < items.Length; i++)
+        //string[] items = new string[itemDatabase.Items.Count];
+        EditorGUILayout.BeginVertical();
+        EditorGUI.indentLevel++;
+        foldout = EditorGUILayout.Foldout(foldout, "Add item");
+        if (foldout)
         {
-            if (itemDatabase.Items[i].ItemType == ItemTypeToAdd)
+            EditorGUILayout.BeginHorizontal();
+            ItemTypeToAdd = (ItemType)EditorGUILayout.EnumPopup("Type of item: ", ItemTypeToAdd);
+            EditorGUILayout.EndHorizontal();
+            for (int i = 0; i < itemDatabase.Items.Count; i++)
             {
-                items[i] = itemDatabase.Items[i].Name;
-            }
-            else
-            {
+                if (itemDatabase.Items[i].ItemType == ItemTypeToAdd)
+                {
+                    //items[i] = itemDatabase.Items[i].Name;
+                    EditorGUILayout.BeginHorizontal();
+                    EditorGUILayout.LabelField(itemDatabase.Items[i].Name);
+                    if (itemDatabase.Items[i].MaxStackSize > 1)
+                    {
+                        ItemStackSize = EditorGUILayout.IntField("", ItemStackSize, GUILayout.Width(40));
+                        if (ItemStackSize <= 0)
+                        {
+                            ItemStackSize = 1;
+                        }
+                    }
+                    GUI.color = Color.green;
+                    if (GUILayout.Button("Add item"))
+                    {
+                        Inventory.AddItem(i, ItemStackSize);
+                        Inventory.InventoryManager.Stackable(Inventory.Slots);
+                    }
+                    GUI.color = Color.white;
+                    Inventory.UpdateItemList();
+                    EditorGUILayout.EndHorizontal();
+                }
 
             }
         }
-        EditorGUILayout.BeginHorizontal();
+        EditorGUI.indentLevel--;
+        EditorGUILayout.EndHorizontal();
+        /*EditorGUILayout.BeginHorizontal();
         ItemId = EditorGUILayout.Popup("", ItemId, items, EditorStyles.popup);
         ItemStackSize = EditorGUILayout.IntField("", ItemStackSize, GUILayout.Width(40));
         if (ItemStackSize <= 0)
@@ -82,7 +111,7 @@ public class InventoryEditor : Editor
         }
         Inventory.UpdateItemList();
         GUI.color = Color.white;
-        EditorGUILayout.EndHorizontal();
+        EditorGUILayout.EndHorizontal();*/
     }
 
 
@@ -122,6 +151,12 @@ public class InventoryEditor : Editor
         }
 
         GUI.color = Color.white;
+    }
+
+    void GetItemNames(out List<string> itemNamesList)
+    {
+        itemNamesList = new List<string>();
+
     }
 
 }

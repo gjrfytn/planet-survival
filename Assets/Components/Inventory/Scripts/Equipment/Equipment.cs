@@ -22,11 +22,11 @@ public class Equipment : MonoBehaviour, IDropHandler {
 
     public List<GameObject> Slots;
 
-    Player Player;
+    //Player Player;
     // Use this for initialization
     void Awake()
     {
-        Player = GameObject.FindGameObjectWithTag("Player").GetComponent<Player>();
+        //Player = GameObject.FindGameObjectWithTag("Player").GetComponent<Player>();
         AttachedItem.Equipment = GetComponent<Equipment>();
 
         /*for (int i = 0; i < SlotContainer.childCount; i++)
