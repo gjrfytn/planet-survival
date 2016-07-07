@@ -151,7 +151,7 @@ public class InventoryManager : MonoBehaviour
             }
             if (slot.SlotType == SlotType.Equipment)
             {
-                if (GetComponent<EquipmentSlot>().EquipmentType.Equals(draggingItem.Item.ItemType))
+                if (slot.GetComponent<EquipmentSlot>().EquipmentType.Equals(draggingItem.Item.ItemType))
                 {
                     itemFromSlotGameObject.transform.SetParent(draggingItem.LastSlot.transform);
                     itemFromSlotGameObject.GetComponent<RectTransform>().localPosition = Vector2.zero;
