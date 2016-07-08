@@ -7,7 +7,25 @@ public class Item
 {
     public string Name;
 
-    public int Id;
+	bool IdSet=false;
+	uint Id_;
+    public uint Id
+	{
+		get
+		{
+			return Id_;
+		}
+		set
+		{
+			if(IdSet)
+				throw new System.InvalidOperationException("Id has already been set.");
+			else
+			{
+				Id_=value;
+				IdSet=true;
+			}
+		}
+	}
 
     public byte Height;
     public byte Width;

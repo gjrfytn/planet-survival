@@ -3,7 +3,8 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
-public class ItemEditor : EditorWindow {
+public class ItemEditor : EditorWindow
+{
 
     Item Item = new Item();
 
@@ -47,7 +48,13 @@ public class ItemEditor : EditorWindow {
     [MenuItem("Game manager/Inventory/Item editor")]
     static void Init()
     {
-        ItemDatabase = (ItemDatabase)Resources.Load("Inventory/ItemDatabase", typeof(ItemDatabase)) as ItemDatabase;
+        //ItemDatabase = (ItemDatabase)Resources.Load("Inventory/ItemDatabase", typeof(ItemDatabase)) as ItemDatabase;
+		if(ItemDatabase==null)
+		{
+			ItemDatabase=ScriptableObject.CreateInstance<ItemDatabase>();
+			AssetDatabase.CreateAsset(ItemDatabase,"Assets/Resources/Inventory/ItemDatabase.asset");
+			AssetDatabase.SaveAssets();
+		}
         GetWindow(typeof(ItemEditor));
     }
 
@@ -157,6 +164,7 @@ public class ItemEditor : EditorWindow {
 
         SerObj.ApplyModifiedProperties();
 
+		EditorUtility.SetDirty(ItemDatabase);
         if(GUI.changed)
         {
             EditorUtility.SetDirty(ItemDatabase);
@@ -316,11 +324,16 @@ public class ItemEditor : EditorWindow {
 
             if (IsReturnsItem)
             {
-                string[] items = new string[ItemDatabase.Items.Count];
-                for (int i = 0; i < items.Length; i++)
+                string[] items = new string[ItemDatabase.Count];
+
+				uint i=0;
+				foreach(Item item in ItemDatabase)
+					items[i++]=item.Name;
+
+                /*for (int i = 0; i < items.Length; i++)
                 {
                     items[i] = ItemDatabase.Items[i].Name;
-                }
+                }*/
                 Item.ReturnItemId = EditorGUILayout.Popup("Returned item: ", Item.ReturnItemId, items, EditorStyles.popup);
                 Item.ReturnItemStackSize = EditorGUILayout.IntField("Stack size: ", Item.ReturnItemStackSize);
             }
@@ -336,10 +349,10 @@ public class ItemEditor : EditorWindow {
 
         if (GUILayout.Button("Create item", GUILayout.Height(40)))
         {
-                Item.Id = ItemDatabase.Items.Count;
-                ItemDatabase.AddItem(Item);
+                //Item.Id = ItemDatabase.Items.Count;
+                ItemDatabase.Add(Item);
                 Item = new Item();
-                UpdateDatabase();
+                //UpdateDatabase();
         }
         GUILayout.EndScrollView();
     }
@@ -351,7 +364,155 @@ public class ItemEditor : EditorWindow {
         GUILayout.Label("Search in the item database");
         GUILayout.EndHorizontal();
         ScrollPosition = GUILayout.BeginScrollView(ScrollPosition);
-        for (int i = 0; i < ItemDatabase.Items.Count; i++)
+
+		foreach(Item item in ItemDatabase)
+		{
+			if (item != ItemToManage)
+			{
+				if (item.Name.ToLower().Contains(ItemToSearch.ToLower()))
+				{
+					EditorGUILayout.BeginHorizontal();
+					if (GUILayout.Button(">", "label", GUILayout.Width(10)))
+					{
+						ItemToManage = item;
+						string[] itemTypes = System.Enum.GetNames(typeof(ItemType));
+
+						//string[] equipmentItemTypes = System.Enum.GetNames(typeof(ItemType));
+
+						for (int k = 0; k < itemTypes.Length; k++)
+						{
+							if (itemTypes[k] == EquipmentItemTypeToCreate.ToString())
+							{
+								Item.ItemType = (ItemType)System.Enum.Parse(typeof(ItemType), itemTypes[k]);
+								break;
+							}
+						}
+					}
+
+					if (GUILayout.Button(item.Name))
+					{
+						ItemToManage = item;
+					}
+					GUI.color = Color.red;
+
+					if (GUILayout.Button("X", GUILayout.Width(25)))
+					{
+						if (EditorUtility.DisplayDialog("Remove item", "Are you sure?", "Remove", "Cancel"))
+						{
+							ItemDatabase.Remove(item.Id);
+						}
+					}
+					GUILayout.EndHorizontal();
+					GUI.color = Color.white;
+				}
+			}
+			else
+			{
+				GUI.color = Color.green;
+				GUILayout.BeginHorizontal();
+				if (GUILayout.Button("v", "label", GUILayout.Width(10)))
+				{
+					ItemToManage = null;
+					return;
+				}
+				if (GUILayout.Button(item.Name))
+				{
+					ItemToManage = null;
+					return;
+				}
+				GUI.color = Color.red;
+				if (GUILayout.Button("X", GUILayout.Width(25)))
+				{
+					if (EditorUtility.DisplayDialog("Remove item", "Are you sure?", "Remove", "Cancel"))
+					{
+						ItemDatabase.Remove(item.Id);
+					}
+				}
+				GUILayout.EndHorizontal();
+
+				GUI.color = Color.white;
+
+				ScrollManageItem = GUILayout.BeginScrollView(ScrollManageItem);
+
+				//ItemToManage.Id = EditorGUILayout.IntField("Item ID: ", ItemToManage.Id); //Не рекомендуется редактировать это значение
+
+				ItemToManage.Name = EditorGUILayout.TextField("Item name: ", ItemToManage.Name);
+				ItemToManage.ItemType = (ItemType)EditorGUILayout.EnumPopup("Item type: ", ItemToManage.ItemType);
+				ItemToManage.ItemActionType = (ItemActionType)EditorGUILayout.EnumPopup("Item action type: ", ItemToManage.ItemActionType);
+				/*EditorGUILayout.BeginHorizontal();
+                ItemToManage.Width = (byte)EditorGUILayout.IntSlider("Item width: ", ItemToManage.Width, 0, 255);
+                ItemToManage.Height = (byte)EditorGUILayout.IntSlider("Item height: ", ItemToManage.Height, 0, 255);
+                EditorGUILayout.EndHorizontal();*/
+				ItemToManage.ItemQuality = (ItemQuality)EditorGUILayout.EnumPopup("Item quality: ", ItemToManage.ItemQuality);
+				ItemToManage.Icon = (Sprite)EditorGUILayout.ObjectField("Icon: ", ItemToManage.Icon, typeof(Sprite), false);
+				ItemToManage.ItemSound = (AudioClip)EditorGUILayout.ObjectField("Item sound: ", ItemToManage.ItemSound, typeof(AudioClip), false);
+				ItemToManage.DroppedItem = (GameObject)EditorGUILayout.ObjectField("Model: ", ItemToManage.DroppedItem, typeof(GameObject), false);
+				ItemToManage.CustomObject = (GameObject)EditorGUILayout.ObjectField("Custom object: ", ItemToManage.CustomObject, typeof(GameObject), false);
+
+				if (ItemToManage.IsEquipment)
+				{
+					if (ItemToManage.ItemType == ItemType.Weapon)
+					{
+						OffHandOnly = EditorGUILayout.Toggle("OffHand: ", OffHandOnly);
+						if (OffHandOnly)
+						{
+							ItemToManage.TwoHanded = false;
+						}
+						if (!OffHandOnly)
+						{
+							ItemToManage.TwoHanded = EditorGUILayout.Toggle("Two handed", ItemToManage.TwoHanded);
+						}
+						ItemToManage.LevelReq = (byte)EditorGUILayout.IntField("Item level requirement: ", ItemToManage.LevelReq);
+
+						GUILayout.BeginHorizontal();
+
+						ItemToManage.Damage = (byte)EditorGUILayout.IntField("Damage: ", ItemToManage.Damage);
+						ItemToManage.CriticalDamage = (byte)EditorGUILayout.IntField("CriticalDamage: ", ItemToManage.CriticalDamage);
+
+						GUILayout.EndHorizontal();
+
+						GUILayout.BeginHorizontal();
+						ItemToManage.Range = EditorGUILayout.IntField("Range: ", ItemToManage.Range);
+						ItemToManage.AttackSpeed = EditorGUILayout.FloatField("Attack speed: ", ItemToManage.AttackSpeed);
+
+						GUILayout.EndHorizontal();
+					}
+					else if (ItemToManage.ItemType != ItemType.Weapon)
+					{
+						ItemToManage.LevelReq = (byte)EditorGUILayout.IntField("Item level requirement: ", ItemToManage.LevelReq);
+
+						GUILayout.BeginHorizontal();
+						ItemToManage.Armor = EditorGUILayout.FloatField("Armor: ", ItemToManage.Armor);
+						ItemToManage.ColdResistance = EditorGUILayout.IntField("Cold resistance: ", ItemToManage.ColdResistance);
+						ItemToManage.HeatResistance = EditorGUILayout.IntField("Heat resistance: ", ItemToManage.HeatResistance);
+						GUILayout.EndHorizontal();
+					}
+				}
+				else
+				{
+
+					ItemToManage.UseSound = (AudioClip)EditorGUILayout.ObjectField("Use sound: ", ItemToManage.UseSound, typeof(AudioClip), false);
+
+					ItemToManage.IsStackable = EditorGUILayout.Toggle("Stackable: ", ItemToManage.IsStackable);
+
+					if (ItemToManage.IsStackable)
+					{
+						ItemToManage.MaxStackSize = EditorGUILayout.IntField("Max stack size: ", ItemToManage.MaxStackSize);
+					}
+
+					EnableAttributes = EditorGUILayout.Toggle("Enable attributes: ", EnableAttributes);
+					if (EnableAttributes)
+					{
+						AttributeAmount = EditorGUILayout.IntSlider("Amount: ", AttributeAmount, 0, 50);
+
+					}
+				}
+				ItemToManage.Description = EditorGUILayout.TextField("Description: ", ItemToManage.Description);
+				GUILayout.EndScrollView();
+			}
+		}
+
+        /*for (int i = 0; i < ItemDatabase.Items.Count; i++)
         {
             if (ItemDatabase.Items[i] != ItemToManage)
             {
@@ -430,7 +591,7 @@ public class ItemEditor : EditorWindow {
                 /*EditorGUILayout.BeginHorizontal();
                 ItemToManage.Width = (byte)EditorGUILayout.IntSlider("Item width: ", ItemToManage.Width, 0, 255);
                 ItemToManage.Height = (byte)EditorGUILayout.IntSlider("Item height: ", ItemToManage.Height, 0, 255);
-                EditorGUILayout.EndHorizontal();*/
+                EditorGUILayout.EndHorizontal();*//*
                 ItemToManage.ItemQuality = (ItemQuality)EditorGUILayout.EnumPopup("Item quality: ", ItemToManage.ItemQuality);
                 ItemToManage.Icon = (Sprite)EditorGUILayout.ObjectField("Icon: ", ItemToManage.Icon, typeof(Sprite), false);
                 ItemToManage.ItemSound = (AudioClip)EditorGUILayout.ObjectField("Item sound: ", ItemToManage.ItemSound, typeof(AudioClip), false);
@@ -498,18 +659,18 @@ public class ItemEditor : EditorWindow {
                 ItemToManage.Description = EditorGUILayout.TextField("Description: ", ItemToManage.Description);
                 GUILayout.EndScrollView();
             }
-        }
+        }*/
         GUILayout.EndScrollView();
     }
 
 
-    void UpdateDatabase()
+    /*void UpdateDatabase()
     {
         for (int i = 0; i < ItemDatabase.Items.Count; i++)
         {
             ItemDatabase.Items[i].Id = i;
         }
-    }
+    }*/
    /* void UpdateCraftDatabase()
     {
         for (int i = 0; i < ItemDatabase.CraftItems.Count; i++)

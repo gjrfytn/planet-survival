@@ -66,7 +66,35 @@ public class InventoryEditor : Editor
             EditorGUILayout.BeginHorizontal();
             ItemTypeToAdd = (ItemType)EditorGUILayout.EnumPopup("Type of item: ", ItemTypeToAdd);
             EditorGUILayout.EndHorizontal();
-            for (int i = 0; i < itemDatabase.Items.Count; i++)
+
+			foreach(Item item in itemDatabase)
+			{
+				if (item.ItemType == ItemTypeToAdd)
+				{
+					//items[i] = itemDatabase.Items[i].Name;
+					EditorGUILayout.BeginHorizontal();
+					EditorGUILayout.LabelField(item.Name);
+					if (item.MaxStackSize > 1)
+					{
+						ItemStackSize = EditorGUILayout.IntField("", ItemStackSize, GUILayout.Width(40));
+						if (ItemStackSize <= 0)
+						{
+							ItemStackSize = 1;
+						}
+					}
+					GUI.color = Color.green;
+					if (GUILayout.Button("Add item"))
+					{
+						Inventory.AddItem(item.Id, ItemStackSize);
+						Inventory.InventoryManager.Stackable(Inventory.Slots);
+					}
+					GUI.color = Color.white;
+					Inventory.UpdateItemList();
+					EditorGUILayout.EndHorizontal();
+				}
+			}
+
+            /*for (int i = 0; i < itemDatabase.Items.Count; i++)
             {
                 if (itemDatabase.Items[i].ItemType == ItemTypeToAdd)
                 {
@@ -84,7 +112,7 @@ public class InventoryEditor : Editor
                     GUI.color = Color.green;
                     if (GUILayout.Button("Add item"))
                     {
-                        Inventory.AddItem(i, ItemStackSize);
+						Inventory.AddItem((uint)i, ItemStackSize);
                         Inventory.InventoryManager.Stackable(Inventory.Slots);
                     }
                     GUI.color = Color.white;
@@ -92,7 +120,7 @@ public class InventoryEditor : Editor
                     EditorGUILayout.EndHorizontal();
                 }
 
-            }
+            }*/
         }
         EditorGUI.indentLevel--;
         EditorGUILayout.EndHorizontal();

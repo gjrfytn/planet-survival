@@ -32,9 +32,9 @@ public class Storage : MonoBehaviour {
 	
 	}
 
-    public void AddItem(int id, int stackSize)
+    public void AddItem(uint id, int stackSize)
     {
-        Item item = ItemDatabase.FindItemById(id);
+        Item item = ItemDatabase[id];
         item.StackSize = stackSize;
         ItemsInStorage.Add(item);
     }

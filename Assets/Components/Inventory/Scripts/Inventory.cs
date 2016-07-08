@@ -58,7 +58,7 @@ public class Inventory : MonoBehaviour, IDropHandler {
     ///<summary>
     ///Добавляет предмет в инвентарь по его Id
     ///</summary>
-    public GameObject AddItem(int id, int stackSize)
+    public GameObject AddItem(uint id, int stackSize)
     {
         for(int i = 0; i < Slots.Count; i++)
         {
@@ -66,7 +66,7 @@ public class Inventory : MonoBehaviour, IDropHandler {
             {
                 GameObject item = (GameObject)Instantiate(InventoryManager.ItemPrefab);
                 AttachedItem attachedItem = item.GetComponent<AttachedItem>();
-                attachedItem.Item = InventoryManager.ItemDatabase.FindItemById(id);
+                attachedItem.Item = InventoryManager.ItemDatabase[id];
                 if (attachedItem.Item.StackSize <= attachedItem.Item.MaxStackSize && stackSize <= attachedItem.Item.MaxStackSize)
                 {
                     attachedItem.Item.StackSize = stackSize;
@@ -174,7 +174,7 @@ public class Inventory : MonoBehaviour, IDropHandler {
     ///<summary>
     ///Проверяет есть ли добавляемый предмет в инвентаре. Если есть то добавляет его в соседний слот или стакается 
     ///</summary>
-    public bool CheckIfItemAlreadyExist(int id, int stackSize)
+    public bool CheckIfItemAlreadyExist(uint id, int stackSize)
     {
         UpdateItemList();
         int stack;
