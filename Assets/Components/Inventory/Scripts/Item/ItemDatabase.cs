@@ -2,37 +2,49 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public class ItemDatabase : MonoBehaviour {
+public class ItemDatabase : MonoBehaviour, IEnumerable
+{
+    public uint Count { get { return (uint)Items.Count; } }
 
-    public List<Item> Items;
-    public List<CraftedItem> CraftItems;
+    [SerializeField]
+    List<Item> Items = new List<Item>();
 
-    public Item FindItemById(int id)
+    List<uint> FreeIDs = new List<uint>();
+
+    public Item this[uint id]
     {
-        for (int i = 0; i < Items.Count; i++)
+        get
         {
-            if (Items[i].Id == id)
-            {
-                return Items[i].ItemCopy();
-            }
+            Item buf = Items.Find(i => i.Id == id);
+            if (buf == null)
+                throw new KeyNotFoundException();
+            return buf;
         }
-        return null;
     }
 
-    public Item FindItemByName(string name)
+    IEnumerator IEnumerable.GetEnumerator()
     {
-        for(int i = 0; i < Items.Count; i++)
-        {
-            if(Items[i].Name == name)
-            {
-                return Items[i].ItemCopy();
-            }
-        }
-        return null;
+        return Items.GetEnumerator();
     }
 
-    public void AddItem(Item item)
+    public void Add(Item item) //TODO Принимать параметры конструктора?
     {
+        if (FreeIDs.Count == 0)
+            item.Id = (uint)Items.Count;
+        else
+        {
+            item.Id = FreeIDs[0];
+            FreeIDs.RemoveAt(0);
+        }
         Items.Add(item);
+    }
+
+    public void Remove(uint id)
+    {
+        Item buf = Items.Find(i => i.Id == id);
+        if (buf == null)
+            throw new KeyNotFoundException();
+        Items.Remove(buf);
+        FreeIDs.Add(id);
     }
 }

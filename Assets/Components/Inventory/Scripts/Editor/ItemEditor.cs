@@ -316,11 +316,11 @@ public class ItemEditor : EditorWindow {
 
             if (IsReturnsItem)
             {
-                string[] items = new string[ItemDatabase.Items.Count];
-                for (int i = 0; i < items.Length; i++)
-                {
-                    items[i] = ItemDatabase.Items[i].Name;
-                }
+                string[] items = new string[ItemDatabase.Count];
+                uint i = 0;
+                foreach (Item item in ItemDatabase)
+                    items[i++] = item.Name;
+				
                 Item.ReturnItemId = EditorGUILayout.Popup("Returned item: ", Item.ReturnItemId, items, EditorStyles.popup);
                 Item.ReturnItemStackSize = EditorGUILayout.IntField("Stack size: ", Item.ReturnItemStackSize);
             }
@@ -336,10 +336,8 @@ public class ItemEditor : EditorWindow {
 
         if (GUILayout.Button("Create item", GUILayout.Height(40)))
         {
-                Item.Id = ItemDatabase.Items.Count;
-                ItemDatabase.AddItem(Item);
+                ItemDatabase.Add(Item);
                 Item = new Item();
-                UpdateDatabase();
         }
         GUILayout.EndScrollView();
     }
@@ -351,16 +349,16 @@ public class ItemEditor : EditorWindow {
         GUILayout.Label("Search in the item database");
         GUILayout.EndHorizontal();
         ScrollPosition = GUILayout.BeginScrollView(ScrollPosition);
-        for (int i = 0; i < ItemDatabase.Items.Count; i++)
+        foreach (Item item in ItemDatabase)
         {
-            if (ItemDatabase.Items[i] != ItemToManage)
+            if (item != ItemToManage)
             {
-                if (ItemDatabase.Items[i].Name.ToLower().Contains(ItemToSearch.ToLower()))
+                if (item.Name.ToLower().Contains(ItemToSearch.ToLower()))
                 {
                     EditorGUILayout.BeginHorizontal();
                     if (GUILayout.Button(">", "label", GUILayout.Width(10)))
                     {
-                        ItemToManage = ItemDatabase.Items[i];
+                        ItemToManage = item;
                         string[] itemTypes = System.Enum.GetNames(typeof(ItemType));
 
                         //string[] equipmentItemTypes = System.Enum.GetNames(typeof(ItemType));
@@ -375,9 +373,9 @@ public class ItemEditor : EditorWindow {
                         }
                     }
 
-                    if (GUILayout.Button(ItemDatabase.Items[i].Name))
+                    if (GUILayout.Button(item.Name))
                     {
-                        ItemToManage = ItemDatabase.Items[i];
+                        ItemToManage = item;
                     }
                     GUI.color = Color.red;
 
@@ -385,8 +383,7 @@ public class ItemEditor : EditorWindow {
                     {
                         if (EditorUtility.DisplayDialog("Remove item", "Are you sure?", "Remove", "Cancel"))
                         {
-                            ItemDatabase.Items.Remove(ItemDatabase.Items[i]);
-                            UpdateDatabase();
+                            ItemDatabase.Remove(item.Id);
                         }
                     }
                     GUILayout.EndHorizontal();
@@ -402,7 +399,7 @@ public class ItemEditor : EditorWindow {
                     ItemToManage = null;
                     return;
                 }
-                if (GUILayout.Button(ItemDatabase.Items[i].Name))
+                if (GUILayout.Button(item.Name))
                 {
                     ItemToManage = null;
                     return;
@@ -412,8 +409,7 @@ public class ItemEditor : EditorWindow {
                 {
                     if (EditorUtility.DisplayDialog("Remove item", "Are you sure?", "Remove", "Cancel"))
                     {
-                        ItemDatabase.Items.Remove(ItemDatabase.Items[i]);
-                        UpdateDatabase();
+                        ItemDatabase.Remove(item.Id);
                     }
                 }
                 GUILayout.EndHorizontal();
@@ -501,21 +497,4 @@ public class ItemEditor : EditorWindow {
         }
         GUILayout.EndScrollView();
     }
-
-
-    void UpdateDatabase()
-    {
-        for (int i = 0; i < ItemDatabase.Items.Count; i++)
-        {
-            ItemDatabase.Items[i].Id = i;
-        }
-    }
-   /* void UpdateCraftDatabase()
-    {
-        for (int i = 0; i < ItemDatabase.CraftItems.Count; i++)
-        {
-            ItemDatabase.CraftItems[i].Id = i.ToString();
-        }
-    }*/
-
 }
