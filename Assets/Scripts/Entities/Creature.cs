@@ -152,8 +152,8 @@ public class Creature : LivingBeing
             }
         }
 
-        byte movesCount = (byte)Mathf.Min(Speed, Path.Count);
-        RemainingMoves = (byte)(Speed - movesCount);
+		byte movesCount = (byte)Mathf.Min(RemainingMoves, Path.Count);
+		RemainingMoves-=movesCount;
 
         List<LocalPos> lstBuf = new List<LocalPos>(movesCount);
         for (byte i = 0; i < movesCount; ++i)
@@ -220,6 +220,7 @@ public class Creature : LivingBeing
     public override void MakeTurn()
     {
         MakingTurn = true;
+		RemainingMoves=Speed;
         Think();
     }
 
@@ -239,14 +240,26 @@ public class Creature : LivingBeing
                     }
                     else
                     {
-                        MakingTurn = false;
-                        EventManager.OnLivingBeingEndTurn();
+						GlobalPos pos;
+						do
+							pos=HexNavigHelper.GetNeighborMapCoords(Pos,(TurnedHexDirection)Random.Range(0,6));
+						while(pos.X<0||pos.X>=Map.Width||pos.Y<0||pos.Y>=Map.Height);
+						TargetPos=(LocalPos)pos;
+						Move();
+                        //MakingTurn = false;
+                        //EventManager.OnLivingBeingEndTurn();
                     }
                 }
                 else
                 {
-                    MakingTurn = false;
-                    EventManager.OnLivingBeingEndTurn();
+					GlobalPos pos;
+					do
+						pos=HexNavigHelper.GetNeighborMapCoords(Pos,(TurnedHexDirection)Random.Range(0,6));
+					while(pos.X<0||pos.X>=Map.Width||pos.Y<0||pos.Y>=Map.Height);
+					TargetPos=(LocalPos)pos;
+					Move();
+                    //MakingTurn = false;
+                    //EventManager.OnLivingBeingEndTurn();
                 }
                 break;
             case AI_State.MOVE:
