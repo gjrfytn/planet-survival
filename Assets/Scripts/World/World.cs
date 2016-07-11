@@ -19,7 +19,7 @@ public class World : MonoBehaviour
     ushort ChunkSize;
     [SerializeField]
     LocalPos LocalMapSize_;
-    public LocalPos LocalMapSize { get { return LocalMapSize_; } private set { LocalMapSize_ = value; } }
+    public LocalPos LocalMapSize { get { return LocalMapSize_; } }
 
     [SerializeField]
     byte ForestDensity;
@@ -259,7 +259,7 @@ public class World : MonoBehaviour
                 buf2[y, x] = buf[y, x].Value;
                 buf[y, x] = null;
             }
-		WorldGenerator.CreateTerrainmap(ref map.TerrainMatrix,buf2, LocalMapTerrainParam);
+        WorldGenerator.CreateTerrainmap(ref map.TerrainMatrix, buf2, LocalMapTerrainParam);
         WorldGenerator.CreateVegetation(ref map, LocalMapTerrainParam, forest);
 
         return map;
@@ -477,7 +477,7 @@ public class World : MonoBehaviour
         chunk.Rivers = WorldGenerator.CreateRivers(chunk.HeightMatrix, ref chunk.TerrainMatrix, GlobalMapTerrainParam.RiversParam);
         chunk.Clusters = WorldGenerator.CreateClusters(ref chunk, GlobalMapTerrainParam.ClustersParam);
         chunk.Roads = WorldGenerator.CreateRoads(chunk.HeightMatrix, ref chunk.TerrainMatrix, chunk.Clusters, GlobalMapTerrainParam.RoadsParam);
-		WorldGenerator.CreateTerrainmap(ref chunk.TerrainMatrix,chunk.HeightMatrix, GlobalMapTerrainParam);
+        WorldGenerator.CreateTerrainmap(ref chunk.TerrainMatrix, chunk.HeightMatrix, GlobalMapTerrainParam);
         return chunk;
     }
 

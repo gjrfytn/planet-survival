@@ -20,37 +20,37 @@ public class WorldVisualiser : MonoBehaviour
     {
         [SerializeField]
         Terrain[] Terrains_;
-        public Terrain[] Terrains { get { return Terrains_; } private set { Terrains_ = value; } }
+        public Terrain[] Terrains { get { return Terrains_; } }
         [SerializeField]
         Sprite[] RiverStartSprites_;
-        public Sprite[] RiverStartSprites { get { return RiverStartSprites_; } private set { RiverStartSprites_ = value; } }
+        public Sprite[] RiverStartSprites { get { return RiverStartSprites_; } }
         [SerializeField]
         Sprite[] RiverStraightSprites_;
-        public Sprite[] RiverStraightSprites { get { return RiverStraightSprites_; } private set { RiverStraightSprites_ = value; } }
+        public Sprite[] RiverStraightSprites { get { return RiverStraightSprites_; } }
         [SerializeField]
         Sprite[] RiverTurnSprites_;
-        public Sprite[] RiverTurnSprites { get { return RiverTurnSprites_; } private set { RiverTurnSprites_ = value; } }
+        public Sprite[] RiverTurnSprites { get { return RiverTurnSprites_; } }
         [SerializeField]
         Sprite[] RiverEndSprites_;
-        public Sprite[] RiverEndSprites { get { return RiverEndSprites_; } private set { RiverEndSprites_ = value; } }
+        public Sprite[] RiverEndSprites { get { return RiverEndSprites_; } }
         [SerializeField]
         Sprite[] TreeSprites_;
-        public Sprite[] TreeSprites { get { return TreeSprites_; } private set { TreeSprites_ = value; } }
+        public Sprite[] TreeSprites { get { return TreeSprites_; } }
         [SerializeField]
         Sprite[] RuinSprites_;
-        public Sprite[] RuinSprites { get { return RuinSprites_; } private set { RuinSprites_ = value; } }
+        public Sprite[] RuinSprites { get { return RuinSprites_; } }
         [SerializeField]
         Sprite[] RoadStraightSprites_;
-        public Sprite[] RoadStraightSprites { get { return RoadStraightSprites_; } private set { RoadStraightSprites_ = value; } }
+        public Sprite[] RoadStraightSprites { get { return RoadStraightSprites_; } }
         [SerializeField]
         Sprite[] RoadTurnSprites_;
-        public Sprite[] RoadTurnSprites { get { return RoadTurnSprites_; } private set { RoadTurnSprites_ = value; } }
+        public Sprite[] RoadTurnSprites { get { return RoadTurnSprites_; } }
         [SerializeField]
         Sprite[] RoadStraightBridgeSprites_;
-        public Sprite[] RoadStraightBridgeSprites { get { return RoadStraightBridgeSprites_; } private set { RoadStraightBridgeSprites_ = value; } }
+        public Sprite[] RoadStraightBridgeSprites { get { return RoadStraightBridgeSprites_; } }
         [SerializeField]
         Sprite[] RoadTurnBridgeSprites_;
-        public Sprite[] RoadTurnBridgeSprites { get { return RoadTurnBridgeSprites_; } private set { RoadTurnBridgeSprites_ = value; } }
+        public Sprite[] RoadTurnBridgeSprites { get { return RoadTurnBridgeSprites_; } }
     }
 
     [System.Serializable]
@@ -58,13 +58,13 @@ public class WorldVisualiser : MonoBehaviour
     {
         [SerializeField]
         Terrain[] Terrains_;
-        public Terrain[] Terrains { get { return Terrains_; } private set { Terrains_ = value; } }
+        public Terrain[] Terrains { get { return Terrains_; } }
         [SerializeField]
         Sprite[] BankSprites_;
-        public Sprite[] BankSprites { get { return BankSprites_; } private set { BankSprites_ = value; } }
+        public Sprite[] BankSprites { get { return BankSprites_; } }
         [SerializeField]
         Sprite[] DiagBankSprites_;
-        public Sprite[] DiagBankSprites { get { return DiagBankSprites_; } private set { DiagBankSprites_ = value; } }
+        public Sprite[] DiagBankSprites { get { return DiagBankSprites_; } }
     }
 
     public static Vector2 GlobalHexSpriteSize { get; private set; } //TODO static? Перенести в классы?
@@ -76,7 +76,7 @@ public class WorldVisualiser : MonoBehaviour
     GlobalMapSettings GlobalMapParam;
     [SerializeField]
     LocalMapSettings LocalMapParam_;
-    public LocalMapSettings LocalMapParam { get { return LocalMapParam_; } private set { LocalMapParam_ = value; } }
+    public LocalMapSettings LocalMapParam { get { return LocalMapParam_; } }
     [SerializeField]
     Material DiffuseMaterial;
     [SerializeField]
@@ -209,8 +209,8 @@ public class WorldVisualiser : MonoBehaviour
         for (ushort i = 0; i < RenderedHexes.Count; ++i)
             if (!RenderedHexes[i].InSign)
             {
-				for(ushort j=0;j<RenderedHexes[i].Hex.transform.childCount;++j)
-					RenderedHexes[i].Hex.transform.GetChild(j).gameObject.GetComponent<Fader>().FadeAndDestroyObject(FadeTime);
+                for (ushort j = 0; j < RenderedHexes[i].Hex.transform.childCount; ++j)
+                    RenderedHexes[i].Hex.transform.GetChild(j).gameObject.GetComponent<Fader>().FadeAndDestroyObject(FadeTime);
                 RenderedHexes[i].Hex.GetComponent<Fader>().FadeAndDestroyObject(FadeTime);
                 RenderedHexes.RemoveAt(i);
                 --i;
@@ -243,7 +243,7 @@ public class WorldVisualiser : MonoBehaviour
         {
             ListType hex = new ListType { Hex = new GameObject("hex"), InSign = true };
             hex.Hex.transform.position = GetTransformPosFromMapPos(pos);
-			hex.Hex.transform.parent=transform;
+            hex.Hex.transform.parent = transform;
             hex.Pos = pos;
             hex.Hex.AddComponent<SpriteRenderer>();
             hex.Hex.AddComponent<Fader>();
@@ -287,7 +287,7 @@ public class WorldVisualiser : MonoBehaviour
         {
             GameObject riverSprite = new GameObject("riverSprite");
             riverSprite.transform.position = hex.Hex.transform.position;
-			riverSprite.transform.parent = hex.Hex.transform;
+            riverSprite.transform.parent = hex.Hex.transform;
             riverSprite.AddComponent<SpriteRenderer>().sortingLayerName = "LandscapeObjects";
             riverSprite.GetComponent<SpriteRenderer>().material = DiffuseMaterial;
             if (map.RiverSpriteID_Matrix[pos.Y, pos.X].HasValue && map.RiverSpriteID_Matrix[pos.Y, pos.X] < AllRiverSprites.Count)
@@ -304,7 +304,7 @@ public class WorldVisualiser : MonoBehaviour
         {
             GameObject clusterSprite = new GameObject("clusterSprite");
             clusterSprite.transform.position = hex.Hex.transform.position;
-			clusterSprite.transform.parent = hex.Hex.transform;
+            clusterSprite.transform.parent = hex.Hex.transform;
             clusterSprite.AddComponent<SpriteRenderer>().sortingLayerName = "Infrastructure";
             clusterSprite.GetComponent<SpriteRenderer>().material = DiffuseMaterial;
             if (!map.ClusterSpriteID_Matrix[pos.Y, pos.X].HasValue || map.ClusterSpriteID_Matrix[pos.Y, pos.X] >= GlobalMapParam.RuinSprites.Length)
@@ -317,7 +317,7 @@ public class WorldVisualiser : MonoBehaviour
         {
             GameObject roadSprite = new GameObject("roadSprite");
             roadSprite.transform.position = hex.Hex.transform.position;
-			roadSprite.transform.parent = hex.Hex.transform;
+            roadSprite.transform.parent = hex.Hex.transform;
             roadSprite.AddComponent<SpriteRenderer>().sortingLayerName = "Infrastructure";
             roadSprite.GetComponent<SpriteRenderer>().material = DiffuseMaterial;
             if (map.RoadSpriteID_Matrix[pos.Y, pos.X].HasValue /*?*/ && map.RoadSpriteID_Matrix[pos.Y, pos.X] < AllRiverSprites.Count)
@@ -333,8 +333,8 @@ public class WorldVisualiser : MonoBehaviour
         if (!forestBlocked)
             MakeHexForest(hex, pos, map);
         hex.Hex.GetComponent<Fader>().FadeIn(FadeInTime);
-		for(ushort j=0;j<hex.Hex.transform.childCount;++j)
-			hex.Hex.transform.GetChild(j).gameObject.GetComponent<Fader>().FadeIn(FadeInTime);
+        for (ushort j = 0; j < hex.Hex.transform.childCount; ++j)
+            hex.Hex.transform.GetChild(j).gameObject.GetComponent<Fader>().FadeIn(FadeInTime);
     }
 
     void MakeHexGraphics(ListType hex, LocalPos pos, LocalMap map)
@@ -351,7 +351,7 @@ public class WorldVisualiser : MonoBehaviour
                 {
                     GameObject bank = new GameObject("bankSprite");
                     bank.transform.position = hex.Hex.transform.position;
-					bank.transform.parent = hex.Hex.transform;
+                    bank.transform.parent = hex.Hex.transform;
                     bank.AddComponent<SpriteRenderer>().sortingLayerName = "LandscapeObjects";
                     if ((TurnedHexDirection)i == TurnedHexDirection.LEFT || (TurnedHexDirection)i == TurnedHexDirection.RIGHT)
                     {
@@ -381,8 +381,8 @@ public class WorldVisualiser : MonoBehaviour
                 }
 
         hex.Hex.GetComponent<Fader>().FadeIn(FadeInTime);
-		for(ushort j=0;j<hex.Hex.transform.childCount;++j)
-			hex.Hex.transform.GetChild(j).gameObject.GetComponent<Fader>().FadeIn(FadeInTime);
+        for (ushort j = 0; j < hex.Hex.transform.childCount; ++j)
+            hex.Hex.transform.GetChild(j).gameObject.GetComponent<Fader>().FadeIn(FadeInTime);
     }
 
     /// <summary>
@@ -394,7 +394,7 @@ public class WorldVisualiser : MonoBehaviour
     {
         byte id = 0;
         for (byte i = 0; i < GlobalMapParam.Terrains.Length; ++i)
-			if ((map.TerrainMatrix[pos.Y, pos.X] & GlobalMapParam.Terrains[i].TerrainType) != TerrainType.NONE)
+            if ((map.TerrainMatrix[pos.Y, pos.X] & GlobalMapParam.Terrains[i].TerrainType) != TerrainType.NONE)
             {
                 for (byte j = 0; j < i; ++j, id += (byte)GlobalMapParam.Terrains[j].Sprites.Length) ;
                 id += (byte)Random.Range(0, GlobalMapParam.Terrains[i].Sprites.Length);
@@ -408,7 +408,7 @@ public class WorldVisualiser : MonoBehaviour
     {
         byte id = 0;
         for (byte i = 0; i < LocalMapParam.Terrains.Length; ++i)
-			if ((map.TerrainMatrix[pos.Y, pos.X] & LocalMapParam.Terrains[i].TerrainType)!= TerrainType.NONE)
+            if ((map.TerrainMatrix[pos.Y, pos.X] & LocalMapParam.Terrains[i].TerrainType) != TerrainType.NONE)
             {
                 for (byte j = 0; j < i; ++j, id += (byte)LocalMapParam.Terrains[j].Sprites.Length) ;
                 id += (byte)Random.Range(0, LocalMapParam.Terrains[i].Sprites.Length);
@@ -547,7 +547,7 @@ public class WorldVisualiser : MonoBehaviour
                             Vector2 v = new Vector2(Random.value * gridStepX, Random.value * gridStepY); //TODO new?
                             GameObject tree = new GameObject("treeSprite");
                             tree.transform.position = new Vector2(gridOrigin.x + x + v.x, gridOrigin.y + y + v.y);
-							tree.transform.parent = hex.Hex.transform;
+                            tree.transform.parent = hex.Hex.transform;
                             tree.AddComponent<SpriteRenderer>().sortingLayerName = "LandscapeObjects";//
                             tree.GetComponent<SpriteRenderer>().sprite = GlobalMapParam.TreeSprites[Random.Range(0, GlobalMapParam.TreeSprites.Length)];
                             tree.GetComponent<SpriteRenderer>().material = DiffuseMaterial;
@@ -562,7 +562,7 @@ public class WorldVisualiser : MonoBehaviour
                     v.y *= spriteSize.y * 0.5f;
                     GameObject tree = new GameObject("treeSprite");
                     tree.transform.position = new Vector2(hex.Hex.transform.position.x + v.x, hex.Hex.transform.position.y + v.y);
-					tree.transform.parent = hex.Hex.transform;
+                    tree.transform.parent = hex.Hex.transform;
                     tree.AddComponent<SpriteRenderer>().sortingLayerName = "LandscapeObjects";//
                     tree.GetComponent<SpriteRenderer>().sprite = GlobalMapParam.TreeSprites[Random.Range(0, GlobalMapParam.TreeSprites.Length)];
                     tree.GetComponent<SpriteRenderer>().material = DiffuseMaterial;
@@ -591,7 +591,7 @@ public class WorldVisualiser : MonoBehaviour
                 // TODO Возможно стоит заменить ListType на Hex?
                 ListType hex = new ListType { Hex = new GameObject("hex"), InSign = true };
                 hex.Hex.transform.position = GetTransformPosFromMapPos(new LocalPos(x, y));
-				hex.Hex.transform.parent=transform;
+                hex.Hex.transform.parent = transform;
                 hex.Pos = new GlobalPos(x, y);
                 hex.Hex.AddComponent<SpriteRenderer>();
                 hex.Hex.AddComponent<Fader>();

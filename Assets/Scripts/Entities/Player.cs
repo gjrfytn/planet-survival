@@ -21,19 +21,19 @@ public class Player : LivingBeing
     [Header("Основные характеристики")]
     [SerializeField, Range(0, 255)]
     byte MaxWater_;
-    public byte MaxWater { get { return MaxWater_; } private set { MaxWater_ = value; } }
+    public byte MaxWater { get { return MaxWater_; } }
     [SerializeField, Range(0, 255)]
     byte MaxFood_;
-    public byte MaxFood { get { return MaxFood_; } private set { MaxFood_ = value; } }
+    public byte MaxFood { get { return MaxFood_; } }
     [SerializeField, Range(0, 255)]
     byte MaxStamina_;
-    public byte MaxStamina { get { return MaxStamina_; } private set { MaxStamina_ = value; } }
+    public byte MaxStamina { get { return MaxStamina_; } }
     [SerializeField, Range(0, 255)]
     byte MaxMental_;
-    public byte MaxMental { get { return MaxMental_; } private set { MaxMental_ = value; } }
+    public byte MaxMental { get { return MaxMental_; } }
     [SerializeField, Range(0, 255)]
     byte MentalRegen_;
-    public byte MentalRegen { get { return MentalRegen_; } private set { MentalRegen_ = value; } }
+    public byte MentalRegen { get { return MentalRegen_; } }
 
     //TODO Ждём C# 6.0 инициализаторы свойств:
     public override byte Health
@@ -121,16 +121,16 @@ public class Player : LivingBeing
     {
         [SerializeField]
         float TopPercent_;
-        public float TopPercent { get { return TopPercent_; } private set { TopPercent_ = value; } }
+        public float TopPercent { get { return TopPercent_; } }
         [SerializeField]
         float Water_;
-        public float Water { get { return Water_; } private set { Water_ = value; } }
+        public float Water { get { return Water_; } }
         [SerializeField]
         float Food_;
-        public float Food { get { return Food_; } private set { Food_ = value; } }
+        public float Food { get { return Food_; } }
         [SerializeField]
         float Stamina_;
-        public float Stamina { get { return Stamina_; } private set { Stamina_ = value; } }
+        public float Stamina { get { return Stamina_; } }
 
         public MentalPenalty(float water, float food, float stamina)
         {
@@ -152,7 +152,7 @@ public class Player : LivingBeing
     TimedAction CurrentAction;
     [SerializeField]
     bool CanDualWield_;
-    public bool CanDualWield { get { return CanDualWield_; } private set { CanDualWield_ = value; } }
+    public bool CanDualWield { get { return CanDualWield_; } }
 
     byte Level;
 
@@ -335,6 +335,9 @@ public class Player : LivingBeing
 
     void EndAction()
     {
+        Inventory inventory = GameObject.FindWithTag("InventoryManager").GetComponent<InventoryManager>().Inventory;
+        foreach (TimedAction.ProducedItem item in CurrentAction.ProducedItems)
+            inventory.AddItem(item.ItemID, item.Quantity);
         CurrentAction = null;
     }
 

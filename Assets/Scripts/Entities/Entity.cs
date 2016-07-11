@@ -6,7 +6,7 @@ public class Entity : MonoBehaviour, IBinaryReadableWriteable
     public virtual LocalPos Pos { get; set; }
     [SerializeField]
     bool Blocking_;
-    public bool Blocking { get { return Blocking_; } private set { Blocking_ = value; } }
+    public bool Blocking { get { return Blocking_; } }
 
     public virtual void Write(BinaryWriter writer)
     {
@@ -23,7 +23,7 @@ public class Entity : MonoBehaviour, IBinaryReadableWriteable
         Pos = buf;
         bool buf2;
         reader.Read(out buf2);
-        Blocking = buf2;
+        Blocking_ = buf2;
     }
 
     protected virtual void Start()

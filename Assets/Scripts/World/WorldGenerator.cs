@@ -18,7 +18,7 @@ public static class WorldGenerator
             public float StartingHeight { get { return StartingHeight_; } set { StartingHeight_ = value; } }
             [SerializeField]
             float PlantProbability_;
-            public float PlantProbability { get { return PlantProbability_; } private set { PlantProbability_ = value; } }
+            public float PlantProbability { get { return PlantProbability_; } }
             /*[SerializeField]
         float BushesForestValue_;
         public float BushesForestValue { get { return BushesForestValue_; } private set { BushesForestValue_ = value; } }*/
@@ -29,10 +29,10 @@ public static class WorldGenerator
 
         [SerializeField]
         Terrain BottommostTerrain_;
-        public Terrain BottommostTerrain { get { return BottommostTerrain_; } private set { BottommostTerrain_ = value; } }
+        public Terrain BottommostTerrain { get { return BottommostTerrain_; } }
         [SerializeField]
         Terrain[] Terrains_;
-        public Terrain[] Terrains { get { return Terrains_; } private set { Terrains_ = value; } }
+        public Terrain[] Terrains { get { return Terrains_; } }
 
         public Terrain GetTerrain(TerrainType terrain)
         {
@@ -64,19 +64,19 @@ public static class WorldGenerator
         {
             [SerializeField]
             float Height_;
-            public float Height { get { return Height_; } private set { Height_ = value; } }//Коэффициент высоты реки относительно средней высоты
+            public float Height { get { return Height_; } }//Коэффициент высоты реки относительно средней высоты
             [SerializeField]
             byte Count_;
-            public byte Count { get { return Count_; } private set { Count_ = value; } }
+            public byte Count { get { return Count_; } }
             [SerializeField]
             ushort MinimumLength_;
-            public ushort MinimumLength { get { return MinimumLength_; } private set { MinimumLength_ = value; } }
+            public ushort MinimumLength { get { return MinimumLength_; } }
             [SerializeField]
             byte Attempts_;
-            public byte Attempts { get { return Attempts_; } private set { Attempts_ = value; } } //Количество попыток построения реки из одного хекса
+            public byte Attempts { get { return Attempts_; } } //Количество попыток построения реки из одного хекса
             [SerializeField]
             float FlowHeightKoef_;
-            public float FlowHeightKoef { get { return FlowHeightKoef_; } private set { FlowHeightKoef_ = value; } } //Насколько реалистично река распространяется относительно высоты (1 - самое реалистичное)
+            public float FlowHeightKoef { get { return FlowHeightKoef_; } } //Насколько реалистично река распространяется относительно высоты (1 - самое реалистичное)
         }
 
         [System.Serializable]
@@ -84,10 +84,10 @@ public static class WorldGenerator
         {
             [SerializeField]
             byte Count_;
-            public byte Count { get { return Count_; } private set { Count_ = value; } }
+            public byte Count { get { return Count_; } }
             [SerializeField]
             byte Size_;
-            public byte Size { get { return Size_; } private set { Size_ = value; } }
+            public byte Size { get { return Size_; } }
         }
 
         [System.Serializable]
@@ -95,27 +95,27 @@ public static class WorldGenerator
         {
             [SerializeField]
             float RoadMergeMultiplier_;
-            public float RoadMergeMultiplier { get { return RoadMergeMultiplier_; } private set { RoadMergeMultiplier_ = value; } }
+            public float RoadMergeMultiplier { get { return RoadMergeMultiplier_; } }
             [SerializeField]
             float GoingAlongRiverMultiplier_;
-            public float GoingAlongRiverMultiplier { get { return GoingAlongRiverMultiplier_; } private set { GoingAlongRiverMultiplier_ = value; } }
+            public float GoingAlongRiverMultiplier { get { return GoingAlongRiverMultiplier_; } }
         }
 
         [SerializeField]
         TerrainType BottommostTerrain_;
-        public TerrainType BottommostTerrain { get { return BottommostTerrain_; } private set { BottommostTerrain_ = value; } }
+        public TerrainType BottommostTerrain { get { return BottommostTerrain_; } }
         [SerializeField]
         Terrain[] Terrains_;
-        public Terrain[] Terrains { get { return Terrains_; } private set { Terrains_ = value; } }
+        public Terrain[] Terrains { get { return Terrains_; } }
         [SerializeField]
         RiversSettings RiversParam_;
-        public RiversSettings RiversParam { get { return RiversParam_; } private set { RiversParam_ = value; } }
+        public RiversSettings RiversParam { get { return RiversParam_; } }
         [SerializeField]
         RoadsSettings RoadsParam_;
-        public RoadsSettings RoadsParam { get { return RoadsParam_; } private set { RoadsParam_ = value; } }
+        public RoadsSettings RoadsParam { get { return RoadsParam_; } }
         [SerializeField]
         ClustersSettings ClustersParam_;
-        public ClustersSettings ClustersParam { get { return ClustersParam_; } private set { ClustersParam_ = value; } }
+        public ClustersSettings ClustersParam { get { return ClustersParam_; } }
     }
 
     public struct HeighmapNeighboring
@@ -288,42 +288,42 @@ public static class WorldGenerator
         }
     }
 
-	public static void CreateTerrainmap(ref TerrainType[,] terrainmap ,float[,] matrix, LocalTerrainSettings terrainParam)
+    public static void CreateTerrainmap(ref TerrainType[,] terrainmap, float[,] matrix, LocalTerrainSettings terrainParam)
     {
-		ushort height = (ushort)terrainmap.GetLength(0);
-		ushort width = (ushort)terrainmap.GetLength(1);
+        ushort height = (ushort)terrainmap.GetLength(0);
+        ushort width = (ushort)terrainmap.GetLength(1);
 
         for (ushort y = 0; y < height; ++y)
             for (ushort x = 0; x < width; ++x)
                 if (matrix[y, x] < terrainParam.Terrains[0].StartingHeight)
-					terrainmap[y, x]|= terrainParam.BottommostTerrain.TerrainType;
+                    terrainmap[y, x] |= terrainParam.BottommostTerrain.TerrainType;
                 else if (matrix[y, x] >= terrainParam.Terrains[terrainParam.Terrains.Length - 1].StartingHeight)
-					terrainmap[y, x] |= terrainParam.Terrains[terrainParam.Terrains.Length - 1].TerrainType;
+                    terrainmap[y, x] |= terrainParam.Terrains[terrainParam.Terrains.Length - 1].TerrainType;
                 else
                     for (byte i = 1; i < terrainParam.Terrains.Length; ++i)
                         if (matrix[y, x] < terrainParam.Terrains[i].StartingHeight)
                         {
-							terrainmap[y, x] |= terrainParam.Terrains[i - 1].TerrainType;
+                            terrainmap[y, x] |= terrainParam.Terrains[i - 1].TerrainType;
                             break;
                         }
     }
 
-	public static void CreateTerrainmap(ref TerrainType[,] terrainmap ,float[,] matrix, GlobalTerrainSettings terrainParam)
+    public static void CreateTerrainmap(ref TerrainType[,] terrainmap, float[,] matrix, GlobalTerrainSettings terrainParam)
     {
-		ushort height = (ushort)terrainmap.GetLength(0);
-		ushort width = (ushort)terrainmap.GetLength(1);
+        ushort height = (ushort)terrainmap.GetLength(0);
+        ushort width = (ushort)terrainmap.GetLength(1);
 
         for (ushort y = 0; y < height; ++y)
             for (ushort x = 0; x < width; ++x)
                 if (matrix[y, x] < terrainParam.Terrains[0].StartingHeight)
-					terrainmap[y, x] |= terrainParam.BottommostTerrain;
+                    terrainmap[y, x] |= terrainParam.BottommostTerrain;
                 else if (matrix[y, x] >= terrainParam.Terrains[terrainParam.Terrains.Length - 1].StartingHeight)
-					terrainmap[y, x] |= terrainParam.Terrains[terrainParam.Terrains.Length - 1].TerrainType;
+                    terrainmap[y, x] |= terrainParam.Terrains[terrainParam.Terrains.Length - 1].TerrainType;
                 else
                     for (byte i = 1; i < terrainParam.Terrains.Length; ++i)
                         if (matrix[y, x] < terrainParam.Terrains[i].StartingHeight)
                         {
-							terrainmap[y, x] |= terrainParam.Terrains[i - 1].TerrainType;
+                            terrainmap[y, x] |= terrainParam.Terrains[i - 1].TerrainType;
                             break;
                         }
     }

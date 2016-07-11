@@ -7,7 +7,9 @@ public class Item
 {
     public string Name;
 
+	[SerializeField,HideInInspector]
     bool IdSet = false;
+	[SerializeField,HideInInspector]
     uint Id_;
     public uint Id
     {

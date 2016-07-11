@@ -23,7 +23,7 @@ public abstract class LivingBeing : Entity
     protected float MoveAnimTime;//TODO Вынести?
     [SerializeField, Range(0, 255)]
     byte MaxHealth_;
-    public byte MaxHealth { get { return MaxHealth_; } private set { MaxHealth_ = value; } }
+    public byte MaxHealth { get { return MaxHealth_; } }
     [SerializeField]
     protected Item BaseWeapon;
     [SerializeField, Range(0, 255)]
@@ -34,10 +34,10 @@ public abstract class LivingBeing : Entity
 
     [SerializeField, Range(0, 255)]
     byte ViewRange_;
-    public byte ViewRange { get { return ViewRange_; } private set { ViewRange_ = value; } }
+    public byte ViewRange { get { return ViewRange_; } }
     [SerializeField, Range(0, 255)]
     byte Initiative_;
-    public byte Initiative { get { return Initiative_; } private set { Initiative_ = value; } }
+    public byte Initiative { get { return Initiative_; } }
 
     [SerializeField]
     Container Corpse;

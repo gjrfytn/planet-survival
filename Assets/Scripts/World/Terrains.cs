@@ -3,17 +3,17 @@ using System.Collections.Generic;
 
 public class Terrains : MonoBehaviour
 {
-	GameObject TravelCashe;
+    GameObject TravelCashe;
 
     [System.Serializable]
     class TerrainProperties
     {
         [SerializeField]
         TerrainType Terrain_;
-        public TerrainType Terrain { get { return Terrain_; } private set { Terrain_ = value; } }
+        public TerrainType Terrain { get { return Terrain_; } }
         [SerializeField]
         TimedAction Travel_;
-        public TimedAction Travel { get { return Travel_; } private set { Travel_ = value; } }
+        public TimedAction Travel { get { return Travel_; } }
     }
 
     [SerializeField]
@@ -31,19 +31,19 @@ public class Terrains : MonoBehaviour
         }
     }
 
-	void Start()
-	{
-		TravelCashe=new GameObject("TravelCashe");
-		TravelCashe.AddComponent<TimedAction>();
-	}
+    void Start()
+    {
+        TravelCashe = new GameObject("TravelCashe");
+        TravelCashe.AddComponent<TimedAction>();
+    }
 
     public TimedAction GetTerrainProperties(TerrainType type)
     {
-		TimedAction prop = TravelCashe.GetComponent<TimedAction>();
-		prop.Duration=0;
-		prop.WaterConsumption=0;
-		prop.FoodConsumption=0;
-		prop.StaminaConsumption=0;
+        TimedAction prop = TravelCashe.GetComponent<TimedAction>();
+        prop.Duration = 0;
+        prop.WaterConsumption = 0;
+        prop.FoodConsumption = 0;
+        prop.StaminaConsumption = 0;
         foreach (TerrainProperties p in TerrainsArray)
             if ((p.Terrain & type) != TerrainType.NONE)
             {

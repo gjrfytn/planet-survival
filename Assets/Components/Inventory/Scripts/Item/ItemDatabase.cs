@@ -6,7 +6,7 @@ public class ItemDatabase : MonoBehaviour, IEnumerable
 {
     public uint Count { get { return (uint)Items.Count; } }
 
-    [SerializeField]
+    [SerializeField, HideInInspector]
     List<Item> Items = new List<Item>();
 
     List<uint> FreeIDs = new List<uint>();
