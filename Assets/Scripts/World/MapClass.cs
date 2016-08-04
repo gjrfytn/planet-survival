@@ -9,14 +9,14 @@ public abstract class Map : IBinaryReadableWriteable
 
     public TerrainType[,] TerrainMatrix;
 
-    public byte?[,] HexSpriteID_Matrix;
+    public ushort?[,] HexSpriteID_Matrix;
 
     public Map(ushort width, ushort height)
     {
         Width = width;
         Height = height;
         TerrainMatrix = new TerrainType[height, width];
-        HexSpriteID_Matrix = new byte?[height, width];
+		HexSpriteID_Matrix = new ushort?[height, width];
     }
 
     public virtual void Write(BinaryWriter writer)
@@ -45,7 +45,7 @@ public abstract class Map : IBinaryReadableWriteable
             {
                 short buf;
                 reader.Read(out buf);
-                HexSpriteID_Matrix[y, x] = buf == -1 ? null : (byte?)buf;
+				HexSpriteID_Matrix[y, x] = buf == -1 ? null : (ushort?)buf;
             }
     }
 

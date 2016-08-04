@@ -5,6 +5,9 @@ public class World : MonoBehaviour
 {
     public Map CurrentMap { get; private set; } //TODO Возможно, можно будет убрать. Карта, на которой находится игрок.
 
+	[SerializeField]
+	WorldVisualiser Visualiser;
+
     [SerializeField]
     float LandscapeRoughness;
     [SerializeField]
@@ -31,8 +34,6 @@ public class World : MonoBehaviour
 
     Chunk[,] CashedChunks = new Chunk[3, 3];
     LocalMap[,] LocalMaps;
-
-    WorldVisualiser Visualiser; //Временно
 
     GlobalPos GlobalMapPos;
     Player Player;
@@ -85,8 +86,6 @@ public class World : MonoBehaviour
 
         if (Directory.Exists(ChunksDirectoryPath))
             Directory.Delete(ChunksDirectoryPath, true);
-
-        Visualiser = GameObject.FindWithTag("World").GetComponent<WorldVisualiser>(); //Временно
 
         // Это всё временно, как пример. На самом деле карта должна создаваться только при начале новой игры, иначе загружаться из сохранения.
         //--

@@ -636,14 +636,6 @@ public class WorldVisualiser : MonoBehaviour
         RenderedBlues.Add(hex);
     }
 
-    public byte[] GetTerrainsSpriteID()
-    {
-        byte[] buf = new byte[1 + LocalMapParam.Terrains.Length];
-        for (byte i = 0; i < LocalMapParam.Terrains.Length - 1; ++i)
-            buf[i + 1] = (byte)LocalMapParam.Terrains[i].Sprites.Length;
-        return buf;
-    }
-
     public void RenderBluesHexes(LocalPos pos, byte distance, LocalMap map)
     {
         Debug.Assert(distance != 0);
