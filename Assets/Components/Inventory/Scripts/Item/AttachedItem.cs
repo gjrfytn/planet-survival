@@ -14,13 +14,16 @@ public class AttachedItem : MonoBehaviour,
 
     public Item Item;
 
-    [HideInInspector]
-    public Text StackSize;
+    public int StackSize;
 
-    public InventoryManager InventoryManager;
-    public Inventory Inventory;
+    [HideInInspector]
+    public Text StackSizeText;
+    [HideInInspector]
     public static Equipment Equipment;
-    public Hotbar Hotbar;
+
+    [HideInInspector]
+    public ItemInfoPanel ItemInfoPanel;
+    [HideInInspector]
     public InventoryTooltip Tooltip;
 
     public Transform LastSlot;
@@ -28,61 +31,58 @@ public class AttachedItem : MonoBehaviour,
     public Transform DraggingSlot;
 
     public static GameObject DraggingItem;
+
     public GameObject Duplicate;
+    private InventoryManager InventoryManager;
+    private Inventory Inventory;
 
     private CanvasGroup CanvasGroup;
     private RectTransform RectTransform;
     private RectTransform DraggingSlotRectTransform;
 
-    // Use this for initialization
-    void Start () {
+
+    void Start ()
+    {
         InventoryManager = GameObject.FindGameObjectWithTag("InventoryManager").GetComponent<InventoryManager>();
         Inventory = InventoryManager.Inventory;
         Equipment = InventoryManager.Equipment;
-        Hotbar = InventoryManager.Hotbar;
         Tooltip = InventoryManager.Tooltip;
+        ItemInfoPanel = InventoryManager.ItemInfoPanel;
 
         CanvasGroup = GetComponent<CanvasGroup>();
         RectTransform = GetComponent<RectTransform>();
         DraggingSlotRectTransform = InventoryManager.DraggingSlot.GetComponent<RectTransform>();
         DraggingSlot = InventoryManager.DraggingSlot.transform;
     }
-	
-	// Update is called once per frame
-	void Update () {
-	
-	}
-
-
 
     public void CreateDuplicate(GameObject Item)
     {
         Item item = Item.GetComponent<AttachedItem>().Item;
-        GameObject duplicate = Inventory.AddItem(item.Id, item.StackSize);
+        GameObject duplicate = Inventory.AddItem(item.Id, StackSize);
         Item.GetComponent<AttachedItem>().Duplicate = duplicate;
         duplicate.GetComponent<AttachedItem>().Duplicate = Item;
     }
 
     public void UpdateStackSize()
     {
-        StackSize = transform.GetComponentInChildren<Text>();
+        StackSizeText = transform.GetComponentInChildren<Text>();
         if (Item.MaxStackSize > 1)
         {
-            StackSize.text = Item.StackSize.ToString();
-            StackSize.enabled = true;
+            StackSizeText.text = StackSize.ToString();
+            StackSizeText.enabled = true;
             if (Duplicate != null)
             {
-                Duplicate.GetComponent<AttachedItem>().StackSize = Duplicate.GetComponentInChildren<Text>();
-                Duplicate.GetComponent<AttachedItem>().StackSize.text = Item.StackSize.ToString();
-                Duplicate.GetComponent<AttachedItem>().StackSize.enabled = true;
+                Duplicate.GetComponent<AttachedItem>().StackSizeText = Duplicate.GetComponentInChildren<Text>();
+                Duplicate.GetComponent<AttachedItem>().StackSizeText.text = StackSize.ToString();
+                Duplicate.GetComponent<AttachedItem>().StackSizeText.enabled = true;
             }
         }
         else
         {
-            StackSize.enabled = false;
+            StackSizeText.enabled = false;
             if (Duplicate != null)
             {
-                Duplicate.GetComponent<AttachedItem>().StackSize.enabled = false;
+                Duplicate.GetComponent<AttachedItem>().StackSizeText.enabled = false;
             }
         }
     }
@@ -115,13 +115,23 @@ public class AttachedItem : MonoBehaviour,
     public void OnPointerClick(PointerEventData data)
     {
 
-        if (data.button == PointerEventData.InputButton.Right)
+        if (data.button == PointerEventData.InputButton.Left)
         {
-            UseItem(Item);
+            if (ItemInfoPanel != null)
+            {
+                ItemInfoPanel.ActivatePanel(this);
+            }
         }
-        else if (data.button == PointerEventData.InputButton.Left) //Поменять
+        else if (data.button == PointerEventData.InputButton.Right)
         {
-            //ActionButtons.SetActive(false);
+            if (Item.IsConsumable)
+            {
+                InventoryEvents.ConsumeItem(this);
+            }
+            else if(Item.IsEquipment)
+            {
+                InventoryEvents.EquipItem(this);
+            }
         }
 
     }
@@ -136,7 +146,7 @@ public class AttachedItem : MonoBehaviour,
 
             if (transform.parent.GetComponent<Slot>().SlotType == SlotType.Equipment)
             {
-                InventoryEvents.UnequipItem(Item);
+                InventoryEvents.UnequipItem(this);
             }
         }
     }
@@ -171,184 +181,15 @@ public class AttachedItem : MonoBehaviour,
     {
         if (data.button == PointerEventData.InputButton.Left)
         {
+
             CanvasGroup.blocksRaycasts = true;
-            //DraggingItem = null;
             if (gameObject.transform.parent == DraggingSlot)
             {
-                GameObject dropItem = (GameObject)Instantiate(Item.DroppedItem);
-                if (dropItem.GetComponent<SpriteRenderer>().sprite == null)
-                {
-                    dropItem.GetComponent<SpriteRenderer>().sprite = Item.Icon;
-                }
-                dropItem.AddComponent<PickUpItem>();
-                dropItem.GetComponent<PickUpItem>().Item = Item;
-                dropItem.AddComponent<BoxCollider2D>();
-                dropItem.GetComponent<BoxCollider2D>().isTrigger = true;
-                InventoryEvents.DropItem(Item);
-                //dropItem.transform.localPosition = GameObject.FindGameObjectWithTag("Player").transform.localPosition;
-                Inventory.UpdateItemList();
-                Destroy(gameObject);
-                Debug.Log("Предмет выброшен");
+                InventoryEvents.DropItem(this);
             }
             DraggingItem = null;
             Inventory.UpdateItemList();
         }
     }
 
-    public void UseItem(Item item)
-    {
-        if (Item.UseSound != null)
-        {
-            InventoryManager.GetComponent<AudioSource>().PlayOneShot(Item.UseSound);
-        }
-        //ActionButtons.SetActive(true);
-        //ActionButtons.GetComponent<RectTransform>().position = GetComponent<RectTransform>().position;
-        if (Item.IsEquipment)
-        {
-            #region IsEquipment
-            for (int i = 0; i < Equipment.Slots.Count; i++)
-            {
-                if (Equipment.Slots[i].GetComponent<EquipmentSlot>().EquipmentType.Equals(Item.ItemType) || Item.ItemType == ItemType.Socket)
-                {
-                    if (Equipment.Slots[i].transform.childCount == 0)
-                    {
-                        if (GetComponentInParent<EquipmentSlot>() != null)
-                        {
-
-                        }
-                        else
-                        {
-                            InventoryEvents.EquipItem(Item);
-                        }
-                        gameObject.transform.SetParent(Equipment.Slots[i].gameObject.transform);
-                        gameObject.GetComponent<RectTransform>().localPosition = Vector3.zero;
-
-                        Inventory.UpdateItemList();
-                        if (Duplicate != null)
-                        {
-                            Destroy(Duplicate);
-                        }
-                        break;
-
-                    }
-                    if (Equipment.Slots[i].transform.childCount != 0)
-                    {
-                        GameObject equippedItem = Equipment.Slots[i].transform.GetChild(0).gameObject;
-                        Item itemFromSlot = equippedItem.GetComponent<AttachedItem>().Item;
-                        if (Item.ItemType == ItemType.Backpack)
-                        {
-                            //
-                        }
-                        else
-                        {
-                            InventoryEvents.EquipItem(Item);
-                            InventoryEvents.UnequipItem(equippedItem.GetComponent<AttachedItem>().Item);
-                        }
-                        if (this == null)
-                        {
-                            GameObject dropItem = (GameObject)Instantiate(itemFromSlot.DroppedItem);
-                            dropItem.AddComponent<PickUpItem>();
-                            dropItem.GetComponent<PickUpItem>().Item = itemFromSlot;
-                            dropItem.transform.localPosition = GameObject.FindGameObjectWithTag("Player").transform.localPosition;
-                            Inventory.UpdateItemList();
-                        }
-                        else
-                        {
-                            //Inventory.EquipItem(Item);
-                            //Inventory.UnequipItem(equippedItem.GetComponent<AttachedItem>().Item);
-                            equippedItem.transform.SetParent(transform.parent);
-                            equippedItem.GetComponent<RectTransform>().localPosition = Vector3.zero;
-                            if (gameObject.GetComponentInParent<Slot>().SlotType == SlotType.Hotbar)
-                            {
-                                CreateDuplicate(equippedItem);
-                            }
-                            if (gameObject.GetComponentInParent<Slot>().SlotType == SlotType.Equipment)
-                            {
-                                // Нужно реализовать это условие по другому
-                                if (Inventory.ItemsInInventory.Count < (Inventory.Width * Inventory.Height))
-                                {
-                                    if (Tooltip != null)
-                                    {
-                                        Tooltip.DeactivateTooltip();
-                                    }
-                                    InventoryEvents.UnequipItem(equippedItem.GetComponent<AttachedItem>().Item);
-
-                                    Inventory.AddItem(Item.Id, Item.StackSize);
-                                    Inventory.UpdateItemList();
-                                    InventoryManager.Stackable(Inventory.Slots);
-                                    Destroy(gameObject);
-                                }
-                            }
-                            gameObject.transform.SetParent(Equipment.Slots[i].gameObject.transform);
-                            gameObject.GetComponent<RectTransform>().localPosition = Vector3.zero;
-                        }
-
-                        if (Duplicate != null)
-                        {
-                            Destroy(Duplicate);
-                        }
-
-                        Inventory.UpdateItemList();
-                        break;
-                    }
-
-                }
-            }
-            #endregion
-        }
-        else if (Item.IsConsumable)
-        {
-            Item duplicateItem = null;
-
-            if (Duplicate != null)
-            {
-                duplicateItem = Duplicate.GetComponent<AttachedItem>().Item;
-            }
-            InventoryEvents.UseItem(Item);
-            Item.StackSize--;
-            UpdateStackSize();
-            if (duplicateItem != null)
-            {
-                Duplicate.GetComponent<AttachedItem>().Item.StackSize--;
-                UpdateStackSize();
-                if (Item.StackSize <= 0)
-                {
-                    if (Tooltip != null)
-                    {
-                        Tooltip.DeactivateTooltip();
-                    }
-                    Inventory.RemoveItem(Item);
-                    Destroy(Duplicate);
-                }
-            }
-            if (Item.StackSize <= 0)
-            {
-                if (Tooltip != null)
-                {
-                    Tooltip.DeactivateTooltip();
-                }
-                Destroy(gameObject);
-            }
-        }
-        else
-        {
-            //Item duplicateItem = null;
-
-            if (Item.ItemType == ItemType.Book)
-            {
-                //
-            }
-            if (Item.ItemType == ItemType.AudioPlayer)
-            {
-                GameObject audioPlayer = Instantiate(Item.CustomObject);
-                audioPlayer.name = "AudioPlayer";
-                audioPlayer.transform.SetParent(InventoryManager.transform);
-                audioPlayer.GetComponent<RectTransform>().localPosition = Vector3.zero;
-            }
-        }
-        if (Tooltip != null)
-        {
-            Tooltip.DeactivateTooltip();
-        }
-    }
 }

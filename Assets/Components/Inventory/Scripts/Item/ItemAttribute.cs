@@ -12,9 +12,4 @@ public class ItemAttribute {
         this.AttributeValue = attributeValue;
     }
 
-    public ItemAttribute()
-    {
-        //
-    }
-
 }

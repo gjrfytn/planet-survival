@@ -2,14 +2,16 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public class ItemDatabase : MonoBehaviour, IEnumerable
+public class ItemDatabase : ScriptableObject, IEnumerable
 {
     public uint Count { get { return (uint)Items.Count; } }
 
-    [SerializeField, HideInInspector]
+    [SerializeField]
     List<Item> Items = new List<Item>();
 
     List<uint> FreeIDs = new List<uint>();
+
+    //public List<Blueprint> Blueprints = new List<Blueprint>();
 
     public Item this[uint id]
     {

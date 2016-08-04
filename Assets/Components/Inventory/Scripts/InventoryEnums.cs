@@ -1,7 +1,4 @@
-﻿using UnityEngine;
-using System.Collections;
-
-public enum ItemType : byte
+﻿public enum ItemType : byte
 {
     Weapon,
     OffHand,
@@ -13,9 +10,6 @@ public enum ItemType : byte
     Boots,
     Socket,
     Backpack,
-    Book,
-    AudioPlayer,
-    Potion,
     Consumable,
     Other,
 }
@@ -45,10 +39,8 @@ public enum ItemQuality : byte
 //Любые предметы которые нельзя надеть на персонажа
 public enum OtherItemType : byte
 {
-    Potion, //
+    Consumable,
     Socket,
-    Book,
-    AudioRecord,
     Other,
 }
 

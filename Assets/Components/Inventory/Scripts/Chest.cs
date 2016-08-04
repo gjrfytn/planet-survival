@@ -9,7 +9,7 @@ public class Chest : Entity {
     public byte MaxItemsInChest;
 
     //ItemDatabase ItemDatabase;
-    InventoryManager InventoryManager;
+    //InventoryManager InventoryManager;
     //Inventory Inventory;
     //Tooltip Tooltip;
     //GameObject Player;
@@ -18,7 +18,7 @@ public class Chest : Entity {
     {
         base.Start();
         //Player = GameObject.FindGameObjectWithTag("Player");
-        InventoryManager = GameObject.FindGameObjectWithTag("InvetoryManager").GetComponent<InventoryManager>();
+        //InventoryManager = GameObject.FindGameObjectWithTag("InvetoryManager").GetComponent<InventoryManager>();
         //ItemDatabase = InventoryManager.ItemDatabase;
         //Inventory = InventoryManager.Inventory;
 

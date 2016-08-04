@@ -6,8 +6,8 @@ using System.Collections.Generic;
 
 public class Inventory : MonoBehaviour, IDropHandler {
 
+    [HideInInspector]
     public InventoryManager InventoryManager;
-
     [HideInInspector]
     [Range(1,255)]
     public byte Width;
@@ -17,33 +17,20 @@ public class Inventory : MonoBehaviour, IDropHandler {
 
     public Transform SlotContainer;
 
-    public List<GameObject> Slots;
+    public List<Slot> Slots;
 
     [SerializeField]
-    public List<Item> ItemsInInventory = new List<Item>();
+    public List<AttachedItem> ItemsInInventory = new List<AttachedItem>();
 
-    void Awake()
+    private void Awake()
     {
-
+        InventoryManager = GameObject.FindWithTag("InventoryManager").GetComponent<InventoryManager>();
     }
-
-
-	// Use this for initialization
-	void Start () {
-        UpdateItemList();
-	}
-	
-	// Update is called once per frame
-	void Update () {
-	
-	}
-
-
 
     ///<summary>
     ///Обновляет список предметов в инвентаре
     ///</summary>
-    public void UpdateItemList()
+    public void UpdateItemList() //TODO: Уменьшить количество вызовов этого метода. Причина: вызывается дважды при старте
     {
         ItemsInInventory.Clear();
         for(int i = 0; i < Slots.Count; i++)
@@ -51,7 +38,7 @@ public class Inventory : MonoBehaviour, IDropHandler {
             Transform transform = Slots[i].gameObject.transform;
             if(transform.childCount != 0)
             {
-                ItemsInInventory.Add(transform.GetChild(0).GetComponent<AttachedItem>().Item);
+                ItemsInInventory.Add(transform.GetChild(0).GetComponent<AttachedItem>());
             }
         }
     }
@@ -60,34 +47,42 @@ public class Inventory : MonoBehaviour, IDropHandler {
     ///</summary>
     public GameObject AddItem(uint id, int stackSize)
     {
-        for(int i = 0; i < Slots.Count; i++)
+        if (InventoryManager.ItemDatabase != null)
         {
-            if(Slots[i].gameObject.transform.childCount == 0)
+            for (int i = 0; i < Slots.Count; i++)
             {
-                GameObject item = (GameObject)Instantiate(InventoryManager.ItemPrefab);
-                AttachedItem attachedItem = item.GetComponent<AttachedItem>();
-                attachedItem.Item = InventoryManager.ItemDatabase[id];
-                if (attachedItem.Item.StackSize <= attachedItem.Item.MaxStackSize && stackSize <= attachedItem.Item.MaxStackSize)
+                if (Slots[i].transform.childCount == 0)
                 {
-                    attachedItem.Item.StackSize = stackSize;
-                }
-                else
-                {
-                    attachedItem.Item.StackSize = 1;
-                }
-                item.transform.SetParent(Slots[i].gameObject.transform);
-                item.GetComponent<RectTransform>().localPosition = Vector2.zero;
-                item.transform.GetChild(0).GetComponent<Image>().sprite = attachedItem.Item.Icon;
-                item.transform.GetChild(2).GetComponent<Image>().color = InventoryManager.FindColor(attachedItem.Item);
+                    GameObject item = (GameObject)Instantiate(InventoryManager.ItemPrefab);
+                    AttachedItem attachedItem = item.GetComponent<AttachedItem>();
 
-                item.name = attachedItem.Item.Name;
-                attachedItem.Item.ItemStartNumber = ItemsInInventory.Count;
-                attachedItem.UpdateStackSize();
-                return item;
+                    attachedItem.Item = InventoryManager.ItemDatabase[id];
+                    if (attachedItem.StackSize <= attachedItem.Item.MaxStackSize && stackSize <= attachedItem.Item.MaxStackSize)
+                    {
+                        attachedItem.StackSize = stackSize;
+                    }
+                    else
+                    {
+                        attachedItem.StackSize = 1;
+                    }
+                    item.transform.SetParent(Slots[i].gameObject.transform);
+                    item.GetComponent<RectTransform>().localPosition = Vector2.zero;
+                    item.transform.GetChild(0).GetComponent<Image>().sprite = attachedItem.Item.Icon;
+                    item.transform.GetChild(2).GetComponent<Image>().color = InventoryManager.FindColor(attachedItem.Item);
+
+                    item.name = attachedItem.Item.Name;
+                    attachedItem.Item.ItemStartNumber = ItemsInInventory.Count;
+                    attachedItem.UpdateStackSize();
+                    return item;
+                }
             }
+            InventoryManager.UpdateStacks(Slots);
+            UpdateItemList();
         }
-        InventoryManager.Stackable(Slots);
-        UpdateItemList();
+        else
+        {
+            Debug.LogError("Item database is null");
+        }
         return null;
     }
     ///<summary>
@@ -107,11 +102,11 @@ public class Inventory : MonoBehaviour, IDropHandler {
     ///<summary>
     ///Удаляет Item из списка ItemsInInventory вместе с игровым объектом
     ///</summary>
-    public void RemoveItemAndGameObject(Item item)
+    public void RemoveItemAndGameObject(AttachedItem attachedItem)
     {
         for (int i = 0; i < ItemsInInventory.Count; i++)
         {
-            if (item.Equals(ItemsInInventory[i]))
+            if (attachedItem == ItemsInInventory[i])
             {
                 ItemsInInventory.RemoveAt(i);
             }
@@ -121,11 +116,11 @@ public class Inventory : MonoBehaviour, IDropHandler {
         {
             if(Slots[k].gameObject.transform.childCount != 0)
             {
-                GameObject itemGameObject = Slots[k].gameObject.transform.GetChild(0).gameObject;
-                Item attachedItem = itemGameObject.GetComponent<AttachedItem>().Item;
-                if(attachedItem.Equals(item))
+                GameObject tempItemGameObject = Slots[k].gameObject.transform.GetChild(0).gameObject;
+                AttachedItem tempAttachedItem = tempItemGameObject.GetComponent<AttachedItem>();
+                if(tempAttachedItem == attachedItem)
                 {
-                    Destroy(itemGameObject);
+                    Destroy(tempItemGameObject);
                     break;
                 }
             }
@@ -146,31 +141,6 @@ public class Inventory : MonoBehaviour, IDropHandler {
         }
     }
 
-
-
-    /*public void Stackable()
-    {
-        for (int i = 0; i < Slots.Count; i++)
-        {
-            if (Slots[i].gameObject.transform.childCount > 0)
-            {
-                AttachedItem item = Slots[i].gameObject.transform.GetChild(0).GetComponent<AttachedItem>();
-                if (item.Item.MaxStackSize > 1)
-                {
-                    //Подразумевается, что буде использоваться только 1 объект с присоединенным текстом
-                    item.transform.GetComponentInChildren<Text>().text = item.Item.StackSize.ToString();
-                    //StackSizeText.text = item.Item.StackSize.ToString();
-                    item.transform.GetComponentInChildren<Text>().enabled = true; //IsStackable;
-                }
-                else
-                {
-                    item.transform.GetComponentInChildren<Text>().enabled = false;
-                }
-            }
-        }
-
-    }*/
-
     ///<summary>
     ///Проверяет есть ли добавляемый предмет в инвентаре. Если есть то добавляет его в соседний слот или стакается 
     ///</summary>
@@ -180,33 +150,31 @@ public class Inventory : MonoBehaviour, IDropHandler {
         int stack;
         for(int i = 0; i < ItemsInInventory.Count; i++)
         {
-            if(ItemsInInventory[i].Id == id && ItemsInInventory[i].IsStackable)
+            if(ItemsInInventory[i].Item.Id == id && ItemsInInventory[i].Item.IsStackable)
             {
                 stack = ItemsInInventory[i].StackSize + stackSize;
-                int rest = (stack) % ItemsInInventory[i].MaxStackSize;
-                GameObject tempItem = GetItemGameObject(ItemsInInventory[i]);
-                if (stack <= ItemsInInventory[i].MaxStackSize)
+                int rest = (stack) % ItemsInInventory[i].Item.MaxStackSize;
+                GameObject tempItem = GetItemGameObject(ItemsInInventory[i].Item);
+                if (stack <= ItemsInInventory[i].Item.MaxStackSize)
                 {
                     ItemsInInventory[i].StackSize = stack;
                     tempItem.GetComponent<AttachedItem>().UpdateStackSize();
-                    //GameObject temp = GetItemGameObject(ItemsInInventory[i]);
                     if(tempItem != null && tempItem.GetComponent<AttachedItem>().Duplicate != null)
                     {
-                        tempItem.GetComponent<AttachedItem>().Duplicate.GetComponent<AttachedItem>().Item.StackSize = stack;
+                        tempItem.GetComponent<AttachedItem>().Duplicate.GetComponent<AttachedItem>().StackSize = stack;
                         tempItem.GetComponent<AttachedItem>().UpdateStackSize();
                     }
                     return true;
                 }
-                if (stack > ItemsInInventory[i].MaxStackSize)
+                else if (stack > ItemsInInventory[i].Item.MaxStackSize)
                 {
-                    //int rest = (stack) % ItemsInInventory[i].MaxStackSize;
-                    ItemsInInventory[i].StackSize = ItemsInInventory[i].MaxStackSize;
+                    ItemsInInventory[i].StackSize = ItemsInInventory[i].Item.MaxStackSize;
                     if (tempItem != null && tempItem.GetComponent<AttachedItem>().Duplicate != null)
                     {
-                        tempItem.GetComponent<AttachedItem>().Duplicate.GetComponent<AttachedItem>().Item.StackSize = stack;
+                        tempItem.GetComponent<AttachedItem>().Duplicate.GetComponent<AttachedItem>().StackSize = stack;
                     }
-                    AddItem(ItemsInInventory[i].Id, rest);
-                    GetItemGameObject(ItemsInInventory[i]).GetComponent<AttachedItem>().UpdateStackSize();
+                    AddItem(ItemsInInventory[i].Item.Id, rest);
+                    GetItemGameObject(ItemsInInventory[i].Item).GetComponent<AttachedItem>().UpdateStackSize();
                     return true;
                 }
             }
@@ -214,9 +182,36 @@ public class Inventory : MonoBehaviour, IDropHandler {
         return false;
     }
 
-    public void StackItem(Item item)
+    public void AddItemIntoSlot(GameObject itemGameObject)
+    {
+        if (CheckItemFit())
+        {
+            for (int i = 0; i < Slots.Count; i++)
+            {
+                if(Slots[i].gameObject.transform.childCount == 0)
+                {
+                    itemGameObject.transform.SetParent(Slots[i].transform);
+                    itemGameObject.transform.localPosition = Vector2.zero;
+                    break;
+                }
+            }
+        }
+    }
+
+    public bool CheckItemFit()
     {
 
+        if (ItemsInInventory.Count < (Width * Height))
+        {
+            for (int i = 0; i < Slots.Count; i++)
+            {
+                if (Slots[i].transform.childCount == 0)
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     public GameObject GetItemGameObject(Item item)
@@ -236,8 +231,6 @@ public class Inventory : MonoBehaviour, IDropHandler {
         return null;
     }
 
-
-
     ///<summary>
     ///Удаляет слоты и очищает список Slots
     ///</summary>
@@ -248,7 +241,7 @@ public class Inventory : MonoBehaviour, IDropHandler {
         {
             DestroyImmediate(Slots[i].gameObject);
         }
-        Slots = new List<GameObject>();
+        Slots = new List<Slot>();
 
     }
 
@@ -266,8 +259,8 @@ public class Inventory : MonoBehaviour, IDropHandler {
                 slot.transform.SetParent(SlotContainer.transform);
                 slot.GetComponent<Slot>().SlotType = SlotType.Inventory;
                 slot.name = "Slot " + i;
-                Slots.Add(slot);
-                Slots[i].gameObject.transform.GetComponent<Slot>().SlotNumber += i;
+                Slots.Add(slot.GetComponent<Slot>());
+                Slots[i].GetComponent<Slot>().SlotNumber += i;
             }
         }
         else if (Slots.Count >= height * width)
@@ -286,7 +279,7 @@ public class Inventory : MonoBehaviour, IDropHandler {
             {
                 if (draggingItem.GetComponent<AttachedItem>().LastSlot.GetComponent<Slot>().SlotType == SlotType.Equipment)
                 {
-                    InventoryEvents.EquipItem(draggingItem.GetComponent<AttachedItem>().Item);
+                    InventoryEvents.EquipItem(draggingItem.GetComponent<AttachedItem>());
                 }
             }
             if (draggingItem.GetComponent<AttachedItem>().LastSlot.GetComponent<Slot>().SlotType == SlotType.Hotbar)

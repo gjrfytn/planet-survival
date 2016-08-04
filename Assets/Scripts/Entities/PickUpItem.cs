@@ -1,17 +1,22 @@
 ﻿using UnityEngine;
+using UnityEngine.EventSystems;
+using System.Collections;
 
-public class PickUpItem : Entity
-{
-    public Item Item;
+public class PickUpItem : Entity {
 
-    InventoryManager InventoryManager;
-    Inventory Inventory;
+    public AttachedItem AttachedItem;
+
+    private InventoryManager InventoryManager;
+    private Inventory Inventory;
+
     //InventoryTooltip Tooltip;
+    Player Player;
 
-    protected override void Start()
-    {
+	// Use this for initialization
+	protected override void Start () {
         base.Start();
 
+        Player = GameObject.FindGameObjectWithTag("Player").GetComponent<Player>();
         InventoryManager = GameObject.FindGameObjectWithTag("InventoryManager").GetComponent<InventoryManager>();
         Inventory = InventoryManager.Inventory;
         //Tooltip = InventoryManager.Tooltip;
@@ -19,27 +24,41 @@ public class PickUpItem : Entity
 
         if (world.IsCurrentMapLocal())
         {
-            Pos = GameObject.FindGameObjectWithTag("Player").GetComponent<Player>().Pos;
-            (world.CurrentMap as LocalMap).AddObject(this);
-            transform.position = WorldVisualiser.GetTransformPosFromMapPos(Pos);
+            Entity obj = this;
+            LocalMap localMap = world.CurrentMap as LocalMap;
+            obj.Pos = Player.Pos;
+            localMap.AddObject(obj);
+            obj.transform.position = WorldVisualiser.GetTransformPosFromMapPos(obj.Pos);
         }
-    }
+
+        //map.AddObject(obj);
+
+	}
+
+	// Update is called once per frame
+	void Update() {
+
+	}
 
     void OnMouseUpAsButton()
     {
-        if (Inventory.CheckIfItemAlreadyExist(Item.Id, Item.StackSize))
+        if (Input.GetMouseButtonUp(0))
         {
-            InventoryEvents.PickUpItem(Item);
-            Destroy(gameObject);
-            InventoryManager.Stackable(Inventory.Slots);
+            if (Inventory.CheckIfItemAlreadyExist(AttachedItem.Item.Id, AttachedItem.StackSize))
+            {
+                InventoryEvents.PickUpItem(AttachedItem);
+                Destroy(gameObject);
+                InventoryManager.UpdateStacks(Inventory.Slots);
+            }
+            else if (Inventory.ItemsInInventory.Count < Inventory.Width * Inventory.Height)
+            {
+                InventoryEvents.PickUpItem(AttachedItem);
+                Inventory.AddItem(AttachedItem.Item.Id, AttachedItem.StackSize);
+                Inventory.UpdateItemList();
+                InventoryManager.UpdateStacks(Inventory.Slots);
+                Destroy(gameObject);
+            }
         }
-        else if (Inventory.ItemsInInventory.Count < Inventory.Width * Inventory.Height)
-        {
-            InventoryEvents.PickUpItem(Item);
-            Inventory.AddItem(Item.Id, Item.StackSize);
-            Inventory.UpdateItemList();
-            InventoryManager.Stackable(Inventory.Slots);
-            Destroy(gameObject);
-        }
+
     }
 }

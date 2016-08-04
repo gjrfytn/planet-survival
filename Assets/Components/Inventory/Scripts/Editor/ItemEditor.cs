@@ -3,43 +3,30 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
-public class ItemEditor : EditorWindow {
-
-    Item Item = new Item();
+public partial class ItemEditor : BaseInventoryEditor {
 
     //ItemType ItemTypeToCreate;
     EquipmentItemType EquipmentItemTypeToCreate; //Предметы которые можно одеть на персонажа
     OtherItemType OtherItemTypeToCreate; //Любые предметы которые нельзя надеть на персонажа
+    ItemType ItemTypeToSearch;
+    ItemType CraftItemTypeToAdd;
 
-    Texture2D Logo = null;
-
+    Item Item = new Item();
+    Item ItemToManage;
     bool OffHandOnly;
     bool IsOther;
     bool EnableAttributes;
     bool IsReturnsItem;
-    int AttributeAmount;
+    string AttributeName;
+    int AttributeValue;
+
     string ItemToSearch = string.Empty;
 
-    List<Item> ItemBuffer; // TODO
-
-    static ItemDatabase ItemDatabase;
-
-    //bool CreateItem, ManageItem, CreateCraftingItem, ManageCraftingItem;
-
-    Item ItemToManage;
-
-    private enum SelectAction
+    internal enum SelectAction
     {
         CreateItem,
         ManageItem,
-        CreateCraftingItem,
-        ManageCraftingItem,
     }
-
-    SerializedObject SerObj;
-
-    private Vector2 ScrollPosition;
-    private Vector2 ScrollManageItem;
 
     private SelectAction SelectedAction;
 
@@ -47,152 +34,91 @@ public class ItemEditor : EditorWindow {
     [MenuItem("Game manager/Inventory/Item editor")]
     static void Init()
     {
-        ItemDatabase = (ItemDatabase)Resources.Load("Inventory/ItemDatabase", typeof(ItemDatabase)) as ItemDatabase;
-        GetWindow(typeof(ItemEditor));
+        EditorWindow EditorWindow = GetWindow(typeof(ItemEditor));
+        EditorWindow.titleContent = new GUIContent("Item editor");
+        EditorWindow.minSize = new Vector2(800, 600);
     }
 
-    void OnEnable()
+    protected override void OnEnable()
     {
-        SerObj = new SerializedObject(this);
-        Logo = (Texture2D)Resources.Load("Inventory/Textures/Logo", typeof(Texture2D));
+        base.OnEnable();
     }
 
-    void OnInspectorUpdate()
+    protected override void OnGUI()
     {
-        ItemDatabase = (ItemDatabase)Resources.Load("Inventory/ItemDatabase", typeof(ItemDatabase)) as ItemDatabase;
-    }
+        base.OnGUI();
 
-    void OnGUI()
-    {
-        SerObj.Update();
-
-        GUILayout.Label(Logo);
-
-        GUILayout.Space(10);
-
-        GUI.color = Color.green;
-        GUILayout.BeginHorizontal();
-
-        if (SelectedAction == SelectAction.CreateItem)
+        if (ItemDatabase != null)
         {
+
+            GUILayout.Space(10);
+
             GUI.color = Color.green;
+            GUILayout.BeginHorizontal();
+
+            if (SelectedAction == SelectAction.CreateItem)
+            {
+                GUI.color = Color.green;
+            }
+            else
+            {
+                GUI.color = Color.white;
+            }
+            if (GUILayout.Button("Create item"))
+            {
+                SelectedAction = SelectAction.CreateItem;
+            }
+
+            if (SelectedAction == SelectAction.ManageItem)
+            {
+                GUI.color = Color.green;
+            }
+            else
+            {
+                GUI.color = Color.white;
+            }
+            if (GUILayout.Button("Edit items"))
+            {
+                SelectedAction = SelectAction.ManageItem;
+            }
+            GUILayout.EndHorizontal();
+
+            GUI.color = Color.white;
+
+            GUILayout.Space(25);
+
+            if (SelectedAction == SelectAction.CreateItem)
+            {
+                CreateItems();
+            }
+            else if (SelectedAction == SelectAction.ManageItem)
+            {
+                ManageItems();
+            }
+
+            if (GUI.changed)
+            {
+                EditorUtility.SetDirty(ItemDatabase);
+                PrefabUtility.SetPropertyModifications(PrefabUtility.GetPrefabObject(ItemDatabase), PrefabUtility.GetPropertyModifications(ItemDatabase));
+            }
         }
         else
         {
-            GUI.color = Color.white;
-        }
-        if (GUILayout.Button("Create items"))
-        {
-            SelectedAction = SelectAction.CreateItem;
-        }
-
-        if (SelectedAction == SelectAction.ManageItem)
-        {
-            GUI.color = Color.green;
-        }
-        else
-        {
-            GUI.color = Color.white;
-        }
-        if (GUILayout.Button("Edit items"))
-        {
-            SelectedAction = SelectAction.ManageItem;
-        }
-        GUILayout.EndHorizontal();
-
-        GUILayout.BeginHorizontal();
-
-
-
-        if (SelectedAction == SelectAction.CreateCraftingItem)
-        {
-            GUI.color = Color.green;
-        }
-        else
-        {
-            GUI.color = Color.white;
-        }
-        if (GUILayout.Button("Create crafted items"))
-        {
-            SelectedAction = SelectAction.CreateCraftingItem;
-            //CraftItem = new CraftedItem();
-            //CraftItem.MaterialsId = new List<int>();
-        }
-
-        if (SelectedAction == SelectAction.ManageCraftingItem)
-        {
-            GUI.color = Color.green;
-        }
-        else
-        {
-            GUI.color = Color.white;
-        }
-        if (GUILayout.Button("Edit crafting items"))
-        {
-            SelectedAction = SelectAction.ManageCraftingItem;
-        }
-
-        GUILayout.EndHorizontal();
-
-        GUI.color = Color.white;
-
-        GUILayout.Space(25);
-
-        if (SelectedAction == SelectAction.CreateItem)
-        {
-            CreateItems();
-        }
-        else if (SelectedAction == SelectAction.ManageItem)
-        {
-            ManageItems();
-        }
-        else if (SelectedAction == SelectAction.CreateCraftingItem)
-        {
-            //CreateCraftingItem();
-        }
-        else if (SelectedAction == SelectAction.ManageCraftingItem)
-        {
-           // ManageCraftingItem();
-        }
-
-        SerObj.ApplyModifiedProperties();
-
-        if(GUI.changed)
-        {
-            EditorUtility.SetDirty(ItemDatabase);
-            PrefabUtility.SetPropertyModifications(PrefabUtility.GetPrefabObject(ItemDatabase), PrefabUtility.GetPropertyModifications(ItemDatabase));
+            CreateItemDatabase();
         }
     }
 
 
 
+}
+
+public partial class ItemEditor
+{
     void CreateItems()
     {
         ScrollManageItem = GUILayout.BeginScrollView(ScrollManageItem);
-        Item.Name = EditorGUILayout.TextField("Item name: ", Item.Name);
 
-        /*EditorGUILayout.BeginHorizontal();
-        Item.Width = (byte)EditorGUILayout.IntSlider(new GUIContent("Width: "), Item.Width, 0, 255);
-        Item.Height = (byte)EditorGUILayout.IntSlider(new GUIContent("Height: "), Item.Height, 0, 255);
-        EditorGUILayout.EndHorizontal();*/
-
-        Item.ItemQuality = (ItemQuality)EditorGUILayout.EnumPopup("Item quality: ", Item.ItemQuality);
-
-        Item.Icon = (Sprite)EditorGUILayout.ObjectField("Icon: ", Item.Icon, typeof(Sprite), false);
-
-        Item.ItemSound = (AudioClip)EditorGUILayout.ObjectField("Item sound: ", Item.ItemSound, typeof(AudioClip), false);
-
-        Item.UseSound = (AudioClip)EditorGUILayout.ObjectField("Use sound: ", Item.UseSound, typeof(AudioClip), false);
-
-        if(Item.DroppedItem == null)
-        {
-            Item.DroppedItem = (GameObject)Resources.Load("Inventory/DefaultDropItem");
-        }
-        Item.DroppedItem = (GameObject)EditorGUILayout.ObjectField("Dropped item: ", Item.DroppedItem, typeof(GameObject), false);
-
-        Item.CustomObject = (GameObject)EditorGUILayout.ObjectField("Custom object: ", Item.CustomObject, typeof(GameObject), false);
-
-        Item.Cooldown = EditorGUILayout.IntField("Cooldown: ", Item.Cooldown);
+        CommonItemSettings(Item);
 
         GUILayout.Space(20);
         if (!IsOther)
@@ -223,53 +149,23 @@ public class ItemEditor : EditorWindow {
 
             if (EquipmentItemTypeToCreate == EquipmentItemType.Weapon)
             {
-
-                OffHandOnly = EditorGUILayout.Toggle("OffHand: ", OffHandOnly);
-                if (OffHandOnly)
-                {
-                    Item.TwoHanded = false;
-                }
-                if (!OffHandOnly)
-                {
-                    Item.TwoHanded = EditorGUILayout.Toggle("Two handed", Item.TwoHanded);
-                }
-                Item.LevelReq = (byte)EditorGUILayout.IntField("Item level requirement: ", Item.LevelReq);
-
-                GUILayout.BeginHorizontal();
-
-                Item.Damage = (byte)EditorGUILayout.IntField("Damage: ", Item.Damage);
-                Item.CriticalDamage = (byte)EditorGUILayout.IntField("CriticalDamage: ", Item.CriticalDamage);
-
-                GUILayout.EndHorizontal();
-
-                GUILayout.BeginHorizontal();
-                Item.Range = EditorGUILayout.IntField("Range: ", Item.Range);
-                Item.AttackSpeed = EditorGUILayout.FloatField("Attack speed: ", Item.AttackSpeed);
-
-                GUILayout.EndHorizontal();
+                WeaponItemSettings(Item);
             }
             else if (EquipmentItemTypeToCreate != EquipmentItemType.Weapon)
             {
-                EditorGUILayout.Space();
-
-                Item.LevelReq = (byte)EditorGUILayout.IntField("Item level requirement: ", Item.LevelReq);
-
-                GUILayout.BeginHorizontal();
-
-                Item.Armor = EditorGUILayout.FloatField("Armor: ", Item.Armor);
-                Item.ColdResistance = EditorGUILayout.IntField("Cold resistance: ", Item.ColdResistance);
-                Item.HeatResistance = EditorGUILayout.IntField("Heat resistance: ", Item.HeatResistance);
-
-                GUILayout.EndHorizontal();
-
+                ArmorItemSettings(Item);
             }
         }
-        else if(IsOther)
+        else if (IsOther)
         {
 
             OtherItemTypeToCreate = (OtherItemType)EditorGUILayout.EnumPopup("Item type: ", OtherItemTypeToCreate);
 
-            string[] itemTypes = System.Enum.GetNames(typeof(ItemType));
+            //string[] itemTypes = System.Enum.GetNames(typeof(ItemType));
+
+            string[] itemTypes = System.Linq.Enumerable.ToArray(System.Linq.Enumerable.Except(System.Enum.GetNames(typeof(ItemType)), System.Enum.GetNames(typeof(EquipmentItemType))));
+
+            //=========================================
 
             for (int i = 0; i < itemTypes.Length; i++)
             {
@@ -281,23 +177,7 @@ public class ItemEditor : EditorWindow {
             }
 
 
-            if (Item.ItemType == ItemType.Potion)
-            {
-                EditorGUILayout.LabelField("Note: potions are consumables by default", GUILayout.Height(40));
-                Item.IsConsumable = true;
-                Item.HealthRestore = EditorGUILayout.IntField("Health restore", Item.HealthRestore);
-                Item.EnergyRestore = EditorGUILayout.IntField("Energy restore", Item.EnergyRestore);
-            }
-            else
-            {
-                Item.HealthRestore = 0;
-                Item.EnergyRestore = 0;
-            }
 
-            if (Item.ItemType != ItemType.Potion)
-            {
-                Item.IsConsumable = EditorGUILayout.Toggle(new GUIContent("Consumable: "), Item.IsConsumable);
-            }
 
             Item.IsStackable = EditorGUILayout.Toggle("Stackable: ", Item.IsStackable);
 
@@ -307,12 +187,31 @@ public class ItemEditor : EditorWindow {
             }
 
             EnableAttributes = EditorGUILayout.Toggle("Enable attributes: ", EnableAttributes);
+            //SerializedProperty serPropAttributes = SerObj.FindProperty("Item").FindPropertyRelative("ItemAttributes");
             if (EnableAttributes)
             {
-                AttributeAmount = EditorGUILayout.IntSlider("Amount: ", AttributeAmount, 0, 50);
-
+                EditorGUILayout.BeginHorizontal();
+                AttributeName = EditorGUILayout.TextField("Name: ", AttributeName);
+                AttributeValue = EditorGUILayout.IntSlider(new GUIContent("Value: "), AttributeValue, int.MinValue, int.MaxValue);
+                if (GUILayout.Button("+", GUILayout.Width(25)))
+                {
+                    Item.ItemAttributes.Add(new ItemAttribute(AttributeName, AttributeValue));
+                }
+                EditorGUILayout.EndHorizontal();
+                GUILayout.Space(25);
+                for (int i = 0; i < Item.ItemAttributes.Count; i++)
+                {
+                    EditorGUILayout.BeginHorizontal();
+                    Item.ItemAttributes[i].AttributeName = EditorGUILayout.TextField("Name: ", Item.ItemAttributes[i].AttributeName);
+                    Item.ItemAttributes[i].AttributeValue = EditorGUILayout.IntSlider(new GUIContent("Value: "), Item.ItemAttributes[i].AttributeValue, int.MinValue, int.MaxValue);
+                    if (GUILayout.Button("X", GUILayout.Width(25)))
+                    {
+                        Item.ItemAttributes.RemoveAt(i);
+                    }
+                    EditorGUILayout.EndHorizontal();
+                }
             }
-            IsReturnsItem = EditorGUILayout.Toggle("Return item? ", IsReturnsItem);
+            IsReturnsItem = EditorGUILayout.Toggle("Return item: ", IsReturnsItem);
 
             if (IsReturnsItem)
             {
@@ -320,7 +219,7 @@ public class ItemEditor : EditorWindow {
                 uint i = 0;
                 foreach (Item item in ItemDatabase)
                     items[i++] = item.Name;
-				
+
                 Item.ReturnItemId = EditorGUILayout.Popup("Returned item: ", Item.ReturnItemId, items, EditorStyles.popup);
                 Item.ReturnItemStackSize = EditorGUILayout.IntField("Stack size: ", Item.ReturnItemStackSize);
             }
@@ -331,13 +230,11 @@ public class ItemEditor : EditorWindow {
 
         }
 
-
-        Item.Description = EditorGUILayout.TextField("Description: ", Item.Description);
-
-        if (GUILayout.Button("Create item", GUILayout.Height(40)))
+        if (GUILayout.Button("Create item"))
         {
-                ItemDatabase.Add(Item);
-                Item = new Item();
+            ItemDatabase.Add(Item);
+            Item = new Item();
+            EditorUtility.SetDirty(ItemDatabase);
         }
         GUILayout.EndScrollView();
     }
@@ -347,31 +244,16 @@ public class ItemEditor : EditorWindow {
         GUILayout.BeginHorizontal(EditorStyles.toolbar);
         ItemToSearch = GUILayout.TextField(ItemToSearch, EditorStyles.toolbarTextField, GUILayout.Width(400));
         GUILayout.Label("Search in the item database");
+        //ItemTypeToSearch = (ItemType)EditorGUILayout.EnumPopup("Filter by type: ", ItemTypeToSearch);
         GUILayout.EndHorizontal();
         ScrollPosition = GUILayout.BeginScrollView(ScrollPosition);
         foreach (Item item in ItemDatabase)
         {
             if (item != ItemToManage)
             {
-                if (item.Name.ToLower().Contains(ItemToSearch.ToLower()))
+                if (item.Name.ToLower().Contains(ItemToSearch.ToLower()) /*&& item.ItemType.Equals(ItemTypeToSearch)*/)
                 {
                     EditorGUILayout.BeginHorizontal();
-                    if (GUILayout.Button(">", "label", GUILayout.Width(10)))
-                    {
-                        ItemToManage = item;
-                        string[] itemTypes = System.Enum.GetNames(typeof(ItemType));
-
-                        //string[] equipmentItemTypes = System.Enum.GetNames(typeof(ItemType));
-
-                        for (int k = 0; k < itemTypes.Length; k++)
-                        {
-                            if (itemTypes[k] == EquipmentItemTypeToCreate.ToString())
-                            {
-                                Item.ItemType = (ItemType)System.Enum.Parse(typeof(ItemType), itemTypes[k]);
-                                break;
-                            }
-                        }
-                    }
 
                     if (GUILayout.Button(item.Name))
                     {
@@ -392,13 +274,8 @@ public class ItemEditor : EditorWindow {
             }
             else
             {
-                GUI.color = Color.green;
+                GUI.color = Color.gray;
                 GUILayout.BeginHorizontal();
-                if (GUILayout.Button("v", "label", GUILayout.Width(10)))
-                {
-                    ItemToManage = null;
-                    return;
-                }
                 if (GUILayout.Button(item.Name))
                 {
                     ItemToManage = null;
@@ -418,58 +295,23 @@ public class ItemEditor : EditorWindow {
 
                 ScrollManageItem = GUILayout.BeginScrollView(ScrollManageItem);
 
-                //ItemToManage.Id = EditorGUILayout.IntField("Item ID: ", ItemToManage.Id); //Не рекомендуется редактировать это значение
+                EditorGUILayout.LabelField("Item ID: " + ItemToManage.Id.ToString());
+                ItemToManage.ItemType = (ItemType)EditorGUILayout.EnumPopup("item type: ", ItemToManage.ItemType);
 
-                ItemToManage.Name = EditorGUILayout.TextField("Item name: ", ItemToManage.Name);
-                ItemToManage.ItemType = (ItemType)EditorGUILayout.EnumPopup("Item type: ", ItemToManage.ItemType);
-                ItemToManage.ItemActionType = (ItemActionType)EditorGUILayout.EnumPopup("Item action type: ", ItemToManage.ItemActionType);
-                /*EditorGUILayout.BeginHorizontal();
-                ItemToManage.Width = (byte)EditorGUILayout.IntSlider("Item width: ", ItemToManage.Width, 0, 255);
-                ItemToManage.Height = (byte)EditorGUILayout.IntSlider("Item height: ", ItemToManage.Height, 0, 255);
-                EditorGUILayout.EndHorizontal();*/
-                ItemToManage.ItemQuality = (ItemQuality)EditorGUILayout.EnumPopup("Item quality: ", ItemToManage.ItemQuality);
-                ItemToManage.Icon = (Sprite)EditorGUILayout.ObjectField("Icon: ", ItemToManage.Icon, typeof(Sprite), false);
-                ItemToManage.ItemSound = (AudioClip)EditorGUILayout.ObjectField("Item sound: ", ItemToManage.ItemSound, typeof(AudioClip), false);
-                ItemToManage.DroppedItem = (GameObject)EditorGUILayout.ObjectField("Model: ", ItemToManage.DroppedItem, typeof(GameObject), false);
-                ItemToManage.CustomObject = (GameObject)EditorGUILayout.ObjectField("Custom object: ", ItemToManage.CustomObject, typeof(GameObject), false);
+                CommonItemSettings(ItemToManage);
 
                 if (ItemToManage.IsEquipment)
                 {
                     if (ItemToManage.ItemType == ItemType.Weapon)
                     {
-                        OffHandOnly = EditorGUILayout.Toggle("OffHand: ", OffHandOnly);
-                        if (OffHandOnly)
-                        {
-                            ItemToManage.TwoHanded = false;
-                        }
-                        if (!OffHandOnly)
-                        {
-                            ItemToManage.TwoHanded = EditorGUILayout.Toggle("Two handed", ItemToManage.TwoHanded);
-                        }
-                        ItemToManage.LevelReq = (byte)EditorGUILayout.IntField("Item level requirement: ", ItemToManage.LevelReq);
 
-                        GUILayout.BeginHorizontal();
+                        WeaponItemSettings(ItemToManage);
 
-                        ItemToManage.Damage = (byte)EditorGUILayout.IntField("Damage: ", ItemToManage.Damage);
-                        ItemToManage.CriticalDamage = (byte)EditorGUILayout.IntField("CriticalDamage: ", ItemToManage.CriticalDamage);
-
-                        GUILayout.EndHorizontal();
-
-                        GUILayout.BeginHorizontal();
-                        ItemToManage.Range = EditorGUILayout.IntField("Range: ", ItemToManage.Range);
-                        ItemToManage.AttackSpeed = EditorGUILayout.FloatField("Attack speed: ", ItemToManage.AttackSpeed);
-
-                        GUILayout.EndHorizontal();
                     }
-                    else if (ItemToManage.ItemType != ItemType.Weapon)
+                    else
                     {
-                        ItemToManage.LevelReq = (byte)EditorGUILayout.IntField("Item level requirement: ", ItemToManage.LevelReq);
 
-                        GUILayout.BeginHorizontal();
-                        ItemToManage.Armor = EditorGUILayout.FloatField("Armor: ", ItemToManage.Armor);
-                        ItemToManage.ColdResistance = EditorGUILayout.IntField("Cold resistance: ", ItemToManage.ColdResistance);
-                        ItemToManage.HeatResistance = EditorGUILayout.IntField("Heat resistance: ", ItemToManage.HeatResistance);
-                        GUILayout.EndHorizontal();
+                        ArmorItemSettings(ItemToManage);
                     }
                 }
                 else
@@ -487,14 +329,121 @@ public class ItemEditor : EditorWindow {
                     EnableAttributes = EditorGUILayout.Toggle("Enable attributes: ", EnableAttributes);
                     if (EnableAttributes)
                     {
-                        AttributeAmount = EditorGUILayout.IntSlider("Amount: ", AttributeAmount, 0, 50);
-
+                        EditorGUILayout.BeginHorizontal();
+                        AttributeName = EditorGUILayout.TextField("Name: ", AttributeName);
+                        AttributeValue = EditorGUILayout.IntSlider(new GUIContent("Value: "), AttributeValue, int.MinValue, int.MaxValue);
+                        if (GUILayout.Button("+", GUILayout.Width(25)))
+                        {
+                            ItemToManage.ItemAttributes.Add(new ItemAttribute(AttributeName, AttributeValue));
+                        }
+                        EditorGUILayout.EndHorizontal();
+                        for (int i = 0; i < ItemToManage.ItemAttributes.Count; i++)
+                        {
+                            EditorGUILayout.BeginHorizontal();
+                            ItemToManage.ItemAttributes[i].AttributeName = EditorGUILayout.TextField("Name: ", ItemToManage.ItemAttributes[i].AttributeName);
+                            ItemToManage.ItemAttributes[i].AttributeValue = EditorGUILayout.IntSlider(new GUIContent("Value: "), ItemToManage.ItemAttributes[i].AttributeValue, int.MinValue, int.MaxValue);
+                            if (GUILayout.Button("X", GUILayout.Width(25)))
+                            {
+                                ItemToManage.ItemAttributes.RemoveAt(i);
+                            }
+                            EditorGUILayout.EndHorizontal();
+                        }
                     }
                 }
-                ItemToManage.Description = EditorGUILayout.TextField("Description: ", ItemToManage.Description);
+
                 GUILayout.EndScrollView();
             }
+            EditorUtility.SetDirty(ItemDatabase);
         }
         GUILayout.EndScrollView();
+    }
+
+    void CommonItemSettings(Item item)
+    {
+        item.Name = EditorGUILayout.TextField("Item name: ", item.Name);
+
+        item.ItemQuality = (ItemQuality)EditorGUILayout.EnumPopup("Item quality: ", item.ItemQuality);
+
+        item.Icon = (Sprite)EditorGUILayout.ObjectField("Icon: ", item.Icon, typeof(Sprite), false);
+
+        item.ItemSound = (AudioClip)EditorGUILayout.ObjectField("Item sound: ", item.ItemSound, typeof(AudioClip), false);
+
+        item.UseSound = (AudioClip)EditorGUILayout.ObjectField("Use sound: ", item.UseSound, typeof(AudioClip), false);
+
+        if (item.DroppedItem == null)
+        {
+            item.DroppedItem = (GameObject)Resources.Load("Inventory/DefaultDropItem");
+        }
+        item.DroppedItem = (GameObject)EditorGUILayout.ObjectField("Dropped item: ", item.DroppedItem, typeof(GameObject), false);
+
+        item.CustomObject = (GameObject)EditorGUILayout.ObjectField("Custom object: ", item.CustomObject, typeof(GameObject), false);
+
+        item.Cooldown = EditorGUILayout.IntField("Cooldown: ", item.Cooldown);
+
+        item.Description = EditorGUILayout.TextField("Description: ", item.Description);
+    }
+
+    void WeaponItemSettings(Item item)
+    {
+        OffHandOnly = EditorGUILayout.Toggle("OffHand: ", OffHandOnly);
+        if (OffHandOnly)
+        {
+            item.TwoHanded = false;
+        }
+        if (!OffHandOnly)
+        {
+            item.TwoHanded = EditorGUILayout.Toggle("Two handed", item.TwoHanded);
+        }
+        item.LevelReq = (byte)EditorGUILayout.IntField("Item level requirement: ", item.LevelReq);
+
+        GUILayout.BeginHorizontal();
+
+        item.Damage = (byte)EditorGUILayout.IntField("Damage: ", item.Damage);
+        item.CriticalDamage = (byte)EditorGUILayout.IntField("CriticalDamage: ", item.CriticalDamage);
+
+        GUILayout.EndHorizontal();
+
+        GUILayout.BeginHorizontal();
+        item.Range = EditorGUILayout.IntField("Range: ", item.Range);
+        item.AttackSpeed = EditorGUILayout.FloatField("Attack speed: ", item.AttackSpeed);
+
+        GUILayout.EndHorizontal();
+    }
+
+    void ArmorItemSettings(Item item)
+    {
+        EditorGUILayout.Space();
+
+        item.LevelReq = (byte)EditorGUILayout.IntField("Item level requirement: ", item.LevelReq);
+
+        GUILayout.BeginHorizontal();
+
+        item.Armor = EditorGUILayout.FloatField("Armor: ", item.Armor);
+        item.ColdResistance = EditorGUILayout.IntField("Cold resistance: ", item.ColdResistance);
+        item.HeatResistance = EditorGUILayout.IntField("Heat resistance: ", item.HeatResistance);
+
+        GUILayout.EndHorizontal();
+    }
+
+
+    void CreateItemDatabase()
+    {
+        GUILayout.Space(10);
+        GUILayout.BeginHorizontal();
+        GUILayout.Label("The database could not be found");
+        GUILayout.EndHorizontal();
+        GUILayout.BeginHorizontal();
+        GUI.color = Color.green;
+        if (GUILayout.Button("Create", GUILayout.Width(200)))
+        {
+            ItemDatabase = ScriptableObject.CreateInstance<ItemDatabase>();
+            AssetDatabase.CreateAsset(ItemDatabase, "Assets/Components/Inventory/Data/ItemDatabase.asset");
+            AssetDatabase.SaveAssets();
+        }
+        GUI.color = Color.white;
+        GUILayout.EndHorizontal();
+        GUILayout.BeginHorizontal();
+        GUILayout.Label("The database will be installed in the following directory: Assets/Components/Inventory/Data/ItemDatabase.asset");
+        GUILayout.EndHorizontal();
     }
 }

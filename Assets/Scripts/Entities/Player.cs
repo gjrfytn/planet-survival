@@ -188,7 +188,7 @@ public class Player : LivingBeing
         EventManager.ActionChosen += PerformAction;
 
         //Inventory
-        InventoryEvents.ItemUsed += UseItem;
+        InventoryEvents.ItemConsumed += ConsumeItem;
     }
 
     void OnDisable()
@@ -199,7 +199,7 @@ public class Player : LivingBeing
         EventManager.ActionChosen -= PerformAction;
 
         //Inventory
-        InventoryEvents.ItemUsed -= UseItem;
+        InventoryEvents.ItemConsumed -= ConsumeItem;
     }
 
     protected override void Start()
@@ -396,12 +396,12 @@ public class Player : LivingBeing
     }
 
     //==============================
-    public void UseItem(Item item)
+    public void ConsumeItem(AttachedItem attachedItem)
     {
-        for (int i = 0; i < item.ItemAttributes.Count; i++)
+        for (int i = 0; i < attachedItem.Item.ItemAttributes.Count; i++)
         {
-            if (item.ItemAttributes[i].AttributeName == "Health")
-                TakeHeal((byte)item.ItemAttributes[i].AttributeValue);
+            if (attachedItem.Item.ItemAttributes[i].AttributeName == "Health")
+                TakeHeal((byte)attachedItem.Item.ItemAttributes[i].AttributeValue);
 
             /*if (item.ItemAttributes[i].AttributeName == "Armor")
             {

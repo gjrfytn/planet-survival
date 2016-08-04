@@ -11,8 +11,8 @@ public class Storage : MonoBehaviour {
     public int ItemsAmount;
 
 
-    ItemDatabase ItemDatabase;
-    InventoryManager InventoryManager;
+    //ItemDatabase ItemDatabase;
+    //InventoryManager InventoryManager;
     //Inventory Inventory;
     //Tooltip Tooltip;
     //GameObject Player;
@@ -20,8 +20,8 @@ public class Storage : MonoBehaviour {
 	void Start () {
 
         //Player = GameObject.FindGameObjectWithTag("Player");
-        InventoryManager = GameObject.FindGameObjectWithTag("InvetoryManager").GetComponent<InventoryManager>();
-        ItemDatabase = InventoryManager.ItemDatabase;
+        //InventoryManager = GameObject.FindGameObjectWithTag("InvetoryManager").GetComponent<InventoryManager>();
+        //ItemDatabase = InventoryManager.ItemDatabase;
         //Inventory = InventoryManager.Inventory;
 
 	}
@@ -34,8 +34,8 @@ public class Storage : MonoBehaviour {
 
     public void AddItem(uint id, int stackSize)
     {
-        Item item = ItemDatabase[id];
+        /*Item item = ItemDatabase[id];
         item.StackSize = stackSize;
-        ItemsInStorage.Add(item);
+        ItemsInStorage.Add(item);*/
     }
 }

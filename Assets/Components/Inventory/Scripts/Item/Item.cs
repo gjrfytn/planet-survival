@@ -7,9 +7,8 @@ public class Item
 {
     public string Name;
 
-	[SerializeField,HideInInspector]
     bool IdSet = false;
-	[SerializeField,HideInInspector]
+    [SerializeField, HideInInspector]
     uint Id_;
     public uint Id
     {
@@ -41,7 +40,6 @@ public class Item
     public AudioClip ItemSound;
 
     public bool IsStackable;
-    public int StackSize;
     public int MaxStackSize;
     public AudioClip UseSound;
 
@@ -51,7 +49,6 @@ public class Item
     public GameObject DroppedItem;
     public GameObject CustomObject;
 
-    public int StartSlot;
     public bool IsEquipment;
     public bool IsConsumable;
     public bool TwoHanded;
@@ -87,7 +84,7 @@ public class Item
 
     public int ReturnItemId;
     public int ReturnItemStackSize;
-    [SerializeField]
+
     public List<ItemAttribute> ItemAttributes = new List<ItemAttribute>();
 
     [Space(20)]

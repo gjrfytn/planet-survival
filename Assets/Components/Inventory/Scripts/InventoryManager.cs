@@ -20,7 +20,6 @@ public class InventoryManager : MonoBehaviour
     public ItemInfoPanel ItemInfoPanel; // На будущее. Замена тултипов для сенсорных экранов
     public GameObject SplitPanel;
     public GameObject DropPanel;
-    public GameObject ItemActionButtons; // TODO Вслпывающие кнопки при нажатии правой кнопки мыши на предмете
 
     [Header("Prefabs")]
     public GameObject SlotPrefab;
@@ -32,7 +31,7 @@ public class InventoryManager : MonoBehaviour
     public bool EnableTooltip;
     public bool EnableInfoPanel;
 
-    [Header("Other")] // Неудачное название
+    [Header("Other")]
     public GameObject DraggingSlot;
 
     [Header("Quality colors")]
@@ -41,29 +40,6 @@ public class InventoryManager : MonoBehaviour
     public Color UnusualColor;
     public Color RareColor;
     public Color LegendaryColor;
-
-    [HideInInspector]
-    public Item item;
-
-
-
-
-    // Use this for initialization
-    void Start()
-    {
-
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-
-    }
-
-    public void InfoPanel(Item item)
-    {
-
-    }
 
 
     public bool AddItemIntoSlot(Slot slot)
@@ -78,13 +54,13 @@ public class InventoryManager : MonoBehaviour
             }
             if (slot.SlotType == SlotType.Equipment && draggingItem.Item.IsEquipment && slot.GetComponent<EquipmentSlot>().EquipmentType.Equals(draggingItem.Item.ItemType))
             {
-                InventoryEvents.EquipItem(draggingItem.Item);
+                InventoryEvents.EquipItem(draggingItem);
                 return true;
             }
             if (slot.SlotType == SlotType.Hotbar)
             {
                 draggingItem.CreateDuplicate(draggingItemGameObject);
-                Stackable(Inventory.Slots);
+                UpdateStacks(Inventory.Slots);
                 return true;
             }
             draggingItem.CurrentSlot = slot.gameObject.transform;
@@ -93,21 +69,21 @@ public class InventoryManager : MonoBehaviour
         {
             GameObject itemFromSlotGameObject = slot.transform.GetChild(0).gameObject; ;
             AttachedItem itemFromSlot = itemFromSlotGameObject.GetComponent<AttachedItem>();
+            RectTransform itemFromSlotRect = itemFromSlotGameObject.GetComponent<RectTransform>();
             bool sameItem = draggingItem.Item.Id == itemFromSlot.Item.Id;
             if (slot.SlotType == SlotType.Inventory)
             {
                 if (sameItem && itemFromSlot.Item.IsStackable)
                 {
-                    int stack = itemFromSlot.Item.StackSize + draggingItem.Item.StackSize;
-                    //GameObject tempItem = itemFromSlotGameObject;
+                    int stack = itemFromSlot.StackSize + draggingItem.StackSize;
 
                     if (stack <= itemFromSlot.Item.MaxStackSize)
                     {
-                        itemFromSlot.Item.StackSize = stack;
+                        itemFromSlot.StackSize = stack;
                         itemFromSlot.UpdateStackSize();
                         if (itemFromSlotGameObject != null && itemFromSlot.Duplicate != null)
                         {
-                            itemFromSlot.Duplicate.GetComponent<AttachedItem>().Item.StackSize = stack;
+                            itemFromSlot.Duplicate.GetComponent<AttachedItem>().StackSize = stack;
                             itemFromSlot.UpdateStackSize();
                         }
                         Destroy(draggingItemGameObject);
@@ -116,14 +92,14 @@ public class InventoryManager : MonoBehaviour
                     }
                     else
                     {
-                        itemFromSlot.Item.StackSize = itemFromSlot.Item.MaxStackSize;
+                        itemFromSlot.StackSize = itemFromSlot.Item.MaxStackSize;
                         itemFromSlot.UpdateStackSize();
                         if (itemFromSlotGameObject != null && itemFromSlot.Duplicate != null)
                         {
-                            itemFromSlot.Duplicate.GetComponent<AttachedItem>().Item.StackSize = stack;
+                            itemFromSlot.Duplicate.GetComponent<AttachedItem>().StackSize = stack;
                             itemFromSlot.UpdateStackSize();
                         }
-                        draggingItem.Item.StackSize = stack - itemFromSlot.Item.MaxStackSize;
+                        draggingItem.StackSize = stack - itemFromSlot.Item.MaxStackSize;
                         draggingItem.UpdateStackSize();
 
                         return false;
@@ -134,7 +110,7 @@ public class InventoryManager : MonoBehaviour
                     if (!draggingItem.Item.IsEquipment)
                     {
                         itemFromSlotGameObject.transform.SetParent(draggingItem.LastSlot);
-                        itemFromSlotGameObject.GetComponent<RectTransform>().localPosition = Vector2.zero;
+                        itemFromSlotRect.localPosition = Vector2.zero;
                         return true;
                     }
                     else
@@ -142,7 +118,7 @@ public class InventoryManager : MonoBehaviour
                         if (itemFromSlot.Item.ItemType.Equals(draggingItem.Item.ItemType))
                         {
                             itemFromSlotGameObject.transform.SetParent(draggingItem.LastSlot);
-                            itemFromSlotGameObject.GetComponent<RectTransform>().localPosition = Vector2.zero;
+                            itemFromSlotRect.localPosition = Vector2.zero;
                             return true;
                         }
                     }
@@ -154,7 +130,7 @@ public class InventoryManager : MonoBehaviour
                 if (slot.GetComponent<EquipmentSlot>().EquipmentType.Equals(draggingItem.Item.ItemType))
                 {
                     itemFromSlotGameObject.transform.SetParent(draggingItem.LastSlot.transform);
-                    itemFromSlotGameObject.GetComponent<RectTransform>().localPosition = Vector2.zero;
+                    itemFromSlotRect.localPosition = Vector2.zero;
                     return true;
                 }
                 return false;
@@ -168,60 +144,74 @@ public class InventoryManager : MonoBehaviour
     public Color FindColor(Item item)
     {
 
-        if (item.ItemQuality == ItemQuality.Junk)
+        switch(item.ItemQuality)
         {
-            return JunkColor;
-        }
-        if (item.ItemQuality == ItemQuality.Normal)
-        {
-            return NormalColor;
-        }
-        if (item.ItemQuality == ItemQuality.Unusual)
-        {
-            return UnusualColor;
-        }
-        if (item.ItemQuality == ItemQuality.Rare)
-        {
-            return RareColor;
-        }
-        if (item.ItemQuality == ItemQuality.Legendary)
-        {
-            return LegendaryColor;
+            case ItemQuality.Junk :
+                return JunkColor;
+            case ItemQuality.Normal:
+                return NormalColor;
+            case ItemQuality.Unusual:
+                return UnusualColor;
+            case ItemQuality.Rare:
+                return RareColor;
+            case ItemQuality.Legendary:
+                return LegendaryColor;
+
         }
         return Color.clear;
     }
 
-    public void Stackable(List<GameObject> slots)
+    public void UpdateStacks(List<Slot> slots)
     {
         for (int i = 0; i < slots.Count; i++)
         {
             if (slots[i].gameObject.transform.childCount > 0)
             {
-                //AttachedItem item = slots[i].gameObject.transform.GetChild(0).GetComponent<AttachedItem>();
-                AttachedItem item = slots[i].gameObject.transform.GetChild(0).GetComponent<AttachedItem>();
-                if (item.Item.MaxStackSize > 1)
+                AttachedItem attachedItem = slots[i].gameObject.transform.GetChild(0).GetComponent<AttachedItem>();
+                if (attachedItem.Item.MaxStackSize > 1)
                 {
-                    //Подразумевается, что буде использоваться только 1 объект с присоединенным текстом
-                    item.transform.GetComponentInChildren<Text>().text = item.Item.StackSize.ToString();
-                    //StackSizeText.text = item.Item.StackSize.ToString();
-                    item.transform.GetComponentInChildren<Text>().enabled = true; //IsStackable;
+                    attachedItem.StackSizeText = transform.GetComponentInChildren<Text>();
+
+                    attachedItem.StackSizeText.text = attachedItem.StackSize.ToString();
+                    attachedItem.StackSizeText.enabled = true;
+                    if (attachedItem.Duplicate != null)
+                    {
+                        attachedItem.Duplicate.GetComponent<AttachedItem>().StackSizeText = attachedItem.Duplicate.GetComponentInChildren<Text>();
+                        attachedItem.Duplicate.GetComponent<AttachedItem>().StackSizeText.text = attachedItem.StackSize.ToString();
+                        attachedItem.Duplicate.GetComponent<AttachedItem>().StackSizeText.enabled = true;
+                    }
                 }
                 else
                 {
-                    item.transform.GetComponentInChildren<Text>().enabled = false;
+                    attachedItem.StackSizeText.enabled = false;
+                    if (attachedItem.Duplicate != null)
+                    {
+                        attachedItem.Duplicate.GetComponent<AttachedItem>().StackSizeText.enabled = false;
+                    }
                 }
             }
         }
     }
 
-    public void DropItem()
+    public void Consume(AttachedItem attachedItem)
     {
-
+        InventoryEvents.ConsumeItem(attachedItem);
     }
 
-    public void SplitItem()
+    public void Equip(AttachedItem attachedItem)
     {
-
+        InventoryEvents.EquipItem(attachedItem);
     }
+
+    public void Split(AttachedItem attachedItem)
+    {
+        InventoryEvents.SplitItem(attachedItem);
+    }
+
+    public void Drop(AttachedItem attachedItem)
+    {
+        InventoryEvents.DropItem(attachedItem);
+    }
+
 
 }

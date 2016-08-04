@@ -34,7 +34,7 @@ public class DropItem : MonoBehaviour, IDropHandler {
         DraggingItem = AttachedItem.DraggingItem;
         GameObject dropItem = Instantiate(DraggingItem.GetComponent<AttachedItem>().Item.DroppedItem);
             dropItem.AddComponent<PickUpItem>();
-            dropItem.GetComponent<PickUpItem>().Item = DraggingItem.GetComponent<AttachedItem>().Item;
+            dropItem.GetComponent<PickUpItem>().AttachedItem.Item = DraggingItem.GetComponent<AttachedItem>().Item;
             dropItem.transform.localPosition = GameObject.FindGameObjectWithTag("Player").transform.localPosition;
             //Inventory.UpdateItemList();
             Destroy(DraggingItem);

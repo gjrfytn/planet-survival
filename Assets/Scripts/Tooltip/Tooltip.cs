@@ -3,40 +3,33 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using System.Collections;
 
-public class Tooltip : MonoBehaviour
+public class Tooltip : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
 	public Canvas Canvas;
 
     public GameObject TooltipPanel;
 
+    [HideInInspector]
     public RectTransform CanvasRectTransform;
+    [HideInInspector]
     public RectTransform RectTransform;
-
-    //public int TooltipHeight;
-    //public int TooltipWidth;
-
-    public Text HeaderText;
-    public Text DescriptionText;
-    public Text AdditionalText;
 
     public Image Image = null;
 
-    public GameObject CustomBody = null;
+    public bool IsMultiline;
 
-    public GameObject ScrollContent = null;
+    public Text Text;
 
-    // Use this for initialization
-    void Start()
+
+    void Awake()
     {
-
-
+        CanvasRectTransform = Canvas.GetComponent<RectTransform>();
+        RectTransform = TooltipPanel.GetComponent<RectTransform>();
     }
-
-    // Update is called once per frame
-    void Update()
+    // Use this for initialization
+    public virtual void Start()
     {
-
-
+        DeactivateTooltip();
     }
 
 
@@ -50,5 +43,14 @@ public class Tooltip : MonoBehaviour
         TooltipPanel.SetActive(false);
     }
 
+    public void OnPointerEnter(PointerEventData data)
+    {
+
+    }
+
+    public void OnPointerExit(PointerEventData data)
+    {
+
+    }
 
 }
