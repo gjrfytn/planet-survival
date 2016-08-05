@@ -16,7 +16,7 @@ public abstract class Map : IBinaryReadableWriteable
         Width = width;
         Height = height;
         TerrainMatrix = new TerrainType[height, width];
-		HexSpriteID_Matrix = new ushort?[height, width];
+        HexSpriteID_Matrix = new ushort?[height, width];
     }
 
     public virtual void Write(BinaryWriter writer)
@@ -45,7 +45,7 @@ public abstract class Map : IBinaryReadableWriteable
             {
                 short buf;
                 reader.Read(out buf);
-				HexSpriteID_Matrix[y, x] = buf == -1 ? null : (ushort?)buf;
+                HexSpriteID_Matrix[y, x] = buf == -1 ? null : (ushort?)buf;
             }
     }
 

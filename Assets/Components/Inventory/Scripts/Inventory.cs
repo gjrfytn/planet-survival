@@ -56,7 +56,7 @@ public class Inventory : MonoBehaviour, IDropHandler {
                     GameObject item = (GameObject)Instantiate(InventoryManager.ItemPrefab);
                     AttachedItem attachedItem = item.GetComponent<AttachedItem>();
 
-                    attachedItem.Item = InventoryManager.ItemDatabase[id];
+					attachedItem.Item = InventoryManager.ItemDatabase[id];
                     if (attachedItem.StackSize <= attachedItem.Item.MaxStackSize && stackSize <= attachedItem.Item.MaxStackSize)
                     {
                         attachedItem.StackSize = stackSize;

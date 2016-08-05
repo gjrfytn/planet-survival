@@ -28,7 +28,7 @@ public class Entity : MonoBehaviour, IBinaryReadableWriteable
 
     protected virtual void Start()
     {
-        transform.position = WorldVisualiser.GetTransformPosFromMapPos(Pos);
+        transform.position = WorldVisualizer.GetTransformPosFromMapPos(Pos);
     }
 
     public virtual void Destroy()

@@ -23,7 +23,7 @@ public class BattleController : MonoBehaviour
     void Activate()
     {
         EventManager.LivingBeingEndedTurn += ProceedBattle;
-        LBs = (GameObject.FindWithTag("World").GetComponent<World>().CurrentMap as LocalMap).GetAllLivingBeings();
+        LBs = (GameObject.FindWithTag("World/World").GetComponent<World>().CurrentMap as LocalMap).GetAllLivingBeings();
         Index = 0;
         ProceedBattle();
     }

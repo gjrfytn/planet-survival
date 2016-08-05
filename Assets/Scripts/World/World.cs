@@ -5,8 +5,8 @@ public class World : MonoBehaviour
 {
     public Map CurrentMap { get; private set; } //TODO Возможно, можно будет убрать. Карта, на которой находится игрок.
 
-	[SerializeField]
-	WorldVisualiser Visualiser;
+    [SerializeField]
+    WorldVisualizer Visualizer;
 
     [SerializeField]
     float LandscapeRoughness;
@@ -107,9 +107,9 @@ public class World : MonoBehaviour
 
         Player = GameObject.FindWithTag("Player").GetComponent<Player>();
         Camera.main.transform.position = new Vector3(Player.transform.position.x, Player.transform.position.y + Camera.main.transform.position.z * (Mathf.Tan((360 - Camera.main.transform.rotation.eulerAngles.x) / 57.3f)), Camera.main.transform.position.z);
-        Visualiser.RenderVisibleHexes(Player.GlobalPos, Player.ViewRange, CashedChunks, ChunkY, ChunkX);
+        Visualizer.RenderVisibleHexes(Player.GlobalPos, Player.ViewRange, CashedChunks, ChunkY, ChunkX);
         for (byte i = 0; i < 6; ++i)
-            Visualiser.HighlightHex(HexNavigHelper.GetNeighborMapCoords(Player.GlobalPos, (HexDirection)i));
+            Visualizer.HighlightHex(HexNavigHelper.GetNeighborMapCoords(Player.GlobalPos, (HexDirection)i));
     }
 
     /// <summary>
@@ -158,10 +158,10 @@ public class World : MonoBehaviour
             CurrentMap = CashedChunks[1, 1];
         }
 
-        Visualiser.RenderVisibleHexes(pos, Player.ViewRange, CashedChunks, ChunkY, ChunkX);
-        Visualiser.DestroyAllBlues();//TODO Временно
+        Visualizer.RenderVisibleHexes(pos, Player.ViewRange, CashedChunks, ChunkY, ChunkX);
+        Visualizer.DestroyAllBlues();//TODO Временно
         for (byte i = 0; i < 6; ++i)
-            Visualiser.HighlightHex(HexNavigHelper.GetNeighborMapCoords(pos, (HexDirection)i));
+            Visualizer.HighlightHex(HexNavigHelper.GetNeighborMapCoords(pos, (HexDirection)i));
     }
 
     /// <summary>
@@ -169,13 +169,13 @@ public class World : MonoBehaviour
     /// </summary>
     public void SwitchMap()
     {
-        Visualiser.DestroyAllHexes(); //TODO Это лучше делать до генерации карты, чтобы не было видно подвисания (или нужно отображение загрузки).
+        Visualizer.DestroyAllHexes(); //TODO Это лучше делать до генерации карты, чтобы не было видно подвисания (или нужно отображение загрузки).
         if (!IsCurrentMapLocal())
         {
             SkipTurnBtn.gameObject.SetActive(true);
             GotoLocalMap();
             SpawnRandomEnemy();
-            Player.transform.position = WorldVisualiser.GetTransformPosFromMapPos(Player.Pos);
+            Player.transform.position = WorldVisualizer.GetTransformPosFromMapPos(Player.Pos);
             Camera.main.transform.position = new Vector3(Player.transform.position.x, Player.transform.position.y, Camera.main.transform.position.z);
             EventManager.OnLocalMapEnter();
         }
@@ -183,7 +183,7 @@ public class World : MonoBehaviour
         {
             SkipTurnBtn.gameObject.SetActive(false);
             GotoGlobalMap();
-            Player.transform.position = WorldVisualiser.GetTransformPosFromMapPos(Player.GlobalPos);
+            Player.transform.position = WorldVisualizer.GetTransformPosFromMapPos(Player.GlobalPos);
             EventManager.OnLocalMapLeave();
         }
         EventManager.OnPlayerObjectMove();
@@ -207,7 +207,7 @@ public class World : MonoBehaviour
         //
         EventManager.OnEntitySpawn(Player);
 
-        Visualiser.RenderWholeMap(CurrentMap as LocalMap);
+        Visualizer.RenderWholeMap(CurrentMap as LocalMap);
     }
 
     /// <summary>
@@ -219,11 +219,11 @@ public class World : MonoBehaviour
         (CurrentMap as LocalMap).Deactivate();
         CurrentMap = CashedChunks[1, 1];
         Player.GlobalPos = GlobalMapPos;
-        Visualiser.RenderVisibleHexes(Player.GlobalPos, Player.ViewRange, CashedChunks, ChunkY, ChunkX);
+        Visualizer.RenderVisibleHexes(Player.GlobalPos, Player.ViewRange, CashedChunks, ChunkY, ChunkX);
 
-        Visualiser.DestroyAllBlues();
+        Visualizer.DestroyAllBlues();
         for (byte i = 0; i < 6; ++i)
-            Visualiser.HighlightHex(HexNavigHelper.GetNeighborMapCoords(Player.GlobalPos, (HexDirection)i));
+            Visualizer.HighlightHex(HexNavigHelper.GetNeighborMapCoords(Player.GlobalPos, (HexDirection)i));
     }
 
     /// <summary>
@@ -494,6 +494,6 @@ public class World : MonoBehaviour
     public void RerenderBlueHexesOnLocal()//C#6.0 EBD
     {
         EventManager.OnBluesRender();
-        Visualiser.RenderBluesHexes(Player.Pos, Player.RemainingMoves, CurrentMap as LocalMap);
+        Visualizer.RenderBluesHexes(Player.Pos, Player.RemainingMoves, CurrentMap as LocalMap);
     }
 }

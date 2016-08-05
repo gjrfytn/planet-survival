@@ -205,7 +205,7 @@ public class Player : LivingBeing
     protected override void Start()
     {
         base.Start();
-        transform.position = WorldVisualiser.GetTransformPosFromMapPos(GlobalPos);
+        transform.position = WorldVisualizer.GetTransformPosFromMapPos(GlobalPos);
         GetComponent<SpriteRenderer>().sortingLayerName = "Player";
 
         //TODO C# 6.0 инициализаторы свойств:
@@ -222,6 +222,8 @@ public class Player : LivingBeing
                 BodyArmorSlot = slot.GetComponent<EquipmentSlot>();
     }
 
+    bool BluesRendered = false; //TODO Временно
+
     void Update()
     {
         if (MakingTurn)
@@ -231,15 +233,15 @@ public class Player : LivingBeing
                 float tstep = MoveTime / Time.deltaTime;
                 MoveTime -= Time.deltaTime;
                 //TODO Возможно стоит сохранять значение из GetTransformPosFromMapPos(MapCoords,World.IsCurrentMapLocal())), так как это улучшит(?) производительность
-                if (GameObject.FindWithTag("World").GetComponent<World>().IsCurrentMapLocal())
+                if (GameObject.FindWithTag("World/World").GetComponent<World>().IsCurrentMapLocal())
                 {
-                    float dstep = Vector2.Distance(transform.position, WorldVisualiser.GetTransformPosFromMapPos(NextMovePoint)) / tstep;
-                    transform.position = Vector2.MoveTowards(transform.position, WorldVisualiser.GetTransformPosFromMapPos(NextMovePoint), dstep);
+                    float dstep = Vector2.Distance(transform.position, WorldVisualizer.GetTransformPosFromMapPos(NextMovePoint)) / tstep;
+                    transform.position = Vector2.MoveTowards(transform.position, WorldVisualizer.GetTransformPosFromMapPos(NextMovePoint), dstep);
                 }
                 else
                 {
-                    float dstep = Vector2.Distance(transform.position, WorldVisualiser.GetTransformPosFromMapPos(GlobalPos)) / tstep;
-                    transform.position = Vector2.MoveTowards(transform.position, WorldVisualiser.GetTransformPosFromMapPos(GlobalPos), dstep);
+                    float dstep = Vector2.Distance(transform.position, WorldVisualizer.GetTransformPosFromMapPos(GlobalPos)) / tstep;
+                    transform.position = Vector2.MoveTowards(transform.position, WorldVisualizer.GetTransformPosFromMapPos(GlobalPos), dstep);
                 }
 
                 EventManager.OnPlayerObjectMove();
@@ -254,8 +256,11 @@ public class Player : LivingBeing
                 MakingTurn = false;
                 EventManager.OnLivingBeingEndTurn();
             }
-            else
-                GameObject.FindWithTag("World").GetComponent<World>().RerenderBlueHexesOnLocal();
+            else if (!BluesRendered)
+            {
+                GameObject.FindWithTag("World/World").GetComponent<World>().RerenderBlueHexesOnLocal();
+                BluesRendered = true;
+            }
         }
     }
 
@@ -288,7 +293,7 @@ public class Player : LivingBeing
 
     public void MoveTo(LocalPos pos)
     {
-        List<LocalPos> buf = Pathfinder.MakePath((GameObject.FindWithTag("World").GetComponent<World>().CurrentMap as LocalMap).GetBlockMatrix(), Pos, pos, false);//TODO Тут?
+        List<LocalPos> buf = Pathfinder.MakePath((GameObject.FindWithTag("World/World").GetComponent<World>().CurrentMap as LocalMap).GetBlockMatrix(), Pos, pos, false);//TODO Тут?
         buf.Reverse();
         Path = new Stack<LocalPos>(buf);
         Path.Pop();
@@ -325,7 +330,7 @@ public class Player : LivingBeing
 
     void UpdateState()
     {
-        TimedAction terrainCons = GameObject.FindWithTag("World").GetComponent<Terrains>().GetTerrainProperties(GameObject.FindWithTag("World").GetComponent<World>().GetHexTerrain(GlobalPos));
+        TimedAction terrainCons = GameObject.FindWithTag("World/World").GetComponent<Terrains>().GetTerrainProperties(GameObject.FindWithTag("World/World").GetComponent<World>().GetHexTerrain(GlobalPos));
         float mentalPercent = Mental / MaxMental;
         MentalPenalty curPenalty = mentalPercent < InsaneMentalPenalty.TopPercent ? InsaneMentalPenalty : (mentalPercent < HighMentalPenalty.TopPercent ? HighMentalPenalty : (mentalPercent < MediumMentalPenalty.TopPercent ? MediumMentalPenalty : (mentalPercent < LowMentalPenalty.TopPercent ? LowMentalPenalty : new MentalPenalty(0, 0, 0))));
         Water = Water - WaterConsumption - terrainCons.WaterConsumption - curPenalty.Water - (CurrentAction != null ? CurrentAction.WaterConsumption : 0);//C#6.0
@@ -364,6 +369,8 @@ public class Player : LivingBeing
         MakingTurn = true;
         RemainingMoves = Speed;
         DefendedInTurn = false;
+
+        BluesRendered = false;
     }
 
     void StopMakingTurn()

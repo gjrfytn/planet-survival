@@ -2,7 +2,8 @@
 using UnityEngine.EventSystems;
 using System.Collections;
 
-public class PickUpItem : Entity {
+public class PickUpItem : Entity
+{
 
     public AttachedItem AttachedItem;
 
@@ -12,15 +13,16 @@ public class PickUpItem : Entity {
     //InventoryTooltip Tooltip;
     Player Player;
 
-	// Use this for initialization
-	protected override void Start () {
+    // Use this for initialization
+    protected override void Start()
+    {
         base.Start();
 
         Player = GameObject.FindGameObjectWithTag("Player").GetComponent<Player>();
         InventoryManager = GameObject.FindGameObjectWithTag("InventoryManager").GetComponent<InventoryManager>();
         Inventory = InventoryManager.Inventory;
         //Tooltip = InventoryManager.Tooltip;
-        World world = GameObject.FindGameObjectWithTag("World").GetComponent<World>();
+        World world = GameObject.FindGameObjectWithTag("World/World").GetComponent<World>();
 
         if (world.IsCurrentMapLocal())
         {
@@ -28,17 +30,18 @@ public class PickUpItem : Entity {
             LocalMap localMap = world.CurrentMap as LocalMap;
             obj.Pos = Player.Pos;
             localMap.AddObject(obj);
-            obj.transform.position = WorldVisualiser.GetTransformPosFromMapPos(obj.Pos);
+            obj.transform.position = WorldVisualizer.GetTransformPosFromMapPos(obj.Pos);
         }
 
         //map.AddObject(obj);
 
-	}
+    }
 
-	// Update is called once per frame
-	void Update() {
+    // Update is called once per frame
+    void Update()
+    {
 
-	}
+    }
 
     void OnMouseUpAsButton()
     {

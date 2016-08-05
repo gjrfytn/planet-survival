@@ -23,7 +23,7 @@ public class MainCamera : MonoBehaviour
 
     void Start()
     {
-        LocalMapTopRight = new Vector3(World.LocalMapSize.X * WorldVisualiser.LocalHexSpriteSize.x - WorldVisualiser.LocalHexSpriteSize.x * 0.5f, World.LocalMapSize.Y * WorldVisualiser.LocalHexSpriteSize.y * 0.75f - WorldVisualiser.LocalHexSpriteSize.y * 0.5f, 0);
+        LocalMapTopRight = new Vector3(World.LocalMapSize.X * WorldVisualizer.LocalHexSpriteSize.x - WorldVisualizer.LocalHexSpriteSize.x * 0.5f, World.LocalMapSize.Y * WorldVisualizer.LocalHexSpriteSize.y * 0.75f - WorldVisualizer.LocalHexSpriteSize.y * 0.5f, 0);
     }
 
     void Update()

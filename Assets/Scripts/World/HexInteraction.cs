@@ -9,7 +9,7 @@ public class HexInteraction : MonoBehaviour
 
     void Start()
     {
-        World = GameObject.FindWithTag("World").GetComponent<World>();
+        World = GameObject.FindWithTag("World/World").GetComponent<World>();
     }
 
     public void OnMouseUpAsButton()
@@ -18,7 +18,7 @@ public class HexInteraction : MonoBehaviour
         {
             EventManager.OnPlayerMoveOnGlobal(Pos); //Временно см. Player 114
             TerrainType terrType = World.GetHexTerrain(Pos);
-            TimedAction travel = GameObject.FindWithTag("World").GetComponent<Terrains>().GetTerrainProperties(terrType);
+            TimedAction travel = GameObject.FindWithTag("World/World").GetComponent<Terrains>().GetTerrainProperties(terrType);
             GameObject.FindWithTag("Player").GetComponent<Player>().MoveTo(Pos, travel.Duration * GameTime.GameMinToRealSec);
             EventManager.OnActionChoose(travel);
         }

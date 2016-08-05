@@ -18,6 +18,7 @@ public class SkipTurnButton : MonoBehaviour
     {
         EventManager.OnBluesUnrender();
         EventManager.OnLivingBeingEndTurn();
+        //TODO !!! Player.MakingTurn остаётся true
     }
 
     public void Activate()

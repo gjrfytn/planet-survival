@@ -39,7 +39,7 @@ public class Creature : LivingBeing
 
     void Awake()
     {
-        Map = GameObject.FindWithTag("World").GetComponent<World>().CurrentMap as LocalMap;
+        Map = GameObject.FindWithTag("World/World").GetComponent<World>().CurrentMap as LocalMap;
         Animator = GetComponent<Animator>();
     }
 
@@ -52,15 +52,15 @@ public class Creature : LivingBeing
                 float tstep = MoveTime / Time.deltaTime;
                 MoveTime -= Time.deltaTime;
 
-                float dstep = Vector2.Distance(transform.position, WorldVisualiser.GetTransformPosFromMapPos(NextMovePoint)) / tstep;
-                transform.position = Vector2.MoveTowards(transform.position, WorldVisualiser.GetTransformPosFromMapPos(NextMovePoint), dstep);
+                float dstep = Vector2.Distance(transform.position, WorldVisualizer.GetTransformPosFromMapPos(NextMovePoint)) / tstep;
+                transform.position = Vector2.MoveTowards(transform.position, WorldVisualizer.GetTransformPosFromMapPos(NextMovePoint), dstep);
             }
             else if (MovePath.Count != 0)
             {
                 MoveTime = MoveAnimTime;
                 NextMovePoint = MovePath.Pop();
 
-                if (transform.position.x - WorldVisualiser.GetTransformPosFromMapPos(NextMovePoint).x > 0)
+                if (transform.position.x - WorldVisualizer.GetTransformPosFromMapPos(NextMovePoint).x > 0)
                     transform.rotation = new Quaternion(0, 180, 0, 0);
                 else
                     transform.rotation = Quaternion.identity;
@@ -116,8 +116,11 @@ public class Creature : LivingBeing
 
     void Move()
     {
+        string debug = "";
         if (Path.Count == 0)
         {
+            debug += "upper ";
+
             List<LocalPos> buf = Pathfinder.MakePath(Map.GetBlockMatrix(), Pos, TargetPos, true);
             if (buf == null)
             {
@@ -126,10 +129,13 @@ public class Creature : LivingBeing
             }
             buf.Reverse();
             Path = new Stack<LocalPos>(buf);
-            Path.Pop();
+
+            debug += Path.Pop(); //path pop оставить
         }
         else
         {
+            debug += "lower ";
+
             bool pathIsObsolete = false;
             LocalPos[] arrBuf = Path.ToArray();
             foreach (LocalPos pos in arrBuf)
@@ -140,6 +146,8 @@ public class Creature : LivingBeing
                 }
             if (pathIsObsolete)
             {
+                debug += "obsolete ";
+
                 List<LocalPos> buf = Pathfinder.MakePath(Map.GetBlockMatrix(), Pos, TargetPos, true);
                 if (buf == null)
                 {
@@ -153,6 +161,16 @@ public class Creature : LivingBeing
         }
 
         byte movesCount = (byte)Mathf.Min(RemainingMoves, Path.Count);
+
+        if (movesCount == 0)
+        {
+            Debug.Log(debug);
+            Debug.Log(RemainingMoves);
+            Debug.Log(Path.Count);
+            Debug.Log(Pos);
+            Debug.Log(TargetPos);
+        }
+
         RemainingMoves -= movesCount;
 
         List<LocalPos> lstBuf = new List<LocalPos>(movesCount);
@@ -190,7 +208,7 @@ public class Creature : LivingBeing
     {
         EventManager.PlayerDefended -= FinishAttack;
         Animator.SetTrigger("Attack");
-        if (transform.position.x - WorldVisualiser.GetTransformPosFromMapPos(Target.Pos).x > 0)
+        if (transform.position.x - WorldVisualizer.GetTransformPosFromMapPos(Target.Pos).x > 0)
             transform.rotation = new Quaternion(0, 180, 0, 0);
         else
             transform.rotation = Quaternion.identity;

@@ -19,7 +19,7 @@ public class DebugUI : MonoBehaviour
         Player = GameObject.FindWithTag("Player").GetComponent<Player>();
     }
 
-    void Update()
+    void Update() //TODO По событиям?
     {
         Health.value = (float)Player.Health / Player.MaxHealth;
         Stamina.value = Player.Stamina / Player.MaxStamina;

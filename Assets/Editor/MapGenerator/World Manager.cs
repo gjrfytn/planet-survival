@@ -38,7 +38,7 @@ public class World_Manager : EditorWindow
 	[MenuItem("Game Modules/World Module/Create/World")]   
 	public static void CreateWorld()  
 	{
-		GameObject World = GameObject.FindGameObjectWithTag("World");
+		GameObject World = GameObject.FindGameObjectWithTag("World/World");
 		if (World == null)
 		{
 			World = (GameObject)Instantiate(Resources.Load("Prefabs/MapGenerator/World") as GameObject);         

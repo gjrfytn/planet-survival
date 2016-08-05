@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 
 
-public class WorldVisualiser : MonoBehaviour
+public class WorldVisualizer : MonoBehaviour
 {
     [System.Serializable]
     public class Terrain
@@ -595,6 +595,28 @@ public class WorldVisualiser : MonoBehaviour
                 hex.Pos = new GlobalPos(x, y);
                 hex.Hex.AddComponent<SpriteRenderer>();
                 hex.Hex.AddComponent<Fader>();
+
+                MakeHexGraphics(hex, new LocalPos(x, y), map);
+                RenderedHexes.Add(hex);
+            }
+    }
+
+    public EditorHex EditorHex; //TODO Временно
+
+    public void RenderWholeMapForEditor(LocalMap map)
+    {
+        ushort height = map.Height;
+        ushort width = map.Width;
+        RenderedHexes.Capacity = height * width;
+
+        for (ushort y = 0; y < height; ++y)
+            for (ushort x = 0; x < width; ++x)
+            {
+                // TODO Возможно стоит заменить ListType на Hex?
+                ListType hex = new ListType { Hex = Instantiate(EditorHex.gameObject), InSign = true };
+                hex.Hex.transform.position = GetTransformPosFromMapPos(new LocalPos(x, y));
+                hex.Hex.transform.parent = transform;
+                hex.Pos = hex.Hex.GetComponent<EditorHex>().Pos=new LocalPos(x, y);
 
                 MakeHexGraphics(hex, new LocalPos(x, y), map);
                 RenderedHexes.Add(hex);

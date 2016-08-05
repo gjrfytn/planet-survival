@@ -33,7 +33,7 @@ public class LocalMapEditor : MonoBehaviour {
 		
 	public void DestroyMap()
 	{
-		GameObject.FindWithTag("WorldVisualiser").GetComponent<WorldVisualiser>().DestroyAllHexes();
+		GameObject.FindWithTag("WorldVisualizer").GetComponent<WorldVisualizer>().DestroyAllHexes();
 	}
 
 	public void CreateLocalMap(GameObject panel)
@@ -54,7 +54,7 @@ public class LocalMapEditor : MonoBehaviour {
 					//map.HeightMatrix[j, i] = TerrainHeight;
 				}
 			}
-			GameObject.FindWithTag("WorldVisualiser").GetComponent<WorldVisualiser>().RenderWholeMap(map);
+			GameObject.FindWithTag("WorldVisualizer").GetComponent<WorldVisualizer>().RenderWholeMap(map);
 
 			panel.gameObject.SetActive(false);
 		}
