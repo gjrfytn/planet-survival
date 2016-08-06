@@ -1,5 +1,8 @@
 ﻿using UnityEngine;
 
+using LocalPos = U16Vec2;
+using GlobalPos = S32Vec2;
+
 public static class EventManager
 {
     public delegate void VoidDelegate();

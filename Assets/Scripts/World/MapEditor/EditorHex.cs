@@ -1,8 +1,10 @@
 ﻿using UnityEngine;
 
-public class EditorHex : MonoBehaviour 
+using LocalPos = U16Vec2;
+
+public class EditorHex : MonoBehaviour
 {
-	const float HighlightPower=1.3f;
+    const float HighlightPower = 1.3f;
 
     bool PosSet = false;
     LocalPos Pos_;
@@ -31,11 +33,11 @@ public class EditorHex : MonoBehaviour
 
     public void OnMouseEnter()
     {
-		GetComponent<SpriteRenderer>().material.color = GetComponent<SpriteRenderer>().material.color * HighlightPower;
+        GetComponent<SpriteRenderer>().material.color = GetComponent<SpriteRenderer>().material.color * HighlightPower;
     }
 
     public void OnMouseExit()
     {
-		GetComponent<SpriteRenderer>().material.color = GetComponent<SpriteRenderer>().material.color / HighlightPower;
+        GetComponent<SpriteRenderer>().material.color = GetComponent<SpriteRenderer>().material.color / HighlightPower;
     }
 }

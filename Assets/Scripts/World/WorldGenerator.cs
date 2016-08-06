@@ -125,7 +125,48 @@ public static class WorldGenerator
         public float[] Bottom;
     }
 
-    static Stack<LocalPos> RiverStack; //Стек для постройки реки
+    static Stack<U16Vec2> RiverStack; //Стек для постройки реки
+
+    public static void CreateLocalMap(ref LocalMap map, LocalTerrainSettings settings, HeighmapNeighboring hmNb, float landscapeRoughness, float forest) //TODO Временно
+    {
+        float?[,] buf = new float?[map.Height, map.Width];
+
+        WorldGenerator.CreateHeightmap(ref buf, landscapeRoughness, hmNb);
+
+        float[,] buf2 = new float[map.Height, map.Width];
+        for (ushort y = 0; y < map.Height; ++y)
+            for (ushort x = 0; x < map.Width; ++x)
+            {
+                buf2[y, x] = buf[y, x].Value;
+                buf[y, x] = null;
+            }
+        WorldGenerator.CreateTerrainmap(ref map.TerrainMatrix, buf2, settings);
+        WorldGenerator.CreateVegetation(ref map, settings, forest);
+    }
+
+    public static void CreateChunk(ref Chunk map, GlobalTerrainSettings settings, HeighmapNeighboring hmNbHeight, float landscapeRoughness, HeighmapNeighboring hmNbForest, float forestRoughness, float forestDensity)
+    {
+        float?[,] buf = new float?[map.Height, map.Width];
+        WorldGenerator.CreateHeightmap(ref buf, landscapeRoughness, hmNbHeight);
+        for (ushort y = 0; y < map.Height; ++y)
+            for (ushort x = 0; x < map.Width; ++x)
+            {
+                map.HeightMatrix[y, x] = Mathf.Clamp(buf[y, x].Value, 0, Mathf.Abs(buf[y, x].Value));
+                buf[y, x] = null;
+            }
+
+        WorldGenerator.CreateHeightmap(ref buf, forestRoughness, hmNbForest);
+        for (ushort y = 0; y < map.Height; ++y)
+            for (ushort x = 0; x < map.Width; ++x)
+            {
+                buf[y, x] = buf[y, x].Value * forestDensity;
+                map.ForestMatrix[y, x] = Mathf.Clamp(buf[y, x].Value, 0, Mathf.Abs(buf[y, x].Value));
+            }
+        map.Rivers = WorldGenerator.CreateRivers(map.HeightMatrix, ref map.TerrainMatrix, settings.RiversParam);
+        map.Clusters = WorldGenerator.CreateClusters(ref map, settings.ClustersParam);
+        map.Roads = WorldGenerator.CreateRoads(map.HeightMatrix, ref map.TerrainMatrix, map.Clusters, settings.RoadsParam);
+        WorldGenerator.CreateTerrainmap(ref map.TerrainMatrix, map.HeightMatrix, settings);
+    }
 
     public static void CreateHeightmap(ref float?[,] matrix, float roughness, HeighmapNeighboring hmNb)
     {
@@ -347,7 +388,7 @@ public static class WorldGenerator
                 if (terrain.PlantProbability > 0 && forestMatrix[y, x] > 0 && Random.value < terrain.PlantProbability * forestMatrix[y, x])
                 {
                     Entity plant = GameObject.Instantiate(terrain.Trees[Random.Range(0, terrain.Trees.Length)]);
-                    plant.Pos = new LocalPos(x, y);
+                    plant.Pos = new U16Vec2(x, y);
                     map.AddObject(plant);
                     /*if (map.ForestMatrix[pos.Y, pos.X] < LocalMapParam.BushesForestValue)
                         plant.GetComponent<SpriteRenderer>().sprite = LocalMapParam.BushSprites[Random.Range(0, LocalMapParam.BushSprites.Length)];
@@ -357,15 +398,15 @@ public static class WorldGenerator
             }
     }
 
-    public static void MakeEqualHeightLine(float[,] matrix, LocalPos[] vertices, float height)
+    public static void MakeEqualHeightLine(float[,] matrix, U16Vec2[] vertices, float height)
     {
-        foreach (LocalPos v in vertices)
-            if (v.X < 0 || v.X >= matrix.GetLength(1) || v.Y < 0 || v.Y >= matrix.GetLength(0))
+        foreach (U16Vec2 v in vertices)
+            if (v.X >= matrix.GetLength(1) || v.Y >= matrix.GetLength(0))
                 throw new System.ArgumentOutOfRangeException("vertices", v.ToString(), "Vector is out of matrix length.");
 
         for (byte i = 0; i < vertices.Length - 1; ++i)
         {
-            GlobalPos v = vertices[i];
+            S32Vec2 v = vertices[i];
             while (v != vertices[i + 1])
             {
                 matrix[v.Y, v.X] = height;
@@ -382,9 +423,9 @@ public static class WorldGenerator
     /// <returns>Список рек.</returns>
     /// <param name="heightMatrix">Карта высот.</param>
     /// <param name="riverMatrix">[out] Карта рек.</param>
-    public static List<List<LocalPos>> CreateRivers(float[,] heightMap, ref TerrainType[,] terrainMap, GlobalTerrainSettings.RiversSettings riversParam)
+    public static List<List<U16Vec2>> CreateRivers(float[,] heightMap, ref TerrainType[,] terrainMap, GlobalTerrainSettings.RiversSettings riversParam)
     {
-        RiverStack = new Stack<LocalPos>();
+        RiverStack = new Stack<U16Vec2>();
 
         ushort height = (ushort)heightMap.GetLength(0);
         ushort width = (ushort)heightMap.GetLength(1);
@@ -395,23 +436,23 @@ public static class WorldGenerator
         avg /= height * width;
         float minRiverHeight = (float)avg * riversParam.Height;
 
-        List<List<LocalPos>> rivers = new List<List<LocalPos>>();
+        List<List<U16Vec2>> rivers = new List<List<U16Vec2>>();
 
         for (byte i = 0; i < riversParam.Count; ++i)
         {
             bool riverCreated = false;
             for (ushort y = 1; y < height - 1 && !riverCreated; ++y) //TODO
                 for (ushort x = 1; x < width - 1 && !riverCreated; ++x) //TODO
-                    if (heightMap[y, x] > minRiverHeight && (terrainMap[y, x] & TerrainType.RIVER) == TerrainType.NONE && RiverNeighbours(new LocalPos(x, y), terrainMap) == 0) //Проверяем, можно ли нам начать создание реки с этого хекса
+                    if (heightMap[y, x] > minRiverHeight && (terrainMap[y, x] & TerrainType.RIVER) == TerrainType.NONE && RiverNeighbours(new U16Vec2(x, y), terrainMap) == 0) //Проверяем, можно ли нам начать создание реки с этого хекса
                         for (byte k = 0; k < riversParam.Attempts && !riverCreated; ++k)
                         {
-                            DirectRiver(new LocalPos(x, y), heightMap, terrainMap, riversParam.FlowHeightKoef); //Запускаем рекурсию
+                            DirectRiver(new U16Vec2(x, y), heightMap, terrainMap, riversParam.FlowHeightKoef); //Запускаем рекурсию
                             if (RiverStack.Count >= riversParam.MinimumLength)
                             { //Если река получилась больше необходим длины, то помечаем ячейки матрицы, иначе пробуем ещё раз 
-                                foreach (LocalPos hex in RiverStack)
+                                foreach (U16Vec2 hex in RiverStack)
                                     terrainMap[hex.Y, hex.X] |= TerrainType.RIVER;
                                 riverCreated = true;
-                                rivers.Add(new List<LocalPos>(RiverStack));
+                                rivers.Add(new List<U16Vec2>(RiverStack));
                                 rivers[rivers.Count - 1].Reverse();
                             }
                             RiverStack.Clear();
@@ -428,7 +469,7 @@ public static class WorldGenerator
     /// <param name="x">x координата.</param>
     /// <param name="heightMatrix">Карта высот.</param>
     /// <param name="matrix">Карта рек.</param>
-    static void DirectRiver(LocalPos pos, float[,] heightMatrix, TerrainType[,] terrainMatrix, float flowHeightKoef)
+    static void DirectRiver(U16Vec2 pos, float[,] heightMatrix, TerrainType[,] terrainMatrix, float flowHeightKoef)
     {
         ushort height = (ushort)heightMatrix.GetLength(0);
         ushort width = (ushort)heightMatrix.GetLength(1);
@@ -446,49 +487,49 @@ public static class WorldGenerator
                 switch (Random.Range(0, 7))//Выбираем случайное направление
                 {
                     case (int)HexDirection.BOTTOM_LEFT:
-                        if ((limiter & 1) == 0 && !RiverStack.Contains(new LocalPos((ushort)(pos.X - 1), (ushort)(pos.Y - (k ^ 1)))) && heightMatrix[pos.Y - (k ^ 1), pos.X - 1] * flowHeightKoef <= heightMatrix[pos.Y, pos.X] && (terrainMatrix[pos.Y - (k ^ 1), pos.X - 1] & TerrainType.RIVER) == TerrainType.NONE && RiverNeighbours(new LocalPos((ushort)(pos.X - 1), (ushort)(pos.Y - (k ^ 1))), terrainMatrix) < 2)
+                        if ((limiter & 1) == 0 && !RiverStack.Contains(new U16Vec2((ushort)(pos.X - 1), (ushort)(pos.Y - (k ^ 1)))) && heightMatrix[pos.Y - (k ^ 1), pos.X - 1] * flowHeightKoef <= heightMatrix[pos.Y, pos.X] && (terrainMatrix[pos.Y - (k ^ 1), pos.X - 1] & TerrainType.RIVER) == TerrainType.NONE && RiverNeighbours(new U16Vec2((ushort)(pos.X - 1), (ushort)(pos.Y - (k ^ 1))), terrainMatrix) < 2)
                         {
-                            DirectRiver(new LocalPos((ushort)(pos.X - 1), (ushort)(pos.Y - (k ^ 1))), heightMatrix, terrainMatrix, flowHeightKoef);
+                            DirectRiver(new U16Vec2((ushort)(pos.X - 1), (ushort)(pos.Y - (k ^ 1))), heightMatrix, terrainMatrix, flowHeightKoef);
                             dirFound = true;
                         }
                         limiter |= 1;
                         break;
                     case (int)HexDirection.TOP_LEFT:
-                        if ((limiter & 2) == 0 && !RiverStack.Contains(new LocalPos((ushort)(pos.X - 1), (ushort)(pos.Y + k))) && heightMatrix[pos.Y + k, pos.X - 1] * flowHeightKoef <= heightMatrix[pos.Y, pos.X] && (terrainMatrix[pos.Y + k, pos.X - 1] & TerrainType.RIVER) == TerrainType.NONE && RiverNeighbours(new LocalPos((ushort)(pos.X - 1), (ushort)(pos.Y + k)), terrainMatrix) < 2)
+                        if ((limiter & 2) == 0 && !RiverStack.Contains(new U16Vec2((ushort)(pos.X - 1), (ushort)(pos.Y + k))) && heightMatrix[pos.Y + k, pos.X - 1] * flowHeightKoef <= heightMatrix[pos.Y, pos.X] && (terrainMatrix[pos.Y + k, pos.X - 1] & TerrainType.RIVER) == TerrainType.NONE && RiverNeighbours(new U16Vec2((ushort)(pos.X - 1), (ushort)(pos.Y + k)), terrainMatrix) < 2)
                         {
-                            DirectRiver(new LocalPos((ushort)(pos.X - 1), (ushort)(pos.Y + k)), heightMatrix, terrainMatrix, flowHeightKoef);
+                            DirectRiver(new U16Vec2((ushort)(pos.X - 1), (ushort)(pos.Y + k)), heightMatrix, terrainMatrix, flowHeightKoef);
                             dirFound = true;
                         }
                         limiter |= 2;
                         break;
                     case (int)HexDirection.BOTTOM:
-                        if ((limiter & 4) == 0 && !RiverStack.Contains(new LocalPos(pos.X, (ushort)(pos.Y - 1))) && heightMatrix[pos.Y - 1, pos.X] * flowHeightKoef <= heightMatrix[pos.Y, pos.X] && (terrainMatrix[pos.Y - 1, pos.X] & TerrainType.RIVER) == TerrainType.NONE && RiverNeighbours(new LocalPos(pos.X, (ushort)(pos.Y - 1)), terrainMatrix) < 2)
+                        if ((limiter & 4) == 0 && !RiverStack.Contains(new U16Vec2(pos.X, (ushort)(pos.Y - 1))) && heightMatrix[pos.Y - 1, pos.X] * flowHeightKoef <= heightMatrix[pos.Y, pos.X] && (terrainMatrix[pos.Y - 1, pos.X] & TerrainType.RIVER) == TerrainType.NONE && RiverNeighbours(new U16Vec2(pos.X, (ushort)(pos.Y - 1)), terrainMatrix) < 2)
                         {
-                            DirectRiver(new LocalPos(pos.X, (ushort)(pos.Y - 1)), heightMatrix, terrainMatrix, flowHeightKoef);
+                            DirectRiver(new U16Vec2(pos.X, (ushort)(pos.Y - 1)), heightMatrix, terrainMatrix, flowHeightKoef);
                             dirFound = true;
                         }
                         limiter |= 4;
                         break;
                     case (int)HexDirection.TOP:
-                        if ((limiter & 8) == 0 && !RiverStack.Contains(new LocalPos((ushort)pos.X, (ushort)(pos.Y + 1))) && heightMatrix[pos.Y + 1, pos.X] * flowHeightKoef <= heightMatrix[pos.Y, pos.X] && (terrainMatrix[pos.Y + 1, pos.X] & TerrainType.RIVER) == TerrainType.NONE && RiverNeighbours(new LocalPos(pos.X, (ushort)(pos.Y + 1)), terrainMatrix) < 2)
+                        if ((limiter & 8) == 0 && !RiverStack.Contains(new U16Vec2((ushort)pos.X, (ushort)(pos.Y + 1))) && heightMatrix[pos.Y + 1, pos.X] * flowHeightKoef <= heightMatrix[pos.Y, pos.X] && (terrainMatrix[pos.Y + 1, pos.X] & TerrainType.RIVER) == TerrainType.NONE && RiverNeighbours(new U16Vec2(pos.X, (ushort)(pos.Y + 1)), terrainMatrix) < 2)
                         {
-                            DirectRiver(new LocalPos(pos.X, (ushort)(pos.Y + 1)), heightMatrix, terrainMatrix, flowHeightKoef);
+                            DirectRiver(new U16Vec2(pos.X, (ushort)(pos.Y + 1)), heightMatrix, terrainMatrix, flowHeightKoef);
                             dirFound = true;
                         }
                         limiter |= 8;
                         break;
                     case (int)HexDirection.BOTTOM_RIGHT:
-                        if ((limiter & 16) == 0 && !RiverStack.Contains(new LocalPos((ushort)(pos.X + 1), (ushort)(pos.Y - (k ^ 1)))) && heightMatrix[pos.Y - (k ^ 1), pos.X + 1] * flowHeightKoef <= heightMatrix[pos.Y, pos.X] && (terrainMatrix[pos.Y - (k ^ 1), pos.X + 1] & TerrainType.RIVER) == TerrainType.NONE && RiverNeighbours(new LocalPos((ushort)(pos.X + 1), (ushort)(pos.Y - (k ^ 1))), terrainMatrix) < 2)
+                        if ((limiter & 16) == 0 && !RiverStack.Contains(new U16Vec2((ushort)(pos.X + 1), (ushort)(pos.Y - (k ^ 1)))) && heightMatrix[pos.Y - (k ^ 1), pos.X + 1] * flowHeightKoef <= heightMatrix[pos.Y, pos.X] && (terrainMatrix[pos.Y - (k ^ 1), pos.X + 1] & TerrainType.RIVER) == TerrainType.NONE && RiverNeighbours(new U16Vec2((ushort)(pos.X + 1), (ushort)(pos.Y - (k ^ 1))), terrainMatrix) < 2)
                         {
-                            DirectRiver(new LocalPos((ushort)(pos.X + 1), (ushort)(pos.Y - (k ^ 1))), heightMatrix, terrainMatrix, flowHeightKoef);
+                            DirectRiver(new U16Vec2((ushort)(pos.X + 1), (ushort)(pos.Y - (k ^ 1))), heightMatrix, terrainMatrix, flowHeightKoef);
                             dirFound = true;
                         }
                         limiter |= 16;
                         break;
                     case (int)HexDirection.TOP_RIGHT:
-                        if ((limiter & 32) == 0 && !RiverStack.Contains(new LocalPos((ushort)(pos.X + 1), (ushort)(pos.Y + k))) && heightMatrix[pos.Y + k, pos.X + 1] * flowHeightKoef <= heightMatrix[pos.Y, pos.X] && (terrainMatrix[pos.Y + k, pos.X + 1] & TerrainType.RIVER) == TerrainType.NONE && RiverNeighbours(new LocalPos((ushort)(pos.X + 1), (ushort)(pos.Y + k)), terrainMatrix) < 2)
+                        if ((limiter & 32) == 0 && !RiverStack.Contains(new U16Vec2((ushort)(pos.X + 1), (ushort)(pos.Y + k))) && heightMatrix[pos.Y + k, pos.X + 1] * flowHeightKoef <= heightMatrix[pos.Y, pos.X] && (terrainMatrix[pos.Y + k, pos.X + 1] & TerrainType.RIVER) == TerrainType.NONE && RiverNeighbours(new U16Vec2((ushort)(pos.X + 1), (ushort)(pos.Y + k)), terrainMatrix) < 2)
                         {
-                            DirectRiver(new LocalPos((ushort)(pos.X + 1), (ushort)(pos.Y + k)), heightMatrix, terrainMatrix, flowHeightKoef);
+                            DirectRiver(new U16Vec2((ushort)(pos.X + 1), (ushort)(pos.Y + k)), heightMatrix, terrainMatrix, flowHeightKoef);
                             dirFound = true;
                         }
                         limiter |= 32;
@@ -508,7 +549,7 @@ public static class WorldGenerator
     /// <param name="matrix">Карта рек.</param>
     /// Функция подсчитывает количство соседних клеток, помеченных как "Река" или находящихся в "стеке реки"
     /// TODO Проверить работу стека реки
-    static byte RiverNeighbours(LocalPos pos, TerrainType[,] terrainMatrix)
+    static byte RiverNeighbours(U16Vec2 pos, TerrainType[,] terrainMatrix)
     {
         ushort height = (ushort)terrainMatrix.GetLength(0);
         ushort width = (ushort)terrainMatrix.GetLength(1);
@@ -516,38 +557,38 @@ public static class WorldGenerator
         byte k = (byte)(pos.X & 1); //TODO Провести рефакторинг.
 
         byte riversCount = 0;
-        if (pos.Y > 0 && pos.X > 0 && ((terrainMatrix[pos.Y - (k ^ 1), pos.X - 1] & TerrainType.RIVER) != TerrainType.NONE || RiverStack.Contains(new LocalPos((ushort)(pos.X - 1), (ushort)(pos.Y - (k ^ 1))))))
+        if (pos.Y > 0 && pos.X > 0 && ((terrainMatrix[pos.Y - (k ^ 1), pos.X - 1] & TerrainType.RIVER) != TerrainType.NONE || RiverStack.Contains(new U16Vec2((ushort)(pos.X - 1), (ushort)(pos.Y - (k ^ 1))))))
             riversCount++;
-        if (pos.X > 0 && pos.Y < height - 1 && ((terrainMatrix[pos.Y + k, pos.X - 1] & TerrainType.RIVER) != TerrainType.NONE || RiverStack.Contains(new LocalPos((ushort)(pos.X - 1), (ushort)(pos.Y + k)))))
+        if (pos.X > 0 && pos.Y < height - 1 && ((terrainMatrix[pos.Y + k, pos.X - 1] & TerrainType.RIVER) != TerrainType.NONE || RiverStack.Contains(new U16Vec2((ushort)(pos.X - 1), (ushort)(pos.Y + k)))))
             riversCount++;
-        if (pos.Y > 0 && ((terrainMatrix[pos.Y - 1, pos.X] & TerrainType.RIVER) != TerrainType.NONE || RiverStack.Contains(new LocalPos(pos.X, (ushort)(pos.Y - 1)))))
+        if (pos.Y > 0 && ((terrainMatrix[pos.Y - 1, pos.X] & TerrainType.RIVER) != TerrainType.NONE || RiverStack.Contains(new U16Vec2(pos.X, (ushort)(pos.Y - 1)))))
             riversCount++;
-        if (pos.Y < height - 1 && ((terrainMatrix[pos.Y + 1, pos.X] & TerrainType.RIVER) != TerrainType.NONE || RiverStack.Contains(new LocalPos(pos.X, (ushort)(pos.Y + 1)))))
+        if (pos.Y < height - 1 && ((terrainMatrix[pos.Y + 1, pos.X] & TerrainType.RIVER) != TerrainType.NONE || RiverStack.Contains(new U16Vec2(pos.X, (ushort)(pos.Y + 1)))))
             riversCount++;
-        if (pos.Y > 0 && pos.X < width - 1 && ((terrainMatrix[pos.Y - (k ^ 1), pos.X + 1] & TerrainType.RIVER) != TerrainType.NONE || RiverStack.Contains(new LocalPos((ushort)(pos.X + 1), (ushort)(pos.Y - (k ^ 1))))))
+        if (pos.Y > 0 && pos.X < width - 1 && ((terrainMatrix[pos.Y - (k ^ 1), pos.X + 1] & TerrainType.RIVER) != TerrainType.NONE || RiverStack.Contains(new U16Vec2((ushort)(pos.X + 1), (ushort)(pos.Y - (k ^ 1))))))
             riversCount++;
-        if (pos.X < width - 1 && pos.Y < height - 1 && ((terrainMatrix[pos.Y + k, pos.X + 1] & TerrainType.RIVER) != TerrainType.NONE || RiverStack.Contains(new LocalPos((ushort)(pos.X + 1), (ushort)(pos.Y + k)))))
+        if (pos.X < width - 1 && pos.Y < height - 1 && ((terrainMatrix[pos.Y + k, pos.X + 1] & TerrainType.RIVER) != TerrainType.NONE || RiverStack.Contains(new U16Vec2((ushort)(pos.X + 1), (ushort)(pos.Y + k)))))
             riversCount++;
 
         return riversCount;
     }
 
     //UNDONE
-    public static List<List<LocalPos>> CreateClusters(ref Chunk map, GlobalTerrainSettings.ClustersSettings clustersParam)
+    public static List<List<U16Vec2>> CreateClusters(ref Chunk map, GlobalTerrainSettings.ClustersSettings clustersParam)
     {
         ushort height = map.Height;
         ushort width = map.Width;
 
-        List<List<LocalPos>> clusters = new List<List<LocalPos>>(clustersParam.Count);
+        List<List<U16Vec2>> clusters = new List<List<U16Vec2>>(clustersParam.Count);
 
         for (byte i = 0; i < clustersParam.Count; ++i)
         {
-            LocalPos pos;
+            U16Vec2 pos;
             pos.X = (ushort)Random.Range(1, width - 1);
             pos.Y = (ushort)Random.Range(1, height - 1);
             if ((map.TerrainMatrix[pos.Y, pos.X] & TerrainType.RIVER) == TerrainType.NONE)
             {
-                clusters.Add(new List<LocalPos>());
+                clusters.Add(new List<U16Vec2>());
                 SpreadCluster(map, pos, clustersParam.Size, clusters[i]);
             }
             else
@@ -556,7 +597,7 @@ public static class WorldGenerator
         return clusters;
     }
 
-    static void SpreadCluster(Chunk map, LocalPos pos, byte remainingSize, List<LocalPos> cluster)
+    static void SpreadCluster(Chunk map, U16Vec2 pos, byte remainingSize, List<U16Vec2> cluster)
     {
         ushort height = map.Height;
         ushort width = map.Width;
@@ -569,32 +610,32 @@ public static class WorldGenerator
             byte k = (byte)(pos.X & 1); //TODO Провести рефакторинг.
 
             if ((map.TerrainMatrix[pos.Y - (k ^ 1), pos.X - 1] & (TerrainType.RIVER | TerrainType.BUILDING)) == TerrainType.NONE)
-                SpreadCluster(map, new LocalPos((ushort)(pos.X - 1), (ushort)(pos.Y - (k ^ 1))), (byte)(remainingSize - 1), cluster);
+                SpreadCluster(map, new U16Vec2((ushort)(pos.X - 1), (ushort)(pos.Y - (k ^ 1))), (byte)(remainingSize - 1), cluster);
             if ((map.TerrainMatrix[pos.Y + k, pos.X - 1] & (TerrainType.RIVER | TerrainType.BUILDING)) == TerrainType.NONE)
-                SpreadCluster(map, new LocalPos((ushort)(pos.X - 1), (ushort)(pos.Y + k)), (byte)(remainingSize - 1), cluster);
+                SpreadCluster(map, new U16Vec2((ushort)(pos.X - 1), (ushort)(pos.Y + k)), (byte)(remainingSize - 1), cluster);
             if ((map.TerrainMatrix[pos.Y - 1, pos.X] & (TerrainType.RIVER | TerrainType.BUILDING)) == TerrainType.NONE)
-                SpreadCluster(map, new LocalPos(pos.X, (ushort)(pos.Y - 1)), (byte)(remainingSize - 1), cluster);
+                SpreadCluster(map, new U16Vec2(pos.X, (ushort)(pos.Y - 1)), (byte)(remainingSize - 1), cluster);
             if ((map.TerrainMatrix[pos.Y + 1, pos.X] & (TerrainType.RIVER | TerrainType.BUILDING)) == TerrainType.NONE)
-                SpreadCluster(map, new LocalPos(pos.X, (ushort)(pos.Y + 1)), (byte)(remainingSize - 1), cluster);
+                SpreadCluster(map, new U16Vec2(pos.X, (ushort)(pos.Y + 1)), (byte)(remainingSize - 1), cluster);
             if ((map.TerrainMatrix[pos.Y - (k ^ 1), pos.X + 1] & (TerrainType.RIVER | TerrainType.BUILDING)) == TerrainType.NONE)
-                SpreadCluster(map, new LocalPos((ushort)(pos.X + 1), (ushort)(pos.Y - (k ^ 1))), (byte)(remainingSize - 1), cluster);
+                SpreadCluster(map, new U16Vec2((ushort)(pos.X + 1), (ushort)(pos.Y - (k ^ 1))), (byte)(remainingSize - 1), cluster);
             if ((map.TerrainMatrix[pos.Y + k, pos.X + 1] & (TerrainType.RIVER | TerrainType.BUILDING)) == TerrainType.NONE)
-                SpreadCluster(map, new LocalPos((ushort)(pos.X + 1), (ushort)(pos.Y + k)), (byte)(remainingSize - 1), cluster);
+                SpreadCluster(map, new U16Vec2((ushort)(pos.X + 1), (ushort)(pos.Y + k)), (byte)(remainingSize - 1), cluster);
         }
     }
 
-    public static List<List<LocalPos>> CreateRoads(float[,] heightMap, ref TerrainType[,] terrainMap, List<List<LocalPos>> clusters, GlobalTerrainSettings.RoadsSettings roadsParam)
+    public static List<List<U16Vec2>> CreateRoads(float[,] heightMap, ref TerrainType[,] terrainMap, List<List<U16Vec2>> clusters, GlobalTerrainSettings.RoadsSettings roadsParam)
     {
-        List<List<LocalPos>> roads = new List<List<LocalPos>>();
+        List<List<U16Vec2>> roads = new List<List<U16Vec2>>();
         for (byte i = 0; i < clusters.Count >> 1; ++i)
         {
-            roads.Add(new List<LocalPos>());
+            roads.Add(new List<U16Vec2>());
             DirectRoad(heightMap, terrainMap, clusters[i][0], clusters[(clusters.Count >> 1) + i][0], roads[i], roadsParam);
         }
         return roads;
     }
 
-    static void DirectRoad(float[,] heightMatrix, TerrainType[,] terrainMatrix, LocalPos pos, LocalPos destination, List<LocalPos> road, GlobalTerrainSettings.RoadsSettings roadsParam)
+    static void DirectRoad(float[,] heightMatrix, TerrainType[,] terrainMatrix, U16Vec2 pos, U16Vec2 destination, List<U16Vec2> road, GlobalTerrainSettings.RoadsSettings roadsParam)
     {
         ushort height = (ushort)heightMatrix.GetLength(0);
         ushort width = (ushort)heightMatrix.GetLength(1);
@@ -641,37 +682,37 @@ public static class WorldGenerator
             float weight = 0, buf;
             sbyte dx = 0, dy = 0;
 
-            if (!road.Contains(new LocalPos((ushort)(pos.X - 1), (ushort)(pos.Y + k))) && ((buf = (Mathf.Abs(destination.X - pos.X) - Mathf.Abs(destination.X - (pos.X - 1)) + Mathf.Abs(destination.Y - pos.Y) - Mathf.Abs(destination.Y - (pos.Y + k)) + 3) * (max - Mathf.Abs(heightMatrix[pos.Y + k, pos.X - 1] - avg))) * ((terrainMatrix[pos.Y + k, pos.X - 1] & TerrainType.ROAD) != TerrainType.NONE ? roadsParam.RoadMergeMultiplier : 1) * ((terrainMatrix[pos.Y, pos.X] & terrainMatrix[pos.Y + k, pos.X - 1] & TerrainType.RIVER) != TerrainType.NONE ? roadsParam.GoingAlongRiverMultiplier : 1) > weight))
+            if (!road.Contains(new U16Vec2((ushort)(pos.X - 1), (ushort)(pos.Y + k))) && ((buf = (Mathf.Abs(destination.X - pos.X) - Mathf.Abs(destination.X - (pos.X - 1)) + Mathf.Abs(destination.Y - pos.Y) - Mathf.Abs(destination.Y - (pos.Y + k)) + 3) * (max - Mathf.Abs(heightMatrix[pos.Y + k, pos.X - 1] - avg))) * ((terrainMatrix[pos.Y + k, pos.X - 1] & TerrainType.ROAD) != TerrainType.NONE ? roadsParam.RoadMergeMultiplier : 1) * ((terrainMatrix[pos.Y, pos.X] & terrainMatrix[pos.Y + k, pos.X - 1] & TerrainType.RIVER) != TerrainType.NONE ? roadsParam.GoingAlongRiverMultiplier : 1) > weight))
             {
                 weight = buf;
                 dx = -1;
                 dy = (sbyte)k;
             }
-            if (!road.Contains(new LocalPos((ushort)(pos.X + 1), (ushort)(pos.Y + k))) && ((buf = (Mathf.Abs(destination.X - pos.X) - Mathf.Abs(destination.X - (pos.X + 1)) + Mathf.Abs(destination.Y - pos.Y) - Mathf.Abs(destination.Y - (pos.Y + k)) + 3) * (max - Mathf.Abs(heightMatrix[pos.Y + k, pos.X + 1] - avg))) * ((terrainMatrix[pos.Y + k, pos.X + 1] & TerrainType.ROAD) != TerrainType.NONE ? roadsParam.RoadMergeMultiplier : 1) * ((terrainMatrix[pos.Y, pos.X] & terrainMatrix[pos.Y + k, pos.X + 1] & TerrainType.RIVER) != TerrainType.NONE ? roadsParam.GoingAlongRiverMultiplier : 1) > weight))
+            if (!road.Contains(new U16Vec2((ushort)(pos.X + 1), (ushort)(pos.Y + k))) && ((buf = (Mathf.Abs(destination.X - pos.X) - Mathf.Abs(destination.X - (pos.X + 1)) + Mathf.Abs(destination.Y - pos.Y) - Mathf.Abs(destination.Y - (pos.Y + k)) + 3) * (max - Mathf.Abs(heightMatrix[pos.Y + k, pos.X + 1] - avg))) * ((terrainMatrix[pos.Y + k, pos.X + 1] & TerrainType.ROAD) != TerrainType.NONE ? roadsParam.RoadMergeMultiplier : 1) * ((terrainMatrix[pos.Y, pos.X] & terrainMatrix[pos.Y + k, pos.X + 1] & TerrainType.RIVER) != TerrainType.NONE ? roadsParam.GoingAlongRiverMultiplier : 1) > weight))
             {
                 weight = buf;
                 dx = 1;
                 dy = (sbyte)k;
             }
-            if (!road.Contains(new LocalPos(pos.X, (ushort)(pos.Y + 1))) && ((buf = (Mathf.Abs(destination.Y - pos.Y) - Mathf.Abs(destination.Y - (pos.Y + 1)) + 3) * (max - Mathf.Abs(heightMatrix[pos.Y + 1, pos.X] - avg))) * ((terrainMatrix[pos.Y + 1, pos.X] & TerrainType.ROAD) != TerrainType.NONE ? roadsParam.RoadMergeMultiplier : 1) * ((terrainMatrix[pos.Y, pos.X] & terrainMatrix[pos.Y + 1, pos.X] & TerrainType.RIVER) != TerrainType.NONE ? roadsParam.GoingAlongRiverMultiplier : 1) > weight))//!После диагонали
+            if (!road.Contains(new U16Vec2(pos.X, (ushort)(pos.Y + 1))) && ((buf = (Mathf.Abs(destination.Y - pos.Y) - Mathf.Abs(destination.Y - (pos.Y + 1)) + 3) * (max - Mathf.Abs(heightMatrix[pos.Y + 1, pos.X] - avg))) * ((terrainMatrix[pos.Y + 1, pos.X] & TerrainType.ROAD) != TerrainType.NONE ? roadsParam.RoadMergeMultiplier : 1) * ((terrainMatrix[pos.Y, pos.X] & terrainMatrix[pos.Y + 1, pos.X] & TerrainType.RIVER) != TerrainType.NONE ? roadsParam.GoingAlongRiverMultiplier : 1) > weight))//!После диагонали
             {
                 weight = buf;
                 dx = 0;
                 dy = 1;
             }
-            if (!road.Contains(new LocalPos((ushort)(pos.X + 1), (ushort)(pos.Y - (k ^ 1)))) && ((buf = (Mathf.Abs(destination.X - pos.X) - Mathf.Abs(destination.X - (pos.X + 1)) + Mathf.Abs(destination.Y - pos.Y) - Mathf.Abs(destination.Y - (pos.Y - (k ^ 1))) + 3) * (max - Mathf.Abs(heightMatrix[pos.Y - (k ^ 1), pos.X + 1] - avg))) * ((terrainMatrix[pos.Y - (k ^ 1), pos.X + 1] & TerrainType.ROAD) != TerrainType.NONE ? roadsParam.RoadMergeMultiplier : 1) * ((terrainMatrix[pos.Y, pos.X] & terrainMatrix[pos.Y - (k ^ 1), pos.X + 1] & TerrainType.RIVER) != TerrainType.NONE ? roadsParam.GoingAlongRiverMultiplier : 1) > weight))
+            if (!road.Contains(new U16Vec2((ushort)(pos.X + 1), (ushort)(pos.Y - (k ^ 1)))) && ((buf = (Mathf.Abs(destination.X - pos.X) - Mathf.Abs(destination.X - (pos.X + 1)) + Mathf.Abs(destination.Y - pos.Y) - Mathf.Abs(destination.Y - (pos.Y - (k ^ 1))) + 3) * (max - Mathf.Abs(heightMatrix[pos.Y - (k ^ 1), pos.X + 1] - avg))) * ((terrainMatrix[pos.Y - (k ^ 1), pos.X + 1] & TerrainType.ROAD) != TerrainType.NONE ? roadsParam.RoadMergeMultiplier : 1) * ((terrainMatrix[pos.Y, pos.X] & terrainMatrix[pos.Y - (k ^ 1), pos.X + 1] & TerrainType.RIVER) != TerrainType.NONE ? roadsParam.GoingAlongRiverMultiplier : 1) > weight))
             {
                 weight = buf;
                 dx = 1;
                 dy = (sbyte)(-(k ^ 1));
             }
-            if (!road.Contains(new LocalPos((ushort)(pos.X - 1), (ushort)(pos.Y - (k ^ 1)))) && ((buf = (Mathf.Abs(destination.X - pos.X) - Mathf.Abs(destination.X - (pos.X - 1)) + Mathf.Abs(destination.Y - pos.Y) - Mathf.Abs(destination.Y - (pos.Y - (k ^ 1))) + 3) * (max - Mathf.Abs(heightMatrix[pos.Y - (k ^ 1), pos.X - 1] - avg))) * ((terrainMatrix[pos.Y - (k ^ 1), pos.X - 1] & TerrainType.ROAD) != TerrainType.NONE ? roadsParam.RoadMergeMultiplier : 1) * ((terrainMatrix[pos.Y, pos.X] & terrainMatrix[pos.Y - (k ^ 1), pos.X - 1] & TerrainType.RIVER) != TerrainType.NONE ? roadsParam.GoingAlongRiverMultiplier : 1) > weight))
+            if (!road.Contains(new U16Vec2((ushort)(pos.X - 1), (ushort)(pos.Y - (k ^ 1)))) && ((buf = (Mathf.Abs(destination.X - pos.X) - Mathf.Abs(destination.X - (pos.X - 1)) + Mathf.Abs(destination.Y - pos.Y) - Mathf.Abs(destination.Y - (pos.Y - (k ^ 1))) + 3) * (max - Mathf.Abs(heightMatrix[pos.Y - (k ^ 1), pos.X - 1] - avg))) * ((terrainMatrix[pos.Y - (k ^ 1), pos.X - 1] & TerrainType.ROAD) != TerrainType.NONE ? roadsParam.RoadMergeMultiplier : 1) * ((terrainMatrix[pos.Y, pos.X] & terrainMatrix[pos.Y - (k ^ 1), pos.X - 1] & TerrainType.RIVER) != TerrainType.NONE ? roadsParam.GoingAlongRiverMultiplier : 1) > weight))
             {
                 weight = buf;
                 dx = -1;
                 dy = (sbyte)(-(k ^ 1));
             }
-            if (!road.Contains(new LocalPos(pos.X, (ushort)(pos.Y - 1))) && ((buf = (Mathf.Abs(destination.Y - pos.Y) - Mathf.Abs(destination.Y - (pos.Y - 1)) + 3) * (max - Mathf.Abs(heightMatrix[pos.Y - 1, pos.X] - avg))) * ((terrainMatrix[pos.Y - 1, pos.X] & TerrainType.ROAD) != TerrainType.NONE ? roadsParam.RoadMergeMultiplier : 1) * ((terrainMatrix[pos.Y, pos.X] & terrainMatrix[pos.Y - 1, pos.X] & TerrainType.RIVER) != TerrainType.NONE ? roadsParam.GoingAlongRiverMultiplier : 1) > weight))//!После диагонали
+            if (!road.Contains(new U16Vec2(pos.X, (ushort)(pos.Y - 1))) && ((buf = (Mathf.Abs(destination.Y - pos.Y) - Mathf.Abs(destination.Y - (pos.Y - 1)) + 3) * (max - Mathf.Abs(heightMatrix[pos.Y - 1, pos.X] - avg))) * ((terrainMatrix[pos.Y - 1, pos.X] & TerrainType.ROAD) != TerrainType.NONE ? roadsParam.RoadMergeMultiplier : 1) * ((terrainMatrix[pos.Y, pos.X] & terrainMatrix[pos.Y - 1, pos.X] & TerrainType.RIVER) != TerrainType.NONE ? roadsParam.GoingAlongRiverMultiplier : 1) > weight))//!После диагонали
             {
                 weight = buf;
                 dx = 0;
@@ -681,7 +722,7 @@ public static class WorldGenerator
             if (dx == 0 && dy == 0)
                 throw new System.Exception("Infinite recursion detected. Try to check heightmap values.");
 
-            DirectRoad(heightMatrix, terrainMatrix, new LocalPos((ushort)(pos.X + dx), (ushort)(pos.Y + dy)), destination, road, roadsParam);
+            DirectRoad(heightMatrix, terrainMatrix, new U16Vec2((ushort)(pos.X + dx), (ushort)(pos.Y + dy)), destination, road, roadsParam);
         }
     }
 }

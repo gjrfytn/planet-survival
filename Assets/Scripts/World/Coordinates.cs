@@ -1,36 +1,36 @@
 ﻿
 [System.Serializable]
-public struct LocalPos
+public struct U16Vec2
 {
     public ushort X;
     public ushort Y;
 
-    public LocalPos(ushort x, ushort y)
+    public U16Vec2(ushort x, ushort y)
     {
         X = x;
         Y = y;
     }
 
-    public static bool operator ==(LocalPos op1, LocalPos op2)
+    public static bool operator ==(U16Vec2 op1, U16Vec2 op2)
     {
         return op1.X == op2.X && op1.Y == op2.Y;
     }
 
-    public static bool operator !=(LocalPos op1, LocalPos op2)
+    public static bool operator !=(U16Vec2 op1, U16Vec2 op2)
     {
         return op1.X != op2.X || op1.Y != op2.Y;
     }
 
-    public static explicit operator LocalPos(GlobalPos op)
+    public static explicit operator U16Vec2(S32Vec2 op)
     {
-        return new LocalPos((ushort)op.X, (ushort)op.Y);//TODO   -new !!!!!!!!!!!!!!!!!!!!!!!!!!!
+        return new U16Vec2((ushort)op.X, (ushort)op.Y);//TODO   -new !!!!!!!!!!!!!!!!!!!!!!!!!!!
     }
 
     public override bool Equals(System.Object obj)
     {
-        if (obj is LocalPos)
+        if (obj is U16Vec2)
         {
-            LocalPos p = (LocalPos)obj;
+            U16Vec2 p = (U16Vec2)obj;
             return X == p.X && Y == p.Y;
         }
         return false;
@@ -40,40 +40,45 @@ public struct LocalPos
     {
         return new System.Collections.Generic.KeyValuePair<ushort, ushort>(X, Y).GetHashCode();
     }
+
+    public override string ToString()
+    {
+        return '(' + X.ToString() + ", " + Y.ToString() + ')';
+    }
 }
 
 [System.Serializable]
-public struct GlobalPos
+public struct S32Vec2
 {
     public int X;
     public int Y;
 
-    public GlobalPos(int x, int y)
+    public S32Vec2(int x, int y)
     {
         X = x;
         Y = y;
     }
 
-    public static bool operator ==(GlobalPos op1, GlobalPos op2)
+    public static bool operator ==(S32Vec2 op1, S32Vec2 op2)
     {
         return op1.X == op2.X && op1.Y == op2.Y;
     }
 
-    public static bool operator !=(GlobalPos op1, GlobalPos op2)
+    public static bool operator !=(S32Vec2 op1, S32Vec2 op2)
     {
         return op1.X != op2.X || op1.Y != op2.Y;
     }
 
-    public static implicit operator GlobalPos(LocalPos op)
+    public static implicit operator S32Vec2(U16Vec2 op)
     {
-        return new GlobalPos(op.X, op.Y); //TODO   -new !!!!!!!!!!!!!!!!!!!!!!!!!!!
+        return new S32Vec2(op.X, op.Y); //TODO   -new !!!!!!!!!!!!!!!!!!!!!!!!!!!
     }
 
     public override bool Equals(System.Object obj)
     {
-        if (obj is GlobalPos)
+        if (obj is S32Vec2)
         {
-            GlobalPos p = (GlobalPos)obj;
+            S32Vec2 p = (S32Vec2)obj;
             return X == p.X && Y == p.Y;
         }
         return false;
@@ -82,5 +87,10 @@ public struct GlobalPos
     public override int GetHashCode()
     {
         return new System.Collections.Generic.KeyValuePair<int, int>(X, Y).GetHashCode();
+    }
+
+    public override string ToString()
+    {
+        return '(' + X.ToString() + ", " + Y.ToString() + ')';
     }
 }

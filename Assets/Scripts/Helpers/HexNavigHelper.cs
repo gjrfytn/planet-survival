@@ -1,4 +1,6 @@
 ﻿
+using GlobalPos = S32Vec2;
+
 public enum HexDirection : byte
 {
     TOP_LEFT,

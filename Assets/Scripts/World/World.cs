@@ -1,6 +1,9 @@
 ﻿using UnityEngine;
 using System.IO;
 
+using LocalPos = U16Vec2;
+using GlobalPos = S32Vec2;
+
 public class World : MonoBehaviour
 {
     public Map CurrentMap { get; private set; } //TODO Возможно, можно будет убрать. Карта, на которой находится игрок.
@@ -182,6 +185,7 @@ public class World : MonoBehaviour
         else
         {
             SkipTurnBtn.gameObject.SetActive(false);
+            SkipTurnBtn.GetComponent<UnityEngine.UI.Button>().interactable = false;
             GotoGlobalMap();
             Player.transform.position = WorldVisualizer.GetTransformPosFromMapPos(Player.GlobalPos);
             EventManager.OnLocalMapLeave();
@@ -232,12 +236,11 @@ public class World : MonoBehaviour
     /// <param name="coords">Координаты новой карты на глобальной.</param>
     LocalMap CreateLocalMap(float height, float forest, bool river)
     {
-        float?[,] buf = new float?[LocalMapSize.Y, LocalMapSize.X];
-        if (river)
-        {
-            //LocalPos[] riverPath = new LocalPos[] { new LocalPos(0, (ushort)(LocalMapSize.Y >> 1)), new LocalPos((ushort)(LocalMapSize.X - 1), (ushort)(LocalMapSize.Y >> 1)) }; //UNDONE			
-            //WorldGenerator.MakeEqualHeightLine(map.HeightMatrix, riverPath, Visualiser.LocalMapParam.Terrains[0].StartingHeight - 0.0001f); TODO
-        }
+        //if (river)
+        //{
+        //LocalPos[] riverPath = new LocalPos[] { new LocalPos(0, (ushort)(LocalMapSize.Y >> 1)), new LocalPos((ushort)(LocalMapSize.X - 1), (ushort)(LocalMapSize.Y >> 1)) }; //UNDONE			
+        //WorldGenerator.MakeEqualHeightLine(map.HeightMatrix, riverPath, Visualiser.LocalMapParam.Terrains[0].StartingHeight - 0.0001f); TODO
+        // }
 
         WorldGenerator.HeighmapNeighboring hmNb;
         hmNb.Left = new float[LocalMapSize.Y];
@@ -248,18 +251,10 @@ public class World : MonoBehaviour
             hmNb.Right[i] = hmNb.Left[i] = height;
         for (ushort i = 0; i < LocalMapSize.X; ++i)
             hmNb.Bottom[i] = hmNb.Top[i] = height;
-        WorldGenerator.CreateHeightmap(ref buf, LandscapeRoughness, hmNb);
 
         LocalMap map = new LocalMap(LocalMapSize.X, LocalMapSize.Y);
-        float[,] buf2 = new float[LocalMapSize.Y, LocalMapSize.X];
-        for (ushort y = 0; y < LocalMapSize.Y; ++y)
-            for (ushort x = 0; x < LocalMapSize.X; ++x)
-            {
-                buf2[y, x] = buf[y, x].Value;
-                buf[y, x] = null;
-            }
-        WorldGenerator.CreateTerrainmap(ref map.TerrainMatrix, buf2, LocalMapTerrainParam);
-        WorldGenerator.CreateVegetation(ref map, LocalMapTerrainParam, forest);
+
+        WorldGenerator.CreateLocalMap(ref map, LocalMapTerrainParam, hmNb, LandscapeRoughness, forest);
 
         return map;
     }
@@ -369,7 +364,10 @@ public class World : MonoBehaviour
                         if (reader.ReadString() == "null")
                             LocalMaps[y, x] = null;
                         else
+                        {
+                            LocalMaps[y, x] = new LocalMap(LocalMapSize.X, LocalMapSize.Y);
                             LocalMaps[y, x].Read(reader);
+                        }
             }
             return true;
         }
@@ -417,66 +415,62 @@ public class World : MonoBehaviour
     Chunk AllocAndGenerateChunk(Chunk topChunk, Chunk rightChunk, Chunk bottomChunk, Chunk leftChunk)
     {
         // TODO Ждём MonoDevelop 6.0 ( ?., ?[ ):
-        WorldGenerator.HeighmapNeighboring hmNb = new WorldGenerator.HeighmapNeighboring();
+        WorldGenerator.HeighmapNeighboring hmNbHeight = new WorldGenerator.HeighmapNeighboring();
         if (leftChunk != null)
         {
-            hmNb.Left = new float[ChunkSize];
+            hmNbHeight.Left = new float[ChunkSize];
             for (ushort i = 0; i < ChunkSize; ++i)
-                hmNb.Left[i] = leftChunk.HeightMatrix[i, ChunkSize - 1];
+                hmNbHeight.Left[i] = leftChunk.HeightMatrix[i, ChunkSize - 1];
         }
         if (topChunk != null)
         {
-            hmNb.Top = new float[ChunkSize];
+            hmNbHeight.Top = new float[ChunkSize];
             for (ushort i = 0; i < ChunkSize; ++i)
-                hmNb.Top[i] = topChunk.HeightMatrix[0, i];
+                hmNbHeight.Top[i] = topChunk.HeightMatrix[0, i];
         }
         if (rightChunk != null)
         {
-            hmNb.Right = new float[ChunkSize];
+            hmNbHeight.Right = new float[ChunkSize];
             for (ushort i = 0; i < ChunkSize; ++i)
-                hmNb.Right[i] = rightChunk.HeightMatrix[i, 0];
+                hmNbHeight.Right[i] = rightChunk.HeightMatrix[i, 0];
         }
         if (bottomChunk != null)
         {
-            hmNb.Bottom = new float[ChunkSize];
+            hmNbHeight.Bottom = new float[ChunkSize];
             for (ushort i = 0; i < ChunkSize; ++i)
-                hmNb.Bottom[i] = bottomChunk.HeightMatrix[ChunkSize - 1, i];
+                hmNbHeight.Bottom[i] = bottomChunk.HeightMatrix[ChunkSize - 1, i];
         }
 
-        float?[,] buf = new float?[ChunkSize, ChunkSize];
-        WorldGenerator.CreateHeightmap(ref buf, LandscapeRoughness, hmNb);
+        WorldGenerator.HeighmapNeighboring hmNbForest = new WorldGenerator.HeighmapNeighboring();
+        if (leftChunk != null)
+        {
+            hmNbForest.Left = new float[ChunkSize];
+            for (ushort i = 0; i < ChunkSize; ++i)
+                hmNbForest.Left[i] = leftChunk.ForestMatrix[i, ChunkSize - 1];
+        }
+        if (topChunk != null)
+        {
+            hmNbForest.Top = new float[ChunkSize];
+            for (ushort i = 0; i < ChunkSize; ++i)
+                hmNbForest.Top[i] = topChunk.ForestMatrix[0, i];
+        }
+        if (rightChunk != null)
+        {
+            hmNbForest.Right = new float[ChunkSize];
+            for (ushort i = 0; i < ChunkSize; ++i)
+                hmNbForest.Right[i] = rightChunk.ForestMatrix[i, 0];
+        }
+        if (bottomChunk != null)
+        {
+            hmNbForest.Bottom = new float[ChunkSize];
+            for (ushort i = 0; i < ChunkSize; ++i)
+                hmNbForest.Bottom[i] = bottomChunk.ForestMatrix[ChunkSize - 1, i];
+        }
+
         Chunk chunk = new Chunk(ChunkSize, ChunkSize);
-        for (ushort y = 0; y < ChunkSize; ++y)
-            for (ushort x = 0; x < ChunkSize; ++x)
-            {
-                chunk.HeightMatrix[y, x] = Mathf.Clamp(buf[y, x].Value, 0, Mathf.Abs(buf[y, x].Value));
-                buf[y, x] = null;
-            }
 
-        if (leftChunk != null)
-            for (ushort i = 0; i < ChunkSize; ++i)
-                hmNb.Left[i] = leftChunk.ForestMatrix[i, ChunkSize - 1];
-        if (topChunk != null)
-            for (ushort i = 0; i < ChunkSize; ++i)
-                hmNb.Top[i] = topChunk.ForestMatrix[0, i];
-        if (rightChunk != null)
-            for (ushort i = 0; i < ChunkSize; ++i)
-                hmNb.Right[i] = rightChunk.ForestMatrix[i, 0];
-        if (bottomChunk != null)
-            for (ushort i = 0; i < ChunkSize; ++i)
-                hmNb.Bottom[i] = bottomChunk.ForestMatrix[ChunkSize - 1, i];
+        WorldGenerator.CreateChunk(ref chunk, GlobalMapTerrainParam, hmNbHeight, LandscapeRoughness, hmNbForest, ForestRoughness, ForestDensity);
 
-        WorldGenerator.CreateHeightmap(ref buf, ForestRoughness, hmNb);
-        for (ushort y = 0; y < ChunkSize; ++y)
-            for (ushort x = 0; x < ChunkSize; ++x)
-            {
-                buf[y, x] = buf[y, x].Value * ForestDensity;
-                chunk.ForestMatrix[y, x] = Mathf.Clamp(buf[y, x].Value, 0, Mathf.Abs(buf[y, x].Value));
-            }
-        chunk.Rivers = WorldGenerator.CreateRivers(chunk.HeightMatrix, ref chunk.TerrainMatrix, GlobalMapTerrainParam.RiversParam);
-        chunk.Clusters = WorldGenerator.CreateClusters(ref chunk, GlobalMapTerrainParam.ClustersParam);
-        chunk.Roads = WorldGenerator.CreateRoads(chunk.HeightMatrix, ref chunk.TerrainMatrix, chunk.Clusters, GlobalMapTerrainParam.RoadsParam);
-        WorldGenerator.CreateTerrainmap(ref chunk.TerrainMatrix, chunk.HeightMatrix, GlobalMapTerrainParam);
         return chunk;
     }
 

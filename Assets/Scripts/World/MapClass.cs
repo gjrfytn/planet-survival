@@ -2,6 +2,9 @@
 using System.IO;
 using System.Linq;
 
+using LocalPos = U16Vec2;
+using GlobalPos = S32Vec2;
+
 public abstract class Map : IBinaryReadableWriteable
 {
     public readonly ushort Width;

@@ -1,6 +1,9 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 
+using LocalPos = U16Vec2;
+using GlobalPos = S32Vec2;
+
 public class Player : LivingBeing
 {
     public GlobalPos GlobalPos;

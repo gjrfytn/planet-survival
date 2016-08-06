@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 
+using LocalPos = U16Vec2;
+using GlobalPos = S32Vec2;
+
 public class Creature : LivingBeing
 {
     [System.Flags]
@@ -116,11 +119,8 @@ public class Creature : LivingBeing
 
     void Move()
     {
-        string debug = "";
         if (Path.Count == 0)
         {
-            debug += "upper ";
-
             List<LocalPos> buf = Pathfinder.MakePath(Map.GetBlockMatrix(), Pos, TargetPos, true);
             if (buf == null)
             {
@@ -129,13 +129,10 @@ public class Creature : LivingBeing
             }
             buf.Reverse();
             Path = new Stack<LocalPos>(buf);
-
-            debug += Path.Pop(); //path pop оставить
+            Path.Pop();
         }
         else
         {
-            debug += "lower ";
-
             bool pathIsObsolete = false;
             LocalPos[] arrBuf = Path.ToArray();
             foreach (LocalPos pos in arrBuf)
@@ -146,8 +143,6 @@ public class Creature : LivingBeing
                 }
             if (pathIsObsolete)
             {
-                debug += "obsolete ";
-
                 List<LocalPos> buf = Pathfinder.MakePath(Map.GetBlockMatrix(), Pos, TargetPos, true);
                 if (buf == null)
                 {
@@ -161,16 +156,6 @@ public class Creature : LivingBeing
         }
 
         byte movesCount = (byte)Mathf.Min(RemainingMoves, Path.Count);
-
-        if (movesCount == 0)
-        {
-            Debug.Log(debug);
-            Debug.Log(RemainingMoves);
-            Debug.Log(Path.Count);
-            Debug.Log(Pos);
-            Debug.Log(TargetPos);
-        }
-
         RemainingMoves -= movesCount;
 
         List<LocalPos> lstBuf = new List<LocalPos>(movesCount);
@@ -261,7 +246,7 @@ public class Creature : LivingBeing
                         GlobalPos pos;
                         do
                             pos = HexNavigHelper.GetNeighborMapCoords(Pos, (TurnedHexDirection)Random.Range(0, 6));
-                        while (pos.X < 0 || pos.X >= Map.Width || pos.Y < 0 || pos.Y >= Map.Height);
+                        while (pos.X < 0 || pos.X >= Map.Width || pos.Y < 0 || pos.Y >= Map.Height || Map.IsBlocked((LocalPos)pos));
                         TargetPos = (LocalPos)pos;
                         Move();
                         //MakingTurn = false;
@@ -273,7 +258,7 @@ public class Creature : LivingBeing
                     GlobalPos pos;
                     do
                         pos = HexNavigHelper.GetNeighborMapCoords(Pos, (TurnedHexDirection)Random.Range(0, 6));
-                    while (pos.X < 0 || pos.X >= Map.Width || pos.Y < 0 || pos.Y >= Map.Height);
+                    while (pos.X < 0 || pos.X >= Map.Width || pos.Y < 0 || pos.Y >= Map.Height || Map.IsBlocked((LocalPos)pos));
                     TargetPos = (LocalPos)pos;
                     Move();
                     //MakingTurn = false;

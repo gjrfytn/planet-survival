@@ -1,6 +1,8 @@
 ﻿using UnityEngine;
 using System.IO;
 
+using LocalPos = U16Vec2;
+
 public class Entity : MonoBehaviour, IBinaryReadableWriteable
 {
     public virtual LocalPos Pos { get; set; }

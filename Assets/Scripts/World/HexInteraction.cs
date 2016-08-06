@@ -1,5 +1,8 @@
 ﻿using UnityEngine;
 
+using LocalPos = U16Vec2;
+using GlobalPos = S32Vec2;
+
 public class HexInteraction : MonoBehaviour
 {
     [HideInInspector]

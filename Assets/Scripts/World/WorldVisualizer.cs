@@ -1,6 +1,8 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 
+using LocalPos = U16Vec2;
+using GlobalPos = S32Vec2;
 
 public class WorldVisualizer : MonoBehaviour
 {
@@ -616,7 +618,7 @@ public class WorldVisualizer : MonoBehaviour
                 ListType hex = new ListType { Hex = Instantiate(EditorHex.gameObject), InSign = true };
                 hex.Hex.transform.position = GetTransformPosFromMapPos(new LocalPos(x, y));
                 hex.Hex.transform.parent = transform;
-                hex.Pos = hex.Hex.GetComponent<EditorHex>().Pos=new LocalPos(x, y);
+                hex.Pos = hex.Hex.GetComponent<EditorHex>().Pos = new LocalPos(x, y);
 
                 MakeHexGraphics(hex, new LocalPos(x, y), map);
                 RenderedHexes.Add(hex);
