@@ -39,18 +39,19 @@ public class AttachedBlueprint : MonoBehaviour, IPointerClickHandler {
             Crafting.SelectedBlueprint = Blueprint;
             Crafting.UpdateData();
             ItemInfoPanel.ActivatePanel(Blueprint.Item);
-            if (Crafting.IngredientsContent.childCount != 0)
+            if (Crafting.IngredientsContainer.childCount != 0)
             {
-                for (int i = 0; i < Crafting.IngredientsContent.childCount; i++)
+                for (int i = 0; i < Crafting.IngredientsContainer.childCount; i++)
                 {
-                    Destroy(Crafting.IngredientsContent.GetChild(i).gameObject);
+                    Destroy(Crafting.IngredientsContainer.GetChild(i).gameObject);
                 }
             }
             for (int i = 0; i < Blueprint.ItemIds.Count; i++)
             {
                 GameObject ingredientPrefab = Instantiate(Crafting.IngredientPrefab);
                 Ingredient ingredient = ingredientPrefab.GetComponent<Ingredient>();
-                ingredientPrefab.transform.SetParent(Crafting.IngredientsContent);
+                ingredientPrefab.transform.SetParent(Crafting.IngredientsContainer);
+                ingredient.GetComponent<RectTransform>().sizeDelta = new Vector2(0, 0);
                 ingredientPrefab.GetComponent<Image>().sprite = Blueprint.ItemsForCraft[i].Icon;
                 ingredient.Item = Blueprint.ItemsForCraft[i];
                 Crafting.Ingredients.Add(ingredient);

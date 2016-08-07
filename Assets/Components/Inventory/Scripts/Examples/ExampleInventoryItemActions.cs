@@ -1,29 +1,29 @@
 ﻿using UnityEngine;
+using System.Collections;
 
-public class InventoryItemActions : MonoBehaviour {
+public class ExampleInventoryItemActions : MonoBehaviour {
 
     InventoryManager InventoryManager;
     Inventory Inventory;
     Equipment Equipment;
     //Crafting Crafting;
 
+    SplitItem SplitPanel;
+
     void OnEnable()
     {
         InventoryEvents.OnConsume += ConsumeItem;
         InventoryEvents.OnEquip += EquipItem;
         InventoryEvents.OnUnequip += UnequipItem;
+        InventoryEvents.OnSplit += SplitItem;
         InventoryEvents.OnDrop += DropItem;
         InventoryEvents.OnPickUp += PickUpItem;
         InventoryEvents.OnRightClick += ItemRightClick;
     }
     void OnDisable()
     {
-        InventoryEvents.OnConsume -= ConsumeItem;
         InventoryEvents.OnEquip -= EquipItem;
         InventoryEvents.OnUnequip -= UnequipItem;
-        InventoryEvents.OnDrop -= DropItem;
-        InventoryEvents.OnPickUp -= PickUpItem;
-        InventoryEvents.OnRightClick -= ItemRightClick;
     }
 
     void Start()
@@ -32,6 +32,8 @@ public class InventoryItemActions : MonoBehaviour {
         Inventory = InventoryManager.Inventory;
         Equipment = InventoryManager.Equipment;
         //Crafting = InventoryManager.Crafting;
+
+        SplitPanel = InventoryManager.SplitPanel;
     }
 
     void ConsumeItem(AttachedItem attachedItem)
@@ -101,9 +103,10 @@ public class InventoryItemActions : MonoBehaviour {
                     GameObject equippedItemGameObject = Equipment.Slots[i].transform.GetChild(0).gameObject;
                     AttachedItem equippedItem = equippedItemGameObject.GetComponent<AttachedItem>();
 
+                    UnequipItem(equippedItem);
+
                     if (attachedItem != equippedItem)
                     {
-                        UnequipItem(equippedItem);
                         EquipItem(attachedItem);
                     }
 
@@ -117,7 +120,6 @@ public class InventoryItemActions : MonoBehaviour {
         if (Inventory.CheckItemFit())
         {
             Inventory.MoveItemIntoSlot(equippedItem);
-
             Inventory.UpdateItemList();
         }
         else
@@ -126,29 +128,49 @@ public class InventoryItemActions : MonoBehaviour {
         }
     }
 
+    void SplitItem(AttachedItem attachedItem)
+    {
+        SplitPanel.Slider.onValueChanged.RemoveAllListeners();
+        SplitPanel.InputField.onValueChanged.RemoveAllListeners();
+        SplitPanel.gameObject.SetActive(true);
+        GameObject tempItemGameObject = Instantiate(attachedItem.gameObject);
+        AttachedItem tempItem = tempItemGameObject.GetComponent<AttachedItem>();
+
+        tempItemGameObject.transform.SetParent(SplitPanel.Slot.transform);
+        tempItemGameObject.name = attachedItem.Item.Name;
+        tempItemGameObject.transform.localPosition = Vector2.zero;
+
+        SplitPanel.Slider.minValue = 1;
+        SplitPanel.Slider.maxValue = attachedItem.StackSize - 1;
+        tempItem.StackSize = (int)SplitPanel.Slider.minValue;
+        attachedItem.StackSize = (int)SplitPanel.Slider.maxValue;
+        InventoryManager.UpdateItemStack(tempItem);
+        InventoryManager.UpdateItemStack(attachedItem);
+
+        SplitPanel.Slider.onValueChanged.AddListener(delegate { ValueToSplit(attachedItem, tempItem); });
+        //SplitPanel.InputField.onValueChanged.AddListener(delegate { ValueToSplit(tempItem); });
+        SplitPanel.CancelButton.onClick.RemoveAllListeners();
+        SplitPanel.CancelButton.onClick.AddListener(delegate { SplitPanel.Cancel(attachedItem, tempItem); });
+    }
+
+    void ValueToSplit(AttachedItem itemFromSlot, AttachedItem tempItem)
+    {
+
+        tempItem.StackSize = (int)SplitPanel.Slider.value;
+
+        itemFromSlot.StackSize = Mathf.Abs(tempItem.StackSize - (int)SplitPanel.Slider.maxValue - 1);
+        //SplitPanel.InputField.text = SplitPanel.Slider.value.ToString();
+        /*if (int.Parse(SplitPanel.InputField.text) >= SplitPanel.Slider.minValue && int.Parse(SplitPanel.InputField.text) <= SplitPanel.Slider.maxValue)
+        {
+            SplitPanel.Slider.value = float.Parse(SplitPanel.InputField.text);
+        }*/
+        InventoryManager.UpdateItemStack(tempItem);
+        InventoryManager.UpdateItemStack(itemFromSlot);
+    }
+
     void DropItem(AttachedItem attachedItem)
     {
-        GameObject dropItem = (GameObject)Instantiate(attachedItem.Item.DroppedItem);
-        if (attachedItem.ItemInfoPanel != null)
-        {
-            attachedItem.ItemInfoPanel.DeactivatePanel();
-        }
-        if (dropItem.GetComponent<SpriteRenderer>().sprite == null)
-        {
-            dropItem.GetComponent<SpriteRenderer>().sprite = attachedItem.Item.Icon;
-        }
-        if (attachedItem == InventoryManager.SelectedItem && InventoryManager.SplitPanel != null)
-        {
-            InventoryManager.SplitPanel.gameObject.SetActive(false);
-        }
-        dropItem.AddComponent<PickUpItem>();
-        dropItem.GetComponent<PickUpItem>().AttachedItem = attachedItem;
-        dropItem.AddComponent<BoxCollider2D>();
-        dropItem.GetComponent<BoxCollider2D>().isTrigger = true;
-        //dropItem.transform.localPosition = GameObject.FindGameObjectWithTag("Player").transform.localPosition;
-        Inventory.UpdateItemList();
-        Destroy(attachedItem.gameObject);
-        Debug.Log("Предмет выброшен");
+        //
     }
     void PickUpItem(AttachedItem attachedItem)
     {
@@ -167,4 +189,5 @@ public class InventoryItemActions : MonoBehaviour {
             InventoryManager.GetComponent<AudioSource>().PlayOneShot(attachedItem.Item.UseSound);
         }
     }
+
 }

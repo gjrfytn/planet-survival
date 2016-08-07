@@ -1,15 +1,42 @@
 ﻿using UnityEngine;
-using System.Collections;
 
 public class CraftingItemActions : MonoBehaviour {
 
-	// Use this for initialization
-	void Start () {
-	
-	}
-	
-	// Update is called once per frame
-	void Update () {
-	
-	}
+    InventoryManager InventoryManager;
+    Inventory Inventory;
+    Crafting Crafting;
+
+    
+    private void OnEnable()
+    {
+        CraftingEvents.OnItemCraft += CraftItem;
+    }
+
+    private void OnDisable()
+    {
+        CraftingEvents.OnItemCraft -= CraftItem;
+    }
+
+    private void Awake()
+    {
+        InventoryManager = GameObject.FindWithTag("InventoryManager").GetComponent<InventoryManager>();
+        Inventory = InventoryManager.Inventory;
+        Crafting = InventoryManager.Crafting;
+    }
+
+    private void CraftItem(Blueprint blueprint)
+    {
+        bool EnoughSpace = Inventory.ItemsInInventory.Count < Inventory.Height * Inventory.Width;
+        if (EnoughSpace)
+        {
+            Crafting.RemoveMaterials();
+            Crafting.AddItem();
+        }
+        else
+        {
+            Debug.Log("Недостаточно места");
+            return;
+        }
+    }
+
 }

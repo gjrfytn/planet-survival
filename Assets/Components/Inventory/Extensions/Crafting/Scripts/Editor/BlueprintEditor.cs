@@ -279,6 +279,10 @@ public class BlueprintEditor : BaseInventoryEditor {
 
                     EditorGUILayout.EndHorizontal();
                 }
+
+                BlueprintToManage.CraftLevel = (byte)EditorGUILayout.IntSlider(new GUIContent("Craft level: "), BlueprintToManage.CraftLevel, byte.MinValue, byte.MaxValue, GUILayout.Width(600));
+                BlueprintToManage.CraftTime = (byte)EditorGUILayout.IntSlider(new GUIContent("Craft time: "), BlueprintToManage.CraftTime, byte.MinValue, byte.MaxValue, GUILayout.Width(600));
+
                 BlueprintToManage.Item = ItemDatabase[CraftItemId];
                 EditorGUI.indentLevel--;
             }

@@ -10,7 +10,7 @@ public class Blueprint {
     public List<Item> ItemsForCraft = new List<Item>();
     public List<uint> ItemIds = new List<uint>();
     public List<int> RequiredAmount = new List<int>();
-    public byte CraftTime;
+    public ushort CraftTime;
     public byte CraftLevel;
 
 }

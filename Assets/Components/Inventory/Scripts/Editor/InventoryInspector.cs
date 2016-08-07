@@ -15,15 +15,18 @@ public class InventoryInspector : Editor
     private byte Height;
     private bool AddItemFoldout = false;
 
+    SerializedObject SerializedObject;
+
     private void OnEnable()
     {
         Inventory = target as Inventory;
+        SerializedObject = new SerializedObject(this);
     }
 
 
     public override void OnInspectorGUI()
     {
-        serializedObject.Update();
+        SerializedObject.Update();
         DrawDefaultInspector();
         EditorGUILayout.Space();
         EditorGUILayout.BeginVertical("Box");

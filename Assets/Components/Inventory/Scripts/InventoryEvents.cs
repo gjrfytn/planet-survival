@@ -6,66 +6,77 @@ public static class InventoryEvents
 
     public delegate void ItemDelegate(AttachedItem attachedItem);
 
-    public static event ItemDelegate ItemConsumed;
-    public static event ItemDelegate ItemEquipped;
-    public static event ItemDelegate ItemUnequipped;
-    public static event ItemDelegate ItemSplited;
-    public static event ItemDelegate ItemDropped;
-    public static event ItemDelegate ItemPickedUp;
+    public static event ItemDelegate OnConsume;
+    public static event ItemDelegate OnEquip;
+    public static event ItemDelegate OnUnequip;
+    public static event ItemDelegate OnSplit;
+    public static event ItemDelegate OnDrop;
+    public static event ItemDelegate OnPickUp;
 
-    public static event ItemDelegate ItemRightClicked;
+    public static event ItemDelegate OnLeftClick;
+    public static event ItemDelegate OnRightClick;
 
 
     public static void ConsumeItem(AttachedItem attachedItem)
     {
-        if (ItemConsumed != null)
+        if (OnConsume != null)
         {
-            ItemConsumed(attachedItem);
+            OnConsume(attachedItem);
         }
     }
 
     public static void EquipItem(AttachedItem attachedItem)
     {
-        if (ItemEquipped != null)
+        if (OnEquip != null)
         {
-            ItemEquipped(attachedItem);
+            OnEquip(attachedItem);
         }
     }
 
     public static void UnequipItem(AttachedItem attachedItem)
     {
-        if (ItemUnequipped != null)
+        if (OnUnequip != null)
         {
-            ItemUnequipped(attachedItem);
+            OnUnequip(attachedItem);
         }
     }
 
     public static void SplitItem(AttachedItem attachedItem)
     {
-        if (ItemSplited != null)
+        if (OnSplit != null)
         {
-            ItemSplited(attachedItem);
+           OnSplit(attachedItem);
         }
     }
 
     public static void DropItem(AttachedItem attachedItem)
     {
-        if(ItemDropped != null)
+        if(OnDrop != null)
         {
-            ItemDropped(attachedItem);
+            OnDrop(attachedItem);
         }
     }
 
     public static void PickUpItem(AttachedItem attachedItem)
     {
-        if (ItemPickedUp != null)
+        if (OnPickUp != null)
         {
-            ItemPickedUp(attachedItem);
+            OnPickUp(attachedItem);
         }
     }
 
+    public static void ItemLeftClick(AttachedItem attachedItem)
+    {
+        if(OnLeftClick != null)
+        {
+            OnLeftClick(attachedItem);
+        }
+    }
     public static void ItemRightClick(AttachedItem attachedItem)
     {
-        ItemRightClicked(attachedItem);
+        if (OnRightClick != null)
+        {
+            OnRightClick(attachedItem);
+        }
     }
 }

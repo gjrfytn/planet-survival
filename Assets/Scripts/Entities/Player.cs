@@ -191,7 +191,9 @@ public class Player : LivingBeing
         EventManager.ActionChosen += PerformAction;
 
         //Inventory
-        InventoryEvents.ItemConsumed += ConsumeItem;
+        InventoryEvents.OnConsume += ConsumeItem;
+
+        CraftingEvents.OnItemCraft += PerformCraftAction;
     }
 
     void OnDisable()
@@ -202,7 +204,9 @@ public class Player : LivingBeing
         EventManager.ActionChosen -= PerformAction;
 
         //Inventory
-        InventoryEvents.ItemConsumed -= ConsumeItem;
+        InventoryEvents.OnConsume -= ConsumeItem;
+
+        CraftingEvents.OnItemCraft -= PerformCraftAction;
     }
 
     protected override void Start()
@@ -343,9 +347,12 @@ public class Player : LivingBeing
 
     void EndAction()
     {
-        Inventory inventory = GameObject.FindWithTag("InventoryManager").GetComponent<InventoryManager>().Inventory;
-        foreach (TimedAction.ProducedItem item in CurrentAction.ProducedItems)
-            inventory.AddItem(item.ItemID, item.Quantity);
+        if (CurrentAction.ProducedItems != null)
+        {
+            Inventory inventory = GameObject.FindWithTag("InventoryManager").GetComponent<InventoryManager>().Inventory;
+            foreach (TimedAction.ProducedItem item in CurrentAction.ProducedItems)
+                inventory.AddItem(item.ItemID, item.Quantity);
+        }
         CurrentAction = null;
     }
 
@@ -404,6 +411,17 @@ public class Player : LivingBeing
             Attack(aa.Target, Weapon.Damage * aa.DamageMultiplier, aa.Chance);
         }
     }
+
+    void PerformCraftAction(Blueprint blueprint)
+    {
+        TimedAction timedAction = new TimedAction();
+        timedAction.Duration = blueprint.CraftTime;
+        timedAction.StaminaConsumption = 0.5f;
+        timedAction.Sprite = blueprint.Item.Icon;
+        CurrentAction = timedAction;
+        EventManager.OnActionStart(timedAction);
+    }
+
 
     //==============================
     public void ConsumeItem(AttachedItem attachedItem)

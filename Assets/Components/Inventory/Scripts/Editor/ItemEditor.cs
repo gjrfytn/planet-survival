@@ -372,7 +372,7 @@ public partial class ItemEditor
 
         if (item.DroppedItem == null)
         {
-            item.DroppedItem = (GameObject)Resources.Load("Inventory/DefaultDropItem");
+            item.DroppedItem = (GameObject)AssetDatabase.LoadAssetAtPath("Assets/Components/Inventory/Prefabs/DefaultDropItem.prefab", typeof(GameObject)) as GameObject;
         }
         item.DroppedItem = (GameObject)EditorGUILayout.ObjectField("Dropped item: ", item.DroppedItem, typeof(GameObject), false);
 

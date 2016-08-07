@@ -6,14 +6,27 @@ using System.Collections;
 public class Clocks : MonoBehaviour {
 
     public Text DaysText;
+    public Text TimeText;
     void OnEnable()
     {
-        EventManager.ActionStarted += DaysAlive;
+        EventManager.DayPassed += DaysAlive;
+        EventManager.MinutePassed += ChangeTimeOfDay;
     }
 
-    public void DaysAlive(TimedAction action)
+    void OnDisable()
+    {
+        EventManager.DayPassed -= DaysAlive;
+        EventManager.MinutePassed -= ChangeTimeOfDay;
+    }
+
+    void DaysAlive()
     {
         DaysText.text = GameTime.TimeInDays.ToString();
+    }
+
+    void ChangeTimeOfDay(float unused)
+    {
+        TimeText.text = GameTime.HoursOfDay + " : " + GameTime.MinutesOfHour;
     }
 
 }

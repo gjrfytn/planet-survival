@@ -1,8 +1,8 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
-using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 
 public class Inventory : MonoBehaviour, IDropHandler {
 
@@ -26,7 +26,6 @@ public class Inventory : MonoBehaviour, IDropHandler {
     {
         InventoryManager = GameObject.FindWithTag("InventoryManager").GetComponent<InventoryManager>();
     }
-
     ///<summary>
     ///Обновляет список предметов в инвентаре
     ///</summary>
@@ -56,7 +55,9 @@ public class Inventory : MonoBehaviour, IDropHandler {
                     GameObject item = (GameObject)Instantiate(InventoryManager.ItemPrefab);
                     AttachedItem attachedItem = item.GetComponent<AttachedItem>();
 
-					attachedItem.Item = InventoryManager.ItemDatabase[id];
+                    RectTransform itemRectTransform = item.GetComponent<RectTransform>();
+
+                    attachedItem.Item = InventoryManager.ItemDatabase[id];
                     if (attachedItem.StackSize <= attachedItem.Item.MaxStackSize && stackSize <= attachedItem.Item.MaxStackSize)
                     {
                         attachedItem.StackSize = stackSize;
@@ -65,14 +66,16 @@ public class Inventory : MonoBehaviour, IDropHandler {
                     {
                         attachedItem.StackSize = 1;
                     }
-                    item.transform.SetParent(Slots[i].gameObject.transform);
-                    item.GetComponent<RectTransform>().localPosition = Vector2.zero;
+                    item.transform.SetParent(Slots[i].gameObject.transform, false);
+                    itemRectTransform.localPosition = Vector2.zero;
+                    //itemRectTransform.sizeDelta = Vector2.zero;
+                    //itemRectTransform.localScale = Vector3.one;
                     item.transform.GetChild(0).GetComponent<Image>().sprite = attachedItem.Item.Icon;
                     item.transform.GetChild(2).GetComponent<Image>().color = InventoryManager.FindColor(attachedItem.Item);
 
                     item.name = attachedItem.Item.Name;
                     attachedItem.Item.ItemStartNumber = ItemsInInventory.Count;
-                    attachedItem.UpdateStackSize();
+                    InventoryManager.UpdateItemStack(attachedItem);
                     return item;
                 }
             }
@@ -158,11 +161,11 @@ public class Inventory : MonoBehaviour, IDropHandler {
                 if (stack <= ItemsInInventory[i].Item.MaxStackSize)
                 {
                     ItemsInInventory[i].StackSize = stack;
-                    tempItem.GetComponent<AttachedItem>().UpdateStackSize();
+                    InventoryManager.UpdateItemStack(tempItem.GetComponent<AttachedItem>());
                     if(tempItem != null && tempItem.GetComponent<AttachedItem>().Duplicate != null)
                     {
                         tempItem.GetComponent<AttachedItem>().Duplicate.GetComponent<AttachedItem>().StackSize = stack;
-                        tempItem.GetComponent<AttachedItem>().UpdateStackSize();
+                        InventoryManager.UpdateItemStack(tempItem.GetComponent<AttachedItem>());
                     }
                     return true;
                 }
@@ -174,7 +177,7 @@ public class Inventory : MonoBehaviour, IDropHandler {
                         tempItem.GetComponent<AttachedItem>().Duplicate.GetComponent<AttachedItem>().StackSize = stack;
                     }
                     AddItem(ItemsInInventory[i].Item.Id, rest);
-                    GetItemGameObject(ItemsInInventory[i].Item).GetComponent<AttachedItem>().UpdateStackSize();
+                    InventoryManager.UpdateItemStack(GetItemGameObject(ItemsInInventory[i].Item).GetComponent<AttachedItem>());
                     return true;
                 }
             }
@@ -182,7 +185,7 @@ public class Inventory : MonoBehaviour, IDropHandler {
         return false;
     }
 
-    public void AddItemIntoSlot(GameObject itemGameObject)
+    public void MoveItemIntoSlot(AttachedItem attachedItem)
     {
         if (CheckItemFit())
         {
@@ -190,8 +193,28 @@ public class Inventory : MonoBehaviour, IDropHandler {
             {
                 if(Slots[i].gameObject.transform.childCount == 0)
                 {
-                    itemGameObject.transform.SetParent(Slots[i].transform);
-                    itemGameObject.transform.localPosition = Vector2.zero;
+                    attachedItem.gameObject.transform.SetParent(Slots[i].transform);
+                    attachedItem.gameObject.transform.localPosition = Vector2.zero;
+                    break;
+                }
+            }
+        }
+    }
+
+    public void CloneItemIntoSlot(AttachedItem attachedItem)
+    {
+        if (CheckItemFit())
+        {
+            GameObject tempItem = Instantiate(attachedItem.gameObject);
+            tempItem.name = attachedItem.Item.Name;
+            for (int i = 0; i < Slots.Count; i++)
+            {
+                if (Slots[i].gameObject.transform.childCount == 0)
+                {
+                    tempItem.transform.SetParent(Slots[i].transform, false);
+                    tempItem.transform.localPosition = Vector2.zero;
+                    //tempItem.GetComponent<RectTransform>().sizeDelta = Vector2.zero;
+                    //tempItem.GetComponent<RectTransform>().localScale = Vector3.one;
                     break;
                 }
             }
@@ -272,23 +295,7 @@ public class Inventory : MonoBehaviour, IDropHandler {
 
     public void OnDrop(PointerEventData data)
     {
-        GameObject draggingItem = AttachedItem.DraggingItem;
-        if (draggingItem != null)
-        {
-            if (draggingItem.GetComponent<AttachedItem>().Item.IsEquipment)
-            {
-                if (draggingItem.GetComponent<AttachedItem>().LastSlot.GetComponent<Slot>().SlotType == SlotType.Equipment)
-                {
-                    InventoryEvents.EquipItem(draggingItem.GetComponent<AttachedItem>());
-                }
-            }
-            if (draggingItem.GetComponent<AttachedItem>().LastSlot.GetComponent<Slot>().SlotType == SlotType.Hotbar)
-            {
-                draggingItem.GetComponent<AttachedItem>().CreateDuplicate(draggingItem);
-            }
-            draggingItem.transform.SetParent(draggingItem.GetComponent<AttachedItem>().LastSlot);
-            draggingItem.GetComponent<RectTransform>().localPosition = Vector3.zero;
-        }
+        InventoryManager.OnDrop(data);
     }
 
 }

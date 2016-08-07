@@ -1,9 +1,10 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
-using System.Collections;
+using UnityEngine.EventSystems;
 using System.Collections.Generic;
 
-public class Crafting : MonoBehaviour {
+
+public class Crafting : MonoBehaviour, IDropHandler {
 
     [HideInInspector]
     public InventoryManager InventoryManager;
@@ -16,8 +17,8 @@ public class Crafting : MonoBehaviour {
 
     public ItemInfoPanel ItemInfoPanel;
 
-    public Transform BlueprintsContent;
-    public Transform IngredientsContent;
+    public Transform BlueprintsContainer;
+    public Transform IngredientsContainer;
     public GameObject BlueprintPrefab;
     public GameObject IngredientPrefab;
     public Button AcceptButton;
@@ -27,24 +28,20 @@ public class Crafting : MonoBehaviour {
 
     public List<int> CraftingMaterialCounters = new List<int>();
 
-    void Awake()
+    private void Awake()
     {
         InventoryManager = GameObject.FindGameObjectWithTag("InventoryManager").GetComponent<InventoryManager>();
         Inventory = InventoryManager.Inventory;
     }
 
 	// Use this for initialization
-	void Start () {
+	private void Start () {
 
         AddBlueprints();
         AcceptButton.interactable = false;
 	
 	}
-	
-	// Update is called once per frame
-	void Update () {
 
-	}
 
     public void AddItem()
     {
@@ -64,11 +61,13 @@ public class Crafting : MonoBehaviour {
         {
             GameObject blueprintPrefab = Instantiate(BlueprintPrefab);
             AttachedBlueprint attachedBlueprint = blueprintPrefab.GetComponent<AttachedBlueprint>();
+            blueprintPrefab.transform.SetParent(BlueprintsContainer);
+            blueprintPrefab.GetComponent<RectTransform>().sizeDelta = new Vector2(0,0);
+            blueprintPrefab.GetComponent<RectTransform>().localScale = new Vector3(1, 1, 1);
             attachedBlueprint.Blueprint = BlueprintDatabase[i];
             attachedBlueprint.ItemName.text = BlueprintDatabase[i].Item.Name;
             attachedBlueprint.QualityColor.color = InventoryManager.FindColor(BlueprintDatabase[i].Item);
             blueprintPrefab.name = BlueprintDatabase[i].Item.Name;
-            blueprintPrefab.transform.SetParent(BlueprintsContent);
         }
     }
 
@@ -139,7 +138,7 @@ public class Crafting : MonoBehaviour {
                     }
                     else
                     {
-                        Inventory.ItemsInInventory[j].GetComponent<AttachedItem>().UpdateStackSize();
+                        InventoryManager.UpdateItemStack(Inventory.ItemsInInventory[j].GetComponent<AttachedItem>());
                         break;
                     }
                 }
@@ -151,16 +150,11 @@ public class Crafting : MonoBehaviour {
 
     public void Accept()
     {
-        bool EnoughSpace = Inventory.ItemsInInventory.Count < Inventory.Height * Inventory.Width;
-        if (EnoughSpace)
-        {
-            RemoveMaterials();
-            AddItem();
-        }
-        else
-        {
-            Debug.Log("Недостаточно места");
-            return;
-        }
+        CraftingEvents.CraftItem(SelectedBlueprint);
+    }
+
+    public void OnDrop(PointerEventData data)
+    {
+        InventoryManager.OnDrop(data);
     }
 }

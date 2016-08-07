@@ -33,15 +33,18 @@ public class AttachedItem : MonoBehaviour,
     public static GameObject DraggingItem;
 
     public GameObject Duplicate;
+
+    [HideInInspector]
+    public CanvasGroup CanvasGroup;
+
     private InventoryManager InventoryManager;
     private Inventory Inventory;
 
-    private CanvasGroup CanvasGroup;
     private RectTransform RectTransform;
     private RectTransform DraggingSlotRectTransform;
 
 
-    void Start ()
+    private void Start ()
     {
         InventoryManager = GameObject.FindGameObjectWithTag("InventoryManager").GetComponent<InventoryManager>();
         Inventory = InventoryManager.Inventory;
@@ -63,7 +66,7 @@ public class AttachedItem : MonoBehaviour,
         duplicate.GetComponent<AttachedItem>().Duplicate = Item;
     }
 
-    public void UpdateStackSize()
+    /*public void UpdateItemStackSize(AttachedItem attachedItem) //Old
     {
         StackSizeText = transform.GetComponentInChildren<Text>();
         if (Item.MaxStackSize > 1)
@@ -85,7 +88,15 @@ public class AttachedItem : MonoBehaviour,
                 Duplicate.GetComponent<AttachedItem>().StackSizeText.enabled = false;
             }
         }
-    }
+        if (StackSize <= 0)
+        {
+            if (Duplicate != null)
+            {
+                Destroy(Duplicate);
+            }
+            Destroy(gameObject);
+        }
+    }*/
 
 
     public void OnPointerEnter(PointerEventData data)
@@ -117,9 +128,15 @@ public class AttachedItem : MonoBehaviour,
 
         if (data.button == PointerEventData.InputButton.Left)
         {
+            InventoryManager.SelectedItem = this;
+            InventoryEvents.ItemLeftClick(this);
             if (ItemInfoPanel != null)
             {
                 ItemInfoPanel.ActivatePanel(this);
+            }
+            if(InventoryManager.SplitPanel != null)
+            {
+                InventoryManager.SplitPanel.gameObject.SetActive(false);
             }
         }
         else if (data.button == PointerEventData.InputButton.Right)
@@ -144,10 +161,10 @@ public class AttachedItem : MonoBehaviour,
             DraggingItem = gameObject;
             LastSlot = transform.parent.gameObject.transform;
 
-            if (transform.parent.GetComponent<Slot>().SlotType == SlotType.Equipment)
+            /*if (transform.parent.GetComponent<Slot>() != null && transform.parent.GetComponent<Slot>().SlotType == SlotType.Equipment)
             {
                 InventoryEvents.UnequipItem(this);
-            }
+            }*/
         }
     }
 

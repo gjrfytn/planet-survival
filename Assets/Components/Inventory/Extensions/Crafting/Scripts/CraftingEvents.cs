@@ -5,12 +5,15 @@ public static class CraftingEvents {
 
     public delegate void CraftingDelegate(Blueprint blueprint);
 
-    public static event CraftingDelegate ItemCrafting;
+    public static event CraftingDelegate OnItemCraft;
 
 
 
     public static void CraftItem(Blueprint blueprint)
     {
-        ItemCrafting(blueprint);
+        if (OnItemCraft != null)
+        {
+            OnItemCraft(blueprint);
+        }
     }
 }

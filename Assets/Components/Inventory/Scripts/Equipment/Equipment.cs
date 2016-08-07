@@ -8,9 +8,6 @@ public class Equipment : MonoBehaviour, IDropHandler {
 
     public InventoryManager InventoryManager;
 
-    [HideInInspector]
-    public EquipmentItemType EquipmentItemType;
-    [HideInInspector]
     public ItemType ItemType;
 
     //public Text ArmorText;
@@ -50,19 +47,6 @@ public class Equipment : MonoBehaviour, IDropHandler {
             }
 
     }
-    /*for (int i = 0; i < height * width; i++)
-    {
-        GameObject slot = (GameObject)Instantiate(InventoryManager.EquipmentSlotPrefab);
-        slot.transform.SetParent(SlotContainer.transform);
-        slot.name = "Slot " + i;
-        //Slots.Add(slot);
-        //Slots[i].gameObject.transform.GetComponent<Slot>().SlotNumber += i;
-    }*/
-
-    /*public void AddEquipmentSlot()
-    {
-
-    }*/
 
     public void RemoveEquipmentSlots()
     {
@@ -76,6 +60,6 @@ public class Equipment : MonoBehaviour, IDropHandler {
 
     public void OnDrop(PointerEventData data)
     {
-        InventoryManager.Inventory.OnDrop(data);
+        InventoryManager.OnDrop(data);
     }
 }

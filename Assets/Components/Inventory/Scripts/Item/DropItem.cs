@@ -6,7 +6,7 @@ public class DropItem : MonoBehaviour, IDropHandler {
 
     InventoryManager InventoryManager;
     //Inventory Inventory;
-    GameObject DropPanel;
+    //GameObject DropPanel;
     GameObject DraggingItem;
 
     // Use this for initialization
@@ -14,7 +14,7 @@ public class DropItem : MonoBehaviour, IDropHandler {
 
         InventoryManager = GameObject.FindGameObjectWithTag("InventoryManager").GetComponent<InventoryManager>();
         //Inventory = InventoryManager.Inventory;
-        DropPanel = InventoryManager.DropPanel;
+        //DropPanel = InventoryManager.DropPanel;
 
 	}
 	
@@ -25,7 +25,7 @@ public class DropItem : MonoBehaviour, IDropHandler {
 
     public void OnDrop(PointerEventData data)
     {
-            DropPanel.SetActive(true);
+            //DropPanel.SetActive(true);
 
     }
 
@@ -38,11 +38,11 @@ public class DropItem : MonoBehaviour, IDropHandler {
             dropItem.transform.localPosition = GameObject.FindGameObjectWithTag("Player").transform.localPosition;
             //Inventory.UpdateItemList();
             Destroy(DraggingItem);
-        DropPanel.SetActive(false);
+        //DropPanel.SetActive(false);
     }
 
     public void Cancel()
     {
-        DropPanel.SetActive(false);
+        //DropPanel.SetActive(false);
     }
 }
