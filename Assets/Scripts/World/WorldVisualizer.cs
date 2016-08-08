@@ -583,12 +583,10 @@ public class WorldVisualizer : MonoBehaviour
     /// <param name="map">Карта.</param>
     public void RenderWholeMap(LocalMap map)
     {
-        ushort height = map.Height;
-        ushort width = map.Width;
-        RenderedHexes.Capacity = height * width;
+		RenderedHexes.Capacity = map.Height * map.Width;
 
-        for (ushort y = 0; y < height; ++y)
-            for (ushort x = 0; x < width; ++x)
+		for (ushort y = 0; y < map.Height; ++y)
+			for (ushort x = 0; x < map.Width; ++x)
             {
                 // TODO Возможно стоит заменить ListType на Hex?
                 ListType hex = new ListType { Hex = new GameObject("hex"), InSign = true };
@@ -607,12 +605,10 @@ public class WorldVisualizer : MonoBehaviour
 
     public void RenderWholeMapForEditor(LocalMap map)
     {
-        ushort height = map.Height;
-        ushort width = map.Width;
-        RenderedHexes.Capacity = height * width;
+		RenderedHexes.Capacity = map.Height * map.Width;
 
-        for (ushort y = 0; y < height; ++y)
-            for (ushort x = 0; x < width; ++x)
+		for (ushort y = 0; y < map.Height; ++y)
+			for (ushort x = 0; x < map.Width; ++x)
             {
                 // TODO Возможно стоит заменить ListType на Hex?
                 ListType hex = new ListType { Hex = Instantiate(EditorHex.gameObject), InSign = true };
