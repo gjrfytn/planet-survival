@@ -51,7 +51,7 @@ public abstract class LivingBeing : Entity
 
     public abstract void TakeDamage(byte damage, bool applyArmor, bool applyDefenceAction);
 
-    public void TakeHeal(byte heal)//C#6.0 EBD
+    public void TakeHeal(byte heal)
     {
         //Debug.Assert(heal >= 0);
         Health = (byte)Mathf.Clamp(Health + heal, 0, MaxHealth);

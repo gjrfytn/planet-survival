@@ -6,21 +6,22 @@ public class ItemDatabase : ScriptableObject, IEnumerable
 {
     public uint Count { get { return (uint)Items.Count; } }
 
-    [SerializeField]
+	[SerializeField,HideInInspector]
+	List<uint> IDs = new List<uint>();
+	[SerializeField,HideInInspector]
     List<Item> Items = new List<Item>();
-
+	[SerializeField,HideInInspector]
     List<uint> FreeIDs = new List<uint>();
-
-    //public List<Blueprint> Blueprints = new List<Blueprint>();
 
     public Item this[uint id]
     {
         get
         {
-            Item buf = Items.Find(i => i.Id == id);
-            if (buf == null)
-                throw new KeyNotFoundException();
-            return buf;
+			int index=IDs.IndexOf(id);
+			if (index == -1)
+				throw new KeyNotFoundException();
+			
+			return Items[index];
         }
     }
 
@@ -29,13 +30,13 @@ public class ItemDatabase : ScriptableObject, IEnumerable
         return Items.GetEnumerator();
     }
 
-    public void Add(Item item) //TODO Принимать параметры конструктора?
+    public void Add(Item item)
     {
         if (FreeIDs.Count == 0)
-            item.Id = (uint)Items.Count;
+			IDs.Add((uint)Items.Count);
         else
         {
-            item.Id = FreeIDs[0];
+			IDs.Add(FreeIDs[0]);
             FreeIDs.RemoveAt(0);
         }
         Items.Add(item);
@@ -43,10 +44,20 @@ public class ItemDatabase : ScriptableObject, IEnumerable
 
     public void Remove(uint id)
     {
-        Item buf = Items.Find(i => i.Id == id);
-        if (buf == null)
-            throw new KeyNotFoundException();
-        Items.Remove(buf);
+		int index=IDs.IndexOf(id);
+		if (index == -1)
+			throw new KeyNotFoundException();
+		IDs.RemoveAt(index);
+		Items.RemoveAt(index);
         FreeIDs.Add(id);
     }
+
+	public uint GetID(Item item)
+	{
+		int index=Items.IndexOf(item);
+		if (index == -1)
+			throw new System.ArgumentException("Item not found.","item");
+
+		return IDs[index];
+	}
 }

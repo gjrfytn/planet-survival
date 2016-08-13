@@ -45,13 +45,13 @@ public class Crafting : MonoBehaviour, IDropHandler {
 
     public void AddItem()
     {
-        if (Inventory.CheckIfItemAlreadyExist(SelectedBlueprint.Item.Id, 1)) //Blueprint StackSize
+		if (Inventory.CheckIfItemAlreadyExist(/*SelectedBlueprint.Item.Id*/InventoryManager.ItemDatabase.GetID(SelectedBlueprint.Item), 1)) //Blueprint StackSize
         {
             InventoryManager.UpdateStacks(Inventory.Slots);
         }
         else
         {
-            Inventory.AddItem(SelectedBlueprint.Item.Id, 1);
+			Inventory.AddItem(/*SelectedBlueprint.Item.Id*/InventoryManager.ItemDatabase.GetID(SelectedBlueprint.Item), 1);
         }
     }
 

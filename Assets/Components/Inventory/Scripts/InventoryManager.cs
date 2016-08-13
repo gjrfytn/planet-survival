@@ -77,7 +77,7 @@ public class InventoryManager : MonoBehaviour
             GameObject itemFromSlotGameObject = slot.transform.GetChild(0).gameObject; ;
             AttachedItem itemFromSlot = itemFromSlotGameObject.GetComponent<AttachedItem>();
             RectTransform itemFromSlotRect = itemFromSlotGameObject.GetComponent<RectTransform>();
-            bool sameItem = draggingItem.Item.Id == itemFromSlot.Item.Id;
+			bool sameItem = /*draggingItem.Item.Id*/ItemDatabase.GetID(draggingItem.Item) == /*itemFromSlot.Item.Id*/ItemDatabase.GetID(itemFromSlot.Item);
             if (slot.SlotType == SlotType.Inventory)
             {
                 if (sameItem && itemFromSlot.Item.IsStackable)

@@ -114,7 +114,7 @@ public class BlueprintEditor : BaseInventoryEditor {
         }
         GUILayout.Label(ItemDatabase[CraftItemId].Icon.texture, GUILayout.Width(60f), GUILayout.Height(60f));
         CraftItemId = (uint)EditorGUILayout.Popup("Result item: ", (int)CraftItemId, itemNames.ToArray(), GUILayout.Width(300));
-        GUILayout.Label("Result item ID: " + ItemDatabase[CraftItemId].Id.ToString());
+		GUILayout.Label("Result item ID: " + /*ItemDatabase[CraftItemId].Id*/CraftItemId.ToString()); //???
         Blueprint.Item = ItemDatabase[CraftItemId];
 
         EditorGUILayout.EndHorizontal();
@@ -238,7 +238,7 @@ public class BlueprintEditor : BaseInventoryEditor {
                 }
 
                 GUILayout.BeginHorizontal(GUILayout.Width(800));
-                CraftItemId = BlueprintToManage.Item.Id;
+				CraftItemId = /*BlueprintToManage.Item.Id*/ItemDatabase.GetID(BlueprintToManage.Item);
                 GUILayout.Label(ItemDatabase[CraftItemId].Icon.texture, GUILayout.Width(60f), GUILayout.Height(60f));
                 EditorGUILayout.LabelField("Blueprint ID: " + BlueprintToManage.Id.ToString());
                 CraftItemId = (uint)EditorGUILayout.Popup("Result item: ", (int)CraftItemId, itemNames.ToArray()); //

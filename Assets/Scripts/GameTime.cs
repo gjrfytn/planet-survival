@@ -35,8 +35,9 @@ public class GameTime : MonoBehaviour
         ushort t = 0;
         while (t != count)
         {
-            EventManager.OnMinutePass((float)t / count);
             t++;
+            TimeInMinutes++;
+            EventManager.OnMinutePass((float)t / count);
             minBuffer++;
             if (minBuffer == 60)
             {
@@ -49,7 +50,6 @@ public class GameTime : MonoBehaviour
                     hourBuffer = 0;
                 }
             }
-            TimeInMinutes++;
             yield return new WaitForSeconds(GameMinToRealSec);//TODO Временно
         }
         EventManager.OnActionEnd();

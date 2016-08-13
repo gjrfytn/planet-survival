@@ -265,7 +265,7 @@ public partial class ItemEditor
                     {
                         if (EditorUtility.DisplayDialog("Remove item", "Are you sure?", "Remove", "Cancel"))
                         {
-                            ItemDatabase.Remove(item.Id);
+							ItemDatabase.Remove(/*item.Id*/ItemDatabase.GetID(item));
                         }
                     }
                     GUILayout.EndHorizontal();
@@ -286,7 +286,7 @@ public partial class ItemEditor
                 {
                     if (EditorUtility.DisplayDialog("Remove item", "Are you sure?", "Remove", "Cancel"))
                     {
-                        ItemDatabase.Remove(item.Id);
+						ItemDatabase.Remove(/*item.Id*/ItemDatabase.GetID(item));
                     }
                 }
                 GUILayout.EndHorizontal();
@@ -295,7 +295,7 @@ public partial class ItemEditor
 
                 ScrollManageItem = GUILayout.BeginScrollView(ScrollManageItem);
 
-                EditorGUILayout.LabelField("Item ID: " + ItemToManage.Id.ToString());
+				EditorGUILayout.LabelField("Item ID: " + /*ItemToManage.Id*/ItemDatabase.GetID(ItemToManage).ToString());
                 ItemToManage.ItemType = (ItemType)EditorGUILayout.EnumPopup("item type: ", ItemToManage.ItemType);
 
                 CommonItemSettings(ItemToManage);

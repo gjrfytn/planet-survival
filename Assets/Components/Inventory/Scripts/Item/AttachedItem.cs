@@ -61,7 +61,7 @@ public class AttachedItem : MonoBehaviour,
     public void CreateDuplicate(GameObject Item)
     {
         Item item = Item.GetComponent<AttachedItem>().Item;
-        GameObject duplicate = Inventory.AddItem(item.Id, StackSize);
+		GameObject duplicate = Inventory.AddItem(/*item.Id*/InventoryManager.ItemDatabase.GetID(item), StackSize);
         Item.GetComponent<AttachedItem>().Duplicate = duplicate;
         duplicate.GetComponent<AttachedItem>().Duplicate = Item;
     }

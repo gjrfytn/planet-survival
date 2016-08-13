@@ -75,7 +75,7 @@ public class InventoryInspector : Editor
                     GUI.color = Color.green;
                     if (GUILayout.Button("Add", GUILayout.Width(40)))
                     {
-                        Inventory.AddItem(item.Id, ItemStackSize);
+						Inventory.AddItem(/*item.Id*/itemDatabase.GetID(item), ItemStackSize);
                         Inventory.InventoryManager.UpdateStacks(Inventory.Slots);
                     }
                     GUI.color = Color.white;

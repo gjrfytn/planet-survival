@@ -153,7 +153,7 @@ public class Inventory : MonoBehaviour, IDropHandler {
         int stack;
         for(int i = 0; i < ItemsInInventory.Count; i++)
         {
-            if(ItemsInInventory[i].Item.Id == id && ItemsInInventory[i].Item.IsStackable)
+			if(/*ItemsInInventory[i].Item.Id*/InventoryManager.ItemDatabase.GetID(ItemsInInventory[i].Item) == id && ItemsInInventory[i].Item.IsStackable)
             {
                 stack = ItemsInInventory[i].StackSize + stackSize;
                 int rest = (stack) % ItemsInInventory[i].Item.MaxStackSize;
@@ -176,7 +176,7 @@ public class Inventory : MonoBehaviour, IDropHandler {
                     {
                         tempItem.GetComponent<AttachedItem>().Duplicate.GetComponent<AttachedItem>().StackSize = stack;
                     }
-                    AddItem(ItemsInInventory[i].Item.Id, rest);
+					AddItem(/*ItemsInInventory[i].Item.Id*/InventoryManager.ItemDatabase.GetID(ItemsInInventory[i].Item), rest);
                     InventoryManager.UpdateItemStack(GetItemGameObject(ItemsInInventory[i].Item).GetComponent<AttachedItem>());
                     return true;
                 }

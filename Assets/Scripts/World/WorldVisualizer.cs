@@ -215,7 +215,8 @@ public class WorldVisualizer : MonoBehaviour
                     RenderedHexes[i].Hex.transform.GetChild(j).gameObject.GetComponent<Fader>().FadeAndDestroyObject(FadeTime);
                 RenderedHexes[i].Hex.GetComponent<Fader>().FadeAndDestroyObject(FadeTime);
                 RenderedHexes.RemoveAt(i);
-                --i;
+                if (i != 0)
+                    i--;
             }
     }
 
@@ -583,10 +584,10 @@ public class WorldVisualizer : MonoBehaviour
     /// <param name="map">Карта.</param>
     public void RenderWholeMap(LocalMap map)
     {
-		RenderedHexes.Capacity = map.Height * map.Width;
+        RenderedHexes.Capacity = map.Height * map.Width;
 
-		for (ushort y = 0; y < map.Height; ++y)
-			for (ushort x = 0; x < map.Width; ++x)
+        for (ushort y = 0; y < map.Height; ++y)
+            for (ushort x = 0; x < map.Width; ++x)
             {
                 // TODO Возможно стоит заменить ListType на Hex?
                 ListType hex = new ListType { Hex = new GameObject("hex"), InSign = true };
@@ -605,10 +606,10 @@ public class WorldVisualizer : MonoBehaviour
 
     public void RenderWholeMapForEditor(LocalMap map)
     {
-		RenderedHexes.Capacity = map.Height * map.Width;
+        RenderedHexes.Capacity = map.Height * map.Width;
 
-		for (ushort y = 0; y < map.Height; ++y)
-			for (ushort x = 0; x < map.Width; ++x)
+        for (ushort y = 0; y < map.Height; ++y)
+            for (ushort x = 0; x < map.Width; ++x)
             {
                 // TODO Возможно стоит заменить ListType на Hex?
                 ListType hex = new ListType { Hex = Instantiate(EditorHex.gameObject), InSign = true };
@@ -679,7 +680,8 @@ public class WorldVisualizer : MonoBehaviour
             {
                 Destroy(RenderedBlues[i].Hex);
                 RenderedBlues.RemoveAt(i);
-                --i;
+                if (i != 0)
+                    i--;
             }
     }
 

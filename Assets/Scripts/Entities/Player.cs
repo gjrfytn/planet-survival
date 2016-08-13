@@ -183,6 +183,8 @@ public class Player : LivingBeing
 
     bool DefendedInTurn;
 
+    GameObject CraftActionCashe;
+
     void OnEnable()
     {
         EventManager.HourPassed += UpdateState;
@@ -227,6 +229,9 @@ public class Player : LivingBeing
                 WeaponSlot = slot.GetComponent<EquipmentSlot>();
             else if (slot.GetComponent<EquipmentSlot>().EquipmentType == ItemType.Chest)
                 BodyArmorSlot = slot.GetComponent<EquipmentSlot>();
+
+        CraftActionCashe = new GameObject("CraftActionCashe");
+        CraftActionCashe.AddComponent<TimedAction>();
     }
 
     bool BluesRendered = false; //TODO Временно
@@ -321,7 +326,7 @@ public class Player : LivingBeing
         //EventManager.OnPlayerMove(mapCoords); //TODO Временно //Временно закоммент. см. HexInteraction 21
     }
 
-    void Attack(LivingBeing target, float damage, float accuracy)//C#6.0 EBD
+    void Attack(LivingBeing target, float damage, float accuracy)
     {
         if (Random.value < accuracy)
             target.TakeDamage((byte)damage, true, true);
@@ -414,7 +419,7 @@ public class Player : LivingBeing
 
     void PerformCraftAction(Blueprint blueprint)
     {
-        TimedAction timedAction = new TimedAction();
+        TimedAction timedAction = CraftActionCashe.GetComponent<TimedAction>();
         timedAction.Duration = blueprint.CraftTime;
         timedAction.StaminaConsumption = 0.5f;
         timedAction.Sprite = blueprint.Item.Icon;

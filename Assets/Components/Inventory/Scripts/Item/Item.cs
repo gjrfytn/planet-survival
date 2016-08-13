@@ -7,7 +7,7 @@ public class Item
 {
     public string Name;
 
-    bool IdSet = false;
+   /* bool IdSet = false;
     [SerializeField, HideInInspector]
     uint Id_;
     public uint Id
@@ -26,7 +26,7 @@ public class Item
                 IdSet = true;
             }
         }
-    }
+    }*/
 
     public byte Height;
     public byte Width;

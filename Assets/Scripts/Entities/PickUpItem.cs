@@ -47,7 +47,7 @@ public class PickUpItem : Entity
     {
         if (Input.GetMouseButtonUp(0))
         {
-            if (Inventory.CheckIfItemAlreadyExist(AttachedItem.Item.Id, AttachedItem.StackSize))
+            if (Inventory.CheckIfItemAlreadyExist(/*AttachedItem.Item.Id*/InventoryManager.ItemDatabase.GetID(AttachedItem.Item), AttachedItem.StackSize))
             {
                 InventoryEvents.PickUpItem(AttachedItem);
                 Destroy(gameObject);
@@ -56,7 +56,7 @@ public class PickUpItem : Entity
             else if (Inventory.ItemsInInventory.Count < Inventory.Width * Inventory.Height)
             {
                 InventoryEvents.PickUpItem(AttachedItem);
-                Inventory.AddItem(AttachedItem.Item.Id, AttachedItem.StackSize);
+                Inventory.AddItem(/*AttachedItem.Item.Id*/InventoryManager.ItemDatabase.GetID(AttachedItem.Item), AttachedItem.StackSize);
                 Inventory.UpdateItemList();
                 InventoryManager.UpdateStacks(Inventory.Slots);
                 Destroy(gameObject);
