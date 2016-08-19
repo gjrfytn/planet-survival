@@ -7,7 +7,7 @@ using System.Collections.Generic;
 public class InventoryManager : MonoBehaviour
 {
 
-    public ItemDatabase ItemDatabase;
+	public ItemDatabase<Item> ItemDatabase;
 
     [Header("Inventory components")]
     public Inventory Inventory;

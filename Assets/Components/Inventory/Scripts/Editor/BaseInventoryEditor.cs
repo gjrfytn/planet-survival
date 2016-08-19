@@ -4,7 +4,7 @@ using System.Collections;
 
 public abstract class BaseInventoryEditor : EditorWindow {
 
-    protected static ItemDatabase ItemDatabase;
+	protected static ItemDatabase<Item> ItemDatabase;
 
     private Texture2D Logo = null;
 
@@ -17,7 +17,7 @@ public abstract class BaseInventoryEditor : EditorWindow {
     {
         SerObj = new SerializedObject(this);
         Logo = (Texture2D)AssetDatabase.LoadAssetAtPath("Assets/Components/Inventory/Textures/Logo.png", typeof(Texture2D));
-        ItemDatabase = (ItemDatabase)AssetDatabase.LoadAssetAtPath("Assets/Components/Inventory/Data/ItemDatabase.asset", typeof(ItemDatabase)) as ItemDatabase;
+		ItemDatabase = (ItemDatabase<Item>)AssetDatabase.LoadAssetAtPath("Assets/Components/Inventory/Data/ItemDatabase.asset", typeof(ItemDatabase<Item>)) as ItemDatabase<Item>;
     }
 
     protected virtual void OnGUI()

@@ -436,7 +436,7 @@ public partial class ItemEditor
         GUI.color = Color.green;
         if (GUILayout.Button("Create", GUILayout.Width(200)))
         {
-            ItemDatabase = ScriptableObject.CreateInstance<ItemDatabase>();
+			ItemDatabase = ScriptableObject.CreateInstance<ItemDatabase<Item>>();
             AssetDatabase.CreateAsset(ItemDatabase, "Assets/Components/Inventory/Data/ItemDatabase.asset");
             AssetDatabase.SaveAssets();
         }

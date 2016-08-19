@@ -48,7 +48,7 @@ public class InventoryInspector : Editor
 
     private void AddItem()
     {
-        ItemDatabase itemDatabase = (ItemDatabase)AssetDatabase.LoadAssetAtPath("Assets/Components/Inventory/Data/ItemDatabase.asset", typeof(ItemDatabase)) as ItemDatabase;
+		ItemDatabase<Item> itemDatabase = (ItemDatabase<Item>)AssetDatabase.LoadAssetAtPath("Assets/Components/Inventory/Data/ItemDatabase.asset", typeof(ItemDatabase<Item>)) as ItemDatabase<Item>;
 
         EditorGUILayout.BeginVertical(GUILayout.Width(200));
         EditorGUI.indentLevel++;
